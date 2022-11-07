@@ -1,0 +1,27 @@
+[package]
+name = "doome"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = [
+  "run-wasm"
+]
+
+[dependencies]
+log = "0.4"
+pixels = "0.10.0"
+winit = "0.27"
+winit_input_helper = "0.13"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+console_error_panic_hook = "0.1"
+console_log = "0.2"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = "0.3"
+wgpu = { version = "0.13", features = ["webgl"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+env_logger = "0.9"
+pollster = "0.2"
