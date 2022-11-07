@@ -1,2 +1,2 @@
 [alias]
-run-wasm = "run --package doome-run-wasm --release doome"
+run-wasm = "run --package doome-run-wasm --release -- doome --release"

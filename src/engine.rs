@@ -1,3 +1,6 @@
+mod canvas;
+mod color;
+
 use pixels::{Pixels, SurfaceTexture};
 use std::rc::Rc;
 use winit::dpi::LogicalSize;
@@ -6,9 +9,14 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
+pub use self::{canvas::*, color::*};
+
+pub const WIDTH: u16 = 320;
+pub const HEIGHT: u16 = 200;
+
 pub trait App {
     fn update(&mut self);
-    fn draw(&self, frame: &mut [u8]);
+    fn draw(&self, canvas: Canvas<'_>);
 }
 
 pub fn main(app: impl App + 'static) {
@@ -30,7 +38,7 @@ async fn run(mut app: impl App + 'static) {
     let event_loop = EventLoop::new();
 
     let window = {
-        let size = LogicalSize::new(320.0, 200.0);
+        let size = LogicalSize::new(WIDTH, HEIGHT);
 
         WindowBuilder::new()
             .with_title("Doomé")
@@ -91,12 +99,14 @@ async fn run(mut app: impl App + 'static) {
         let surface_texture =
             SurfaceTexture::new(window_size.width, window_size.height, window.as_ref());
 
-        Pixels::new_async(320, 200, surface_texture).await.unwrap()
+        Pixels::new_async(WIDTH as _, HEIGHT as _, surface_texture)
+            .await
+            .unwrap()
     };
 
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
-            app.draw(pixels.get_frame_mut());
+            app.draw(Canvas::new(pixels.get_frame_mut()));
             pixels.render().unwrap();
         }
 
