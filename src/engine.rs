@@ -43,7 +43,6 @@ async fn run(mut app: impl App + 'static) {
         WindowBuilder::new()
             .with_title("Doomé")
             .with_inner_size(size)
-            .with_min_inner_size(size)
             .build(&event_loop)
             .unwrap()
     };
@@ -104,10 +103,21 @@ async fn run(mut app: impl App + 'static) {
             .unwrap()
     };
 
+    let mut raytracer = crate::raytracer::Raytracer::new(&pixels, WIDTH as _, HEIGHT as _);
+
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
             app.draw(Canvas::new(pixels.get_frame_mut()));
-            pixels.render().unwrap();
+
+            pixels
+                .render_with(|encoder, render_target, context| {
+                    let texture = raytracer.get_texture_view();
+                    context.scaling_renderer.render(encoder, texture);
+                    raytracer.render(encoder, render_target, context.scaling_renderer.clip_rect());
+
+                    Ok(())
+                })
+                .unwrap();
         }
 
         if input.update(&event) {
@@ -118,6 +128,7 @@ async fn run(mut app: impl App + 'static) {
 
             if let Some(size) = input.window_resized() {
                 pixels.resize_surface(size.width, size.height);
+                raytracer.resize(&pixels, size.width, size.height);
             }
 
             app.update();

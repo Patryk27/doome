@@ -1,6 +1,10 @@
 { pkgs ? import <nixpkgs> { } }:
 
 pkgs.mkShell {
+  hardeningDisable = [
+    "fortify"
+  ];
+
   buildInputs = with pkgs; [
     alsaLib
     fontconfig
@@ -16,6 +20,8 @@ pkgs.mkShell {
     export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${with pkgs; lib.makeLibraryPath [
       alsaLib
       fontconfig
+      freetype
+      gcc-unwrapped.lib
       libxkbcommon
       udev
       vulkan-loader
