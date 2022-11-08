@@ -8,7 +8,6 @@ impl Raytracer {
     pub fn new(pixels: &pixels::Pixels) -> Self {
         let device = pixels.device();
         let shader = wgpu::include_spirv!(env!("doome_raytracer_shader.spv"));
-
         let module = device.create_shader_module(shader);
 
         let pipeline_layout =
@@ -35,10 +34,7 @@ impl Raytracer {
                     entry_point: "fs_main",
                     targets: &[Some(wgpu::ColorTargetState {
                         format: pixels.render_texture_format(),
-                        blend: Some(wgpu::BlendState {
-                            color: wgpu::BlendComponent::REPLACE,
-                            alpha: wgpu::BlendComponent::REPLACE,
-                        }),
+                        blend: Some(wgpu::BlendState::REPLACE),
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
                 }),
@@ -52,29 +48,21 @@ impl Raytracer {
         &self,
         encoder: &mut wgpu::CommandEncoder,
         view: &wgpu::TextureView,
-        clip_rect: (u32, u32, u32, u32),
     ) {
-        let mut rpass =
-            encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Raytracer render pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: true,
-                    },
-                })],
-                depth_stencil_attachment: None,
-            });
+        let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("Raytracer render pass"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                    store: true,
+                },
+            })],
+            depth_stencil_attachment: None,
+        });
 
-        rpass.set_pipeline(&self.pipeline);
-        rpass.set_scissor_rect(
-            clip_rect.0,
-            clip_rect.1,
-            clip_rect.2,
-            clip_rect.3,
-        );
-        rpass.draw(0..3, 0..1);
+        pass.set_pipeline(&self.pipeline);
+        pass.draw(0..3, 0..1);
     }
 }

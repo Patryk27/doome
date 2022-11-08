@@ -7,5 +7,8 @@ edition = "2021"
 spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "dcf37b75a7f9e7a94f52c8a3a5d93af795e34cd0", default-features = false, features = ["use-installed-tools"] }
 
 [dependencies]
+bytemuck = "1"
+doome-raytracer-shader-common = { path = "../doome-raytracer-shader-common" }
 pixels = "0.10.0"
+spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = ["glam"] }
 wgpu = { version = "0.13", features = ["spirv"] }

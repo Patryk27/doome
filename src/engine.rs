@@ -133,12 +133,7 @@ async fn run(mut app: impl App + 'static) {
                 pixels
                     .render_with(|encoder, view, context| {
                         context.scaling_renderer.render(encoder, view);
-
-                        raytracer.render(
-                            encoder,
-                            view,
-                            context.scaling_renderer.clip_rect(),
-                        );
+                        raytracer.render(encoder, view);
 
                         Ok(())
                     })

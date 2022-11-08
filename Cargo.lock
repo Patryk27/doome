@@ -147,6 +147,20 @@ name = "bytemuck"
 version = "1.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aaa3a8d9a1ca92e282c96a32d6511b695d7d994d1d102ba85d279f9b2756947f"
+dependencies = [
+ "bytemuck_derive",
+]
+
+[[package]]
+name = "bytemuck_derive"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5fe233b960f12f8007e3db2d136e3cb1c291bfd7396e384ee76025fc1a3932b4"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "byteorder"
@@ -457,8 +471,11 @@ dependencies = [
 name = "doome-raytracer"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
+ "doome-raytracer-shader-common",
  "pixels",
  "spirv-builder",
+ "spirv-std",
  "wgpu",
 ]
 
@@ -466,6 +483,7 @@ dependencies = [
 name = "doome-raytracer-shader"
 version = "0.1.0"
 dependencies = [
+ "doome-raytracer-shader-common",
  "spirv-std",
 ]
 
@@ -474,6 +492,14 @@ name = "doome-raytracer-shader-builder"
 version = "0.1.0"
 dependencies = [
  "spirv-builder",
+]
+
+[[package]]
+name = "doome-raytracer-shader-common"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "spirv-std",
 ]
 
 [[package]]

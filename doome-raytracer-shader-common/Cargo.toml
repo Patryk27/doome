@@ -1,11 +1,8 @@
 [package]
-name = "doome-raytracer-shader"
+name = "doome-raytracer-shader-common"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-crate-type = ["dylib"]
-
 [dependencies]
+bytemuck = { version = "1", features = ["derive"] }
 spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = ["glam"] }
-doome-raytracer-shader-common = { path = "../doome-raytracer-shader-common" }
