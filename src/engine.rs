@@ -2,6 +2,7 @@ mod canvas;
 mod color;
 
 use std::rc::Rc;
+use std::time::Instant;
 
 use pixels::{Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
@@ -15,6 +16,9 @@ pub use self::color::*;
 
 pub const WIDTH: u16 = 320;
 pub const HEIGHT: u16 = 200;
+
+const FPS: f32 = 60.0;
+const SPF: f32 = 1.0 / FPS;
 
 pub trait App {
     fn update(&mut self);
@@ -117,23 +121,30 @@ async fn run(mut app: impl App + 'static) {
     let mut raytracer =
         crate::raytracer::Raytracer::new(&pixels, WIDTH as _, HEIGHT as _);
 
+    let mut time_of_last_render = Instant::now();
+
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
-            app.draw(Canvas::new(pixels.get_frame_mut()));
+            if time_of_last_render.elapsed().as_secs_f32() > SPF {
+                time_of_last_render = Instant::now();
 
-            pixels
-                .render_with(|encoder, render_target, context| {
-                    let texture = raytracer.get_texture_view();
-                    context.scaling_renderer.render(encoder, texture);
-                    raytracer.render(
-                        encoder,
-                        render_target,
-                        context.scaling_renderer.clip_rect(),
-                    );
+                app.draw(Canvas::new(pixels.get_frame_mut()));
 
-                    Ok(())
-                })
-                .unwrap();
+                pixels.render().unwrap();
+                pixels
+                    .render_with(|encoder, render_target, context| {
+                        let texture = raytracer.get_texture_view();
+                        context.scaling_renderer.render(encoder, texture);
+                        raytracer.render(
+                            encoder,
+                            render_target,
+                            context.scaling_renderer.clip_rect(),
+                        );
+
+                        Ok(())
+                    })
+                    .unwrap();
+            }
         }
 
         if input.update(&event) {

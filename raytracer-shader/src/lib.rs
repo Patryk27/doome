@@ -8,10 +8,10 @@ const VERTICES: [Vec2; 3] =
 
 #[spirv(vertex)]
 pub fn vs_main(
-    #[spirv(vertex_index)] in_vertex_index: u32,
-    #[spirv(position)] output: &mut Vec4,
+    #[spirv(vertex_index)] in_vertex_index: i32,
+    #[spirv(position, invariant)] output: &mut Vec4,
 ) {
-    *output = VERTICES[in_vertex_index as usize].extend(0.0).extend(0.0);
+    *output = VERTICES[in_vertex_index as usize].extend(0.0).extend(1.0);
 }
 
 #[spirv(fragment)]
