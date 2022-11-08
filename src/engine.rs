@@ -1,15 +1,17 @@
 mod canvas;
 mod color;
 
-use pixels::{Pixels, SurfaceTexture};
 use std::rc::Rc;
+
+use pixels::{Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
-pub use self::{canvas::*, color::*};
+pub use self::canvas::*;
+pub use self::color::*;
 
 pub const WIDTH: u16 = 320;
 pub const HEIGHT: u16 = 200;
@@ -78,13 +80,19 @@ async fn run(mut app: impl App + 'static) {
             })
             .unwrap();
 
-        let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move |_e: web_sys::Event| {
-            let size = get_window_size();
-            window.set_inner_size(size)
-        }) as Box<dyn FnMut(_)>);
+        let closure = wasm_bindgen::closure::Closure::wrap(Box::new(
+            move |_e: web_sys::Event| {
+                let size = get_window_size();
+                window.set_inner_size(size)
+            },
+        )
+            as Box<dyn FnMut(_)>);
 
         client_window
-            .add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref())
+            .add_event_listener_with_callback(
+                "resize",
+                closure.as_ref().unchecked_ref(),
+            )
             .unwrap();
 
         closure.forget();
@@ -95,15 +103,19 @@ async fn run(mut app: impl App + 'static) {
     let mut pixels = {
         let window_size = window.inner_size();
 
-        let surface_texture =
-            SurfaceTexture::new(window_size.width, window_size.height, window.as_ref());
+        let surface_texture = SurfaceTexture::new(
+            window_size.width,
+            window_size.height,
+            window.as_ref(),
+        );
 
         Pixels::new_async(WIDTH as _, HEIGHT as _, surface_texture)
             .await
             .unwrap()
     };
 
-    let mut raytracer = crate::raytracer::Raytracer::new(&pixels, WIDTH as _, HEIGHT as _);
+    let mut raytracer =
+        crate::raytracer::Raytracer::new(&pixels, WIDTH as _, HEIGHT as _);
 
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
@@ -113,7 +125,11 @@ async fn run(mut app: impl App + 'static) {
                 .render_with(|encoder, render_target, context| {
                     let texture = raytracer.get_texture_view();
                     context.scaling_renderer.render(encoder, texture);
-                    raytracer.render(encoder, render_target, context.scaling_renderer.clip_rect());
+                    raytracer.render(
+                        encoder,
+                        render_target,
+                        context.scaling_renderer.clip_rect(),
+                    );
 
                     Ok(())
                 })

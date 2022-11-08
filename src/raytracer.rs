@@ -6,44 +6,50 @@ pub(crate) struct Raytracer {
 }
 
 impl Raytracer {
-    pub(crate) fn new(pixels: &pixels::Pixels, width: u32, height: u32) -> Self {
+    pub(crate) fn new(
+        pixels: &pixels::Pixels,
+        width: u32,
+        height: u32,
+    ) -> Self {
         let device = pixels.device();
         let shader = wgpu::include_spirv!(env!("DOOME_RAYTRACER_SHADER"));
 
         let module = device.create_shader_module(shader);
         let texture_view = create_texture_view(pixels, width, height);
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("Raytracer pipeline layout"),
-            bind_group_layouts: &[],
-            push_constant_ranges: &[],
-        });
+        let pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Raytracer pipeline layout"),
+                bind_group_layouts: &[],
+                push_constant_ranges: &[],
+            });
 
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Raytracer pipeline"),
-            layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &module,
-                entry_point: "vs_main",
-                buffers: &[],
-            },
-            primitive: wgpu::PrimitiveState::default(),
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
-            fragment: Some(wgpu::FragmentState {
-                module: &module,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: pixels.render_texture_format(),
-                    blend: Some(wgpu::BlendState {
-                        color: wgpu::BlendComponent::REPLACE,
-                        alpha: wgpu::BlendComponent::REPLACE,
-                    }),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-            }),
-            multiview: None,
-        });
+        let render_pipeline =
+            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: Some("Raytracer pipeline"),
+                layout: Some(&pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: &module,
+                    entry_point: "vs_main",
+                    buffers: &[],
+                },
+                primitive: wgpu::PrimitiveState::default(),
+                depth_stencil: None,
+                multisample: wgpu::MultisampleState::default(),
+                fragment: Some(wgpu::FragmentState {
+                    module: &module,
+                    entry_point: "fs_main",
+                    targets: &[Some(wgpu::ColorTargetState {
+                        format: pixels.render_texture_format(),
+                        blend: Some(wgpu::BlendState {
+                            color: wgpu::BlendComponent::REPLACE,
+                            alpha: wgpu::BlendComponent::REPLACE,
+                        }),
+                        write_mask: wgpu::ColorWrites::ALL,
+                    })],
+                }),
+                multiview: None,
+            });
 
         Self {
             texture_view,
@@ -55,7 +61,12 @@ impl Raytracer {
         &self.texture_view
     }
 
-    pub(crate) fn resize(&mut self, pixels: &pixels::Pixels, width: u32, height: u32) {
+    pub(crate) fn resize(
+        &mut self,
+        pixels: &pixels::Pixels,
+        width: u32,
+        height: u32,
+    ) {
         if width == 0 || height == 0 {
             return;
         }
@@ -69,25 +80,35 @@ impl Raytracer {
         render_target: &wgpu::TextureView,
         clip_rect: (u32, u32, u32, u32),
     ) {
-        let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("Raytracer render pass"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: render_target,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                    store: true,
-                },
-            })],
-            depth_stencil_attachment: None,
-        });
+        let mut rpass =
+            encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Raytracer render pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: render_target,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        store: true,
+                    },
+                })],
+                depth_stencil_attachment: None,
+            });
         rpass.set_pipeline(&self.render_pipeline);
-        rpass.set_scissor_rect(clip_rect.0, clip_rect.1, clip_rect.2, clip_rect.3);
+        rpass.set_scissor_rect(
+            clip_rect.0,
+            clip_rect.1,
+            clip_rect.2,
+            clip_rect.3,
+        );
         rpass.draw(0..3, 0..1);
     }
 }
 
-fn create_texture_view(pixels: &pixels::Pixels, width: u32, height: u32) -> wgpu::TextureView {
+fn create_texture_view(
+    pixels: &pixels::Pixels,
+    width: u32,
+    height: u32,
+) -> wgpu::TextureView {
     let device = pixels.device();
 
     let texture_descriptor = wgpu::TextureDescriptor {
@@ -101,7 +122,8 @@ fn create_texture_view(pixels: &pixels::Pixels, width: u32, height: u32) -> wgpu
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
         format: pixels.render_texture_format(),
-        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+        usage: wgpu::TextureUsages::TEXTURE_BINDING
+            | wgpu::TextureUsages::RENDER_ATTACHMENT,
     };
 
     device

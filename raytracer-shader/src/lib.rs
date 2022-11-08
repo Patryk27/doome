@@ -1,14 +1,16 @@
 #![no_std]
 
-use spirv_std::{
-    glam::{vec2, vec4, Vec2, Vec4},
-    spirv,
-};
+use spirv_std::glam::{vec2, vec4, Vec2, Vec4};
+use spirv_std::spirv;
 
-const VERTICES: [Vec2; 3] = [vec2(-1.0, 1.0), vec2(-1.0, -1.0), vec2(1.0, -1.0)];
+const VERTICES: [Vec2; 3] =
+    [vec2(-1.0, 1.0), vec2(-1.0, -1.0), vec2(1.0, -1.0)];
 
 #[spirv(vertex)]
-pub fn vs_main(#[spirv(vertex_index)] in_vertex_index: u32, #[spirv(position)] output: &mut Vec4) {
+pub fn vs_main(
+    #[spirv(vertex_index)] in_vertex_index: u32,
+    #[spirv(position)] output: &mut Vec4,
+) {
     *output = VERTICES[in_vertex_index as usize].extend(0.0).extend(0.0);
 }
 
