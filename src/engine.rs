@@ -3,6 +3,7 @@ mod color;
 
 use std::rc::Rc;
 
+use doome_raytracer::Raytracer;
 use instant::Instant;
 use pixels::{Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
@@ -13,7 +14,6 @@ use winit_input_helper::WinitInputHelper;
 
 pub use self::canvas::*;
 pub use self::color::*;
-use crate::raytracer::Raytracer;
 
 pub const WIDTH: u16 = 320;
 pub const HEIGHT: u16 = 200;

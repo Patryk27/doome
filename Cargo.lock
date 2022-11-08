@@ -439,12 +439,12 @@ version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
  "console_log",
+ "doome-raytracer",
  "env_logger",
  "instant",
  "log",
  "pixels",
  "pollster",
- "spirv-builder",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -454,10 +454,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "doome-raytracer"
+version = "0.1.0"
+dependencies = [
+ "pixels",
+ "spirv-builder",
+ "wgpu",
+]
+
+[[package]]
 name = "doome-raytracer-shader"
 version = "0.1.0"
 dependencies = [
  "spirv-std",
+]
+
+[[package]]
+name = "doome-raytracer-shader-builder"
+version = "0.1.0"
+dependencies = [
+ "spirv-builder",
 ]
 
 [[package]]
@@ -1559,7 +1575,9 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc7c8ca2077515286505bd3ccd396e55ac5706e80322e1d6d22a82e1cad4f7c3"
 dependencies = [
+ "memchr",
  "spirv-tools-sys",
+ "tempfile",
 ]
 
 [[package]]

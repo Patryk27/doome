@@ -1,0 +1,7 @@
+[package]
+name = "doome-raytracer-shader-builder"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "dcf37b75a7f9e7a94f52c8a3a5d93af795e34cd0", default-features = false, features = ["use-installed-tools"] }

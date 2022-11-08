@@ -1,13 +1,13 @@
 use pixels::wgpu;
 
-pub(crate) struct Raytracer {
-    render_pipeline: wgpu::RenderPipeline,
+pub struct Raytracer {
+    pipeline: wgpu::RenderPipeline,
 }
 
 impl Raytracer {
-    pub(crate) fn new(pixels: &pixels::Pixels) -> Self {
+    pub fn new(pixels: &pixels::Pixels) -> Self {
         let device = pixels.device();
-        let shader = wgpu::include_spirv!(env!("DOOME_RAYTRACER_SHADER"));
+        let shader = wgpu::include_spirv!(env!("doome_raytracer_shader.spv"));
 
         let module = device.create_shader_module(shader);
 
@@ -18,7 +18,7 @@ impl Raytracer {
                 push_constant_ranges: &[],
             });
 
-        let render_pipeline =
+        let pipeline =
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: Some("Raytracer pipeline"),
                 layout: Some(&pipeline_layout),
@@ -45,10 +45,10 @@ impl Raytracer {
                 multiview: None,
             });
 
-        Self { render_pipeline }
+        Self { pipeline }
     }
 
-    pub(crate) fn render(
+    pub fn render(
         &self,
         encoder: &mut wgpu::CommandEncoder,
         view: &wgpu::TextureView,
@@ -68,7 +68,7 @@ impl Raytracer {
                 depth_stencil_attachment: None,
             });
 
-        rpass.set_pipeline(&self.render_pipeline);
+        rpass.set_pipeline(&self.pipeline);
         rpass.set_scissor_rect(
             clip_rect.0,
             clip_rect.1,

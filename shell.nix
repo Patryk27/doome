@@ -14,6 +14,7 @@ pkgs.mkShell {
     udev
     vulkan-loader
     xorg.libxcb
+    spirv-tools
   ];
 
   shellHook = ''

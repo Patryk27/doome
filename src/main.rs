@@ -1,7 +1,6 @@
 use self::engine::{Canvas, Color, HEIGHT, WIDTH};
 
 mod engine;
-mod raytracer;
 
 struct App;
 

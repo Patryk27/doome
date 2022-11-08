@@ -5,18 +5,18 @@ edition = "2021"
 
 [workspace]
 members = [
-  "raytracer-shader",
-  "run-wasm"
+    "doome-raytracer",
+    "doome-raytracer-shader",
+    "doome-raytracer-shader-builder",
+    "doome-run-wasm"
 ]
 
-[build-dependencies]
-spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "dcf37b75a7f9e7a94f52c8a3a5d93af795e34cd0" }
-
 [dependencies]
+doome-raytracer = { path = "doome-raytracer" }
 instant = "0.1"
 log = "0.4"
 pixels = "0.10.0"
-wgpu = { version = "0.13", features = ["spirv"] }
+wgpu = "0.13"
 winit = "0.27"
 winit_input_helper = "0.13"
 
