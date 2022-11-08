@@ -13,6 +13,7 @@ members = [
 spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "dcf37b75a7f9e7a94f52c8a3a5d93af795e34cd0" }
 
 [dependencies]
+instant = "0.1"
 log = "0.4"
 pixels = "0.10.0"
 wgpu = { version = "0.13", features = ["spirv"] }
@@ -25,6 +26,7 @@ console_log = "0.2"
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 web-sys = "0.3"
+wgpu = { version = "0.13", features = ["webgl"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.9"

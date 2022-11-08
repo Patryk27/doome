@@ -2,8 +2,8 @@ mod canvas;
 mod color;
 
 use std::rc::Rc;
-use std::time::Instant;
 
+use instant::Instant;
 use pixels::{Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
@@ -13,6 +13,7 @@ use winit_input_helper::WinitInputHelper;
 
 pub use self::canvas::*;
 pub use self::color::*;
+use crate::raytracer::Raytracer;
 
 pub const WIDTH: u16 = 320;
 pub const HEIGHT: u16 = 200;
@@ -118,8 +119,7 @@ async fn run(mut app: impl App + 'static) {
             .unwrap()
     };
 
-    let mut raytracer =
-        crate::raytracer::Raytracer::new(&pixels, WIDTH as _, HEIGHT as _);
+    let raytracer = Raytracer::new(&pixels);
 
     let mut time_of_last_render = Instant::now();
 
@@ -130,14 +130,13 @@ async fn run(mut app: impl App + 'static) {
 
                 app.draw(Canvas::new(pixels.get_frame_mut()));
 
-                pixels.render().unwrap();
                 pixels
-                    .render_with(|encoder, render_target, context| {
-                        let texture = raytracer.get_texture_view();
-                        context.scaling_renderer.render(encoder, texture);
+                    .render_with(|encoder, view, context| {
+                        context.scaling_renderer.render(encoder, view);
+
                         raytracer.render(
                             encoder,
-                            render_target,
+                            view,
                             context.scaling_renderer.clip_rect(),
                         );
 
@@ -155,7 +154,6 @@ async fn run(mut app: impl App + 'static) {
 
             if let Some(size) = input.window_resized() {
                 pixels.resize_surface(size.width, size.height);
-                raytracer.resize(&pixels, size.width, size.height);
             }
 
             app.update();
