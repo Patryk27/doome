@@ -1320,8 +1320,8 @@ checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "rustc_codegen_spirv"
-version = "0.4.0-alpha.16"
-source = "git+https://github.com/EmbarkStudios/rust-gpu#c248806bf0be9cc59e996e0cf61585513a0e3890"
+version = "0.4.0-alpha.15"
+source = "git+https://github.com/EmbarkStudios/rust-gpu?rev=dcf37b75a7f9e7a94f52c8a3a5d93af795e34cd0#dcf37b75a7f9e7a94f52c8a3a5d93af795e34cd0"
 dependencies = [
  "ar",
  "bimap",
@@ -1344,8 +1344,8 @@ dependencies = [
 
 [[package]]
 name = "rustc_codegen_spirv-types"
-version = "0.4.0-alpha.16"
-source = "git+https://github.com/EmbarkStudios/rust-gpu#c248806bf0be9cc59e996e0cf61585513a0e3890"
+version = "0.4.0-alpha.15"
+source = "git+https://github.com/EmbarkStudios/rust-gpu?rev=dcf37b75a7f9e7a94f52c8a3a5d93af795e34cd0#dcf37b75a7f9e7a94f52c8a3a5d93af795e34cd0"
 dependencies = [
  "rspirv",
  "serde",
@@ -1513,8 +1513,8 @@ dependencies = [
 
 [[package]]
 name = "spirv-builder"
-version = "0.4.0-alpha.16"
-source = "git+https://github.com/EmbarkStudios/rust-gpu#c248806bf0be9cc59e996e0cf61585513a0e3890"
+version = "0.4.0-alpha.15"
+source = "git+https://github.com/EmbarkStudios/rust-gpu?rev=dcf37b75a7f9e7a94f52c8a3a5d93af795e34cd0#dcf37b75a7f9e7a94f52c8a3a5d93af795e34cd0"
 dependencies = [
  "memchr",
  "raw-string",
