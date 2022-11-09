@@ -125,6 +125,13 @@ async fn run(mut app: impl App + 'static) {
     let time_of_start = Instant::now();
     let mut time_of_last_render = Instant::now();
 
+    let mut uniforms = Uniforms {
+        time: time_of_start.elapsed().as_secs_f32(),
+        screen_width: window.inner_size().width as f32,
+        screen_height: window.inner_size().height as f32,
+        _padding: 0.0,
+    };
+
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
             if time_of_last_render.elapsed().as_secs_f32() > SPF {
@@ -135,15 +142,14 @@ async fn run(mut app: impl App + 'static) {
                 pixels
                     .render_with(|encoder, view, context| {
                         context.scaling_renderer.render(encoder, view);
-                        let uniforms = Uniforms {
-                            time: time_of_start.elapsed().as_secs_f32(),
-                        };
+                        uniforms.time = time_of_start.elapsed().as_secs_f32();
 
                         raytracer.render(
                             &context.queue,
                             encoder,
                             view,
-                            uniforms,
+                            // TODO: I would like not to clone here
+                            uniforms.clone(),
                         );
 
                         Ok(())

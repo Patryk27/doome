@@ -1,3 +1,4 @@
+use bytemuck::Zeroable;
 use doome_raytracer_shader_common::Uniforms;
 use pixels::wgpu;
 use wgpu::util::DeviceExt;
@@ -5,9 +6,14 @@ use wgpu::util::DeviceExt;
 pub struct Raytracer {
     pipeline: wgpu::RenderPipeline,
 
-    /// Uniforms bind group
+    /// Uniforms
     uniform_bind_group: wgpu::BindGroup,
     uniform_buffer: wgpu::Buffer,
+
+    /// Geometry
+    #[allow(unused)] // TODO: Use it
+    geometry_buffer: wgpu::Buffer,
+    geometry_bind_group: wgpu::BindGroup,
 }
 
 impl Raytracer {
@@ -16,7 +22,12 @@ impl Raytracer {
         let shader = wgpu::include_spirv!(env!("doome_raytracer_shader.spv"));
         let module = device.create_shader_module(shader);
 
-        let uniforms = Uniforms { time: 0.0 };
+        let uniforms = Uniforms {
+            time: 0.0,
+            screen_width: 0.0,
+            screen_height: 0.0,
+            ..Uniforms::zeroed()
+        };
 
         let uniform_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -51,10 +62,50 @@ impl Raytracer {
                 label: Some("uniform_bind_group"),
             });
 
+        let geometry_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Geometry Buffer"),
+                usage: wgpu::BufferUsages::STORAGE
+                    | wgpu::BufferUsages::COPY_DST,
+                contents: bytemuck::cast_slice::<f32, u8>(&[
+                    0.0, 0.2, 0.4, 0.6, 0.8, 1.0,
+                ]),
+            });
+
+        let geometry_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage {
+                            read_only: false,
+                        },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+                label: Some("geometry_bind_group_layout"),
+            });
+
+        let geometry_bind_group =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &geometry_bind_group_layout,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: geometry_buffer.as_entire_binding(),
+                }],
+                label: Some("geometry_bind_group"),
+            });
+
         let pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Raytracer pipeline layout"),
-                bind_group_layouts: &[&uniform_bind_group_layout],
+                bind_group_layouts: &[
+                    &uniform_bind_group_layout,
+                    &geometry_bind_group_layout,
+                ],
                 push_constant_ranges: &[],
             });
 
@@ -86,6 +137,8 @@ impl Raytracer {
             pipeline,
             uniform_bind_group,
             uniform_buffer,
+            geometry_buffer,
+            geometry_bind_group,
         }
     }
 
@@ -116,7 +169,10 @@ impl Raytracer {
         );
 
         pass.set_pipeline(&self.pipeline);
+
         pass.set_bind_group(0, &self.uniform_bind_group, &[]);
+        pass.set_bind_group(1, &self.geometry_bind_group, &[]);
+
         pass.draw(0..3, 0..1);
     }
 }

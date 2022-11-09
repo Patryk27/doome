@@ -14,4 +14,7 @@ pub struct Context {
 pub struct Uniforms {
     /// Time in seconds since start of the program
     pub time: f32,
+    pub screen_width: f32,
+    pub screen_height: f32,
+    pub _padding: f32,
 }
