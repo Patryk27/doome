@@ -2,6 +2,7 @@
 
 use doome_raytracer_shader_common::Uniforms;
 use spirv_std::glam::{vec2, vec3, vec4, Vec2, Vec3, Vec4};
+#[cfg(target_arch = "spirv")]
 use spirv_std::num_traits::real::Real;
 use spirv_std::spirv;
 
@@ -53,11 +54,11 @@ pub fn fs_main(
     let coord = vec2(coord.x, coord.y)
         / vec2(uniforms.screen_width, uniforms.screen_height);
 
-    let selected_geometry = uniforms.time.round() as usize % geometry.len();
-    let selected_geometry = &geometry[selected_geometry];
-
-    let rgb_color =
-        hsv_to_rgb(vec3(coord.x * coord.y, *selected_geometry, 1.0));
+    let rgb_color = hsv_to_rgb(vec3(
+        coord.x * coord.y,
+        (2.0 * uniforms.time).sin().abs(),
+        1.0,
+    ));
 
     *output = vec4(rgb_color.x, rgb_color.y, rgb_color.z, 1.0);
 }

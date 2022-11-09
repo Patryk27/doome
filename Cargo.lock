@@ -3,6 +3,12 @@
 version = 3
 
 [[package]]
+name = "ab_glyph_rasterizer"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "330223a1aecc308757b9926e9391c9b47f8ef2dbd8aea9df88312aea18c5e8d6"
+
+[[package]]
 name = "adler"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -452,6 +458,8 @@ name = "doome"
 version = "0.1.0"
 dependencies = [
  "doome-engine",
+ "doome-surface",
+ "doome-text",
 ]
 
 [[package]]
@@ -462,6 +470,8 @@ dependencies = [
  "console_log",
  "doome-raytracer",
  "doome-raytracer-shader-common",
+ "doome-surface",
+ "doome-text",
  "env_logger",
  "instant",
  "log",
@@ -473,13 +483,6 @@ dependencies = [
  "wgpu",
  "winit",
  "winit_input_helper",
-]
-
-[[package]]
-name = "doome-fonts"
-version = "0.1.0"
-dependencies = [
- "doome-engine",
 ]
 
 [[package]]
@@ -522,6 +525,18 @@ name = "doome-run-wasm"
 version = "0.1.0"
 dependencies = [
  "cargo-run-wasm",
+]
+
+[[package]]
+name = "doome-surface"
+version = "0.1.0"
+
+[[package]]
+name = "doome-text"
+version = "0.1.0"
+dependencies = [
+ "doome-surface",
+ "rusttype",
 ]
 
 [[package]]
@@ -1165,6 +1180,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
 
 [[package]]
+name = "owned_ttf_parser"
+version = "0.15.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05e6affeb1632d6ff6a23d2cd40ffed138e82f1532571a26f527c8a284bb2fbb"
+dependencies = [
+ "ttf-parser",
+]
+
+[[package]]
 name = "parking_lot"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1407,6 +1431,16 @@ source = "git+https://github.com/EmbarkStudios/rust-gpu?rev=dcf37b75a7f9e7a94f52
 dependencies = [
  "rspirv",
  "serde",
+]
+
+[[package]]
+name = "rusttype"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ff8374aa04134254b7995b63ad3dc41c7f7236f69528b28553da7d72efaa967"
+dependencies = [
+ "ab_glyph_rasterizer",
+ "owned_ttf_parser",
 ]
 
 [[package]]
@@ -1723,6 +1757,12 @@ checksum = "8d82e1a7758622a465f8cee077614c73484dac5b836c02ff6a40d5d1010324d7"
 dependencies = [
  "serde",
 ]
+
+[[package]]
+name = "ttf-parser"
+version = "0.15.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b3e06c9b9d80ed6b745c7159c40b311ad2916abb34a49e9be2653b90db0d8dd"
 
 [[package]]
 name = "ultraviolet"

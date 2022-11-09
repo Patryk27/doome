@@ -1,10 +1,11 @@
 mod canvas;
-mod color;
 
 use std::rc::Rc;
 
 use doome_raytracer::Raytracer;
 use doome_raytracer_shader_common::Uniforms;
+use doome_surface::Color;
+use doome_text::TextEngine;
 use instant::Instant;
 use pixels::{Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
@@ -14,7 +15,6 @@ use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
 pub use self::canvas::*;
-pub use self::color::*;
 
 pub const WIDTH: u16 = 320;
 pub const HEIGHT: u16 = 200;
@@ -120,8 +120,8 @@ async fn run(mut app: impl App + 'static) {
             .unwrap()
     };
 
+    let text_engine = TextEngine::default();
     let raytracer = Raytracer::new(&pixels);
-
     let time_of_start = Instant::now();
     let mut time_of_last_render = Instant::now();
 
@@ -136,20 +136,21 @@ async fn run(mut app: impl App + 'static) {
         if let Event::RedrawRequested(_) = event {
             if time_of_last_render.elapsed().as_secs_f32() > SPF {
                 time_of_last_render = Instant::now();
+                uniforms.time = time_of_start.elapsed().as_secs_f32();
 
-                app.draw(Canvas::new(pixels.get_frame_mut()));
+                app.draw(Canvas::new(&text_engine, pixels.get_frame_mut()));
 
                 pixels
                     .render_with(|encoder, view, context| {
                         context.scaling_renderer.render(encoder, view);
-                        uniforms.time = time_of_start.elapsed().as_secs_f32();
 
                         raytracer.render(
                             &context.queue,
                             encoder,
                             view,
-                            // TODO: I would like not to clone here
-                            uniforms.clone(),
+                            &uniforms,
+                            uniforms.screen_width as _,
+                            (uniforms.screen_height * 0.8) as _,
                         );
 
                         Ok(())
@@ -165,6 +166,9 @@ async fn run(mut app: impl App + 'static) {
             }
 
             if let Some(size) = input.window_resized() {
+                uniforms.screen_width = size.width as _;
+                uniforms.screen_height = size.height as _;
+
                 pixels.resize_surface(size.width, size.height);
             }
 

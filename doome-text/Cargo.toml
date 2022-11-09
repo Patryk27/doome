@@ -1,0 +1,8 @@
+[package]
+name = "doome-text"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+doome-surface = { path = "../doome-surface" }
+rusttype = "0.9"

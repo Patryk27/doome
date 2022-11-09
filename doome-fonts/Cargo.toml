@@ -1,7 +1,0 @@
-[package]
-name = "doome-fonts"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-doome-engine = { path = "../doome-engine" }

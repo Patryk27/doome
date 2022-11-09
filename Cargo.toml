@@ -6,13 +6,16 @@ edition = "2021"
 [workspace]
 members = [
     "doome-engine",
-    "doome-fonts",
     "doome-raytracer",
     "doome-raytracer-shader",
     "doome-raytracer-shader-builder",
     "doome-raytracer-shader-common",
-    "doome-run-wasm"
+    "doome-run-wasm",
+    "doome-surface",
+    "doome-text"
 ]
 
 [dependencies]
 doome-engine = { path = "doome-engine" }
+doome-surface = { path = "doome-surface" }
+doome-text = { path = "doome-text" }

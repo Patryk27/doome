@@ -1,3 +1,5 @@
+use std::slice;
+
 use bytemuck::Zeroable;
 use doome_raytracer_shader_common::Uniforms;
 use pixels::wgpu;
@@ -79,7 +81,7 @@ impl Raytracer {
                     visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Storage {
-                            read_only: false,
+                            read_only: true,
                         },
                         has_dynamic_offset: false,
                         min_binding_size: None,
@@ -147,27 +149,30 @@ impl Raytracer {
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
         view: &wgpu::TextureView,
-        uniforms: Uniforms,
+        uniforms: &Uniforms,
+        width: u32,
+        height: u32,
     ) {
+        queue.write_buffer(
+            &self.uniform_buffer,
+            0,
+            bytemuck::cast_slice(slice::from_ref(uniforms)),
+        );
+
         let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Raytracer render pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 view,
                 resolve_target: None,
                 ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                    load: wgpu::LoadOp::Load,
                     store: true,
                 },
             })],
             depth_stencil_attachment: None,
         });
 
-        queue.write_buffer(
-            &self.uniform_buffer,
-            0,
-            bytemuck::cast_slice(&[uniforms]),
-        );
-
+        pass.set_scissor_rect(0, 0, width, height);
         pass.set_pipeline(&self.pipeline);
 
         pass.set_bind_group(0, &self.uniform_bind_group, &[]);
