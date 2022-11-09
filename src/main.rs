@@ -1,14 +1,12 @@
-use self::engine::{Canvas, Color, HEIGHT, WIDTH};
-
-mod engine;
+use doome_engine::{Canvas, Color, HEIGHT, WIDTH};
 
 struct App;
 
 fn main() {
-    engine::main(App);
+    doome_engine::main(App);
 }
 
-impl engine::App for App {
+impl doome_engine::App for App {
     fn update(&mut self) {
         //
     }

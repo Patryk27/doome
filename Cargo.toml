@@ -5,6 +5,8 @@ edition = "2021"
 
 [workspace]
 members = [
+    "doome-engine",
+    "doome-fonts",
     "doome-raytracer",
     "doome-raytracer-shader",
     "doome-raytracer-shader-builder",
@@ -13,23 +15,4 @@ members = [
 ]
 
 [dependencies]
-doome-raytracer = { path = "doome-raytracer" }
-doome-raytracer-shader-common = { path = "doome-raytracer-shader-common" }
-instant = "0.1"
-log = "0.4"
-pixels = "0.10.0"
-wgpu = "0.13"
-winit = "0.27"
-winit_input_helper = "0.13"
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-console_error_panic_hook = "0.1"
-console_log = "0.2"
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4"
-web-sys = "0.3"
-wgpu = { version = "0.13", features = ["webgl"] }
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-env_logger = "0.9"
-pollster = "0.2"
+doome-engine = { path = "doome-engine" }

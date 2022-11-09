@@ -451,6 +451,13 @@ dependencies = [
 name = "doome"
 version = "0.1.0"
 dependencies = [
+ "doome-engine",
+]
+
+[[package]]
+name = "doome-engine"
+version = "0.1.0"
+dependencies = [
  "console_error_panic_hook",
  "console_log",
  "doome-raytracer",
@@ -466,6 +473,13 @@ dependencies = [
  "wgpu",
  "winit",
  "winit_input_helper",
+]
+
+[[package]]
+name = "doome-fonts"
+version = "0.1.0"
+dependencies = [
+ "doome-engine",
 ]
 
 [[package]]

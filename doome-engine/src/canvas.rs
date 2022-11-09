@@ -1,4 +1,4 @@
-use crate::engine::*;
+use crate::*;
 
 pub struct Canvas<'frame> {
     frame: &'frame mut [u8],
