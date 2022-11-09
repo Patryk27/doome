@@ -4,6 +4,7 @@ mod color;
 use std::rc::Rc;
 
 use doome_raytracer::Raytracer;
+use doome_raytracer_shader_common::Uniforms;
 use instant::Instant;
 use pixels::{Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
@@ -121,6 +122,7 @@ async fn run(mut app: impl App + 'static) {
 
     let raytracer = Raytracer::new(&pixels);
 
+    let time_of_start = Instant::now();
     let mut time_of_last_render = Instant::now();
 
     event_loop.run(move |event, _, control_flow| {
@@ -133,7 +135,16 @@ async fn run(mut app: impl App + 'static) {
                 pixels
                     .render_with(|encoder, view, context| {
                         context.scaling_renderer.render(encoder, view);
-                        raytracer.render(encoder, view);
+                        let uniforms = Uniforms {
+                            time: time_of_start.elapsed().as_secs_f32(),
+                        };
+
+                        raytracer.render(
+                            &context.queue,
+                            encoder,
+                            view,
+                            uniforms,
+                        );
 
                         Ok(())
                     })

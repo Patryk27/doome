@@ -8,3 +8,10 @@ pub struct Context {
     pub viewport_width: f32,
     pub viewport_height: f32,
 }
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Pod, Zeroable)]
+pub struct Uniforms {
+    /// Time in seconds since start of the program
+    pub time: f32,
+}

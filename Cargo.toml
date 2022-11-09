@@ -14,6 +14,7 @@ members = [
 
 [dependencies]
 doome-raytracer = { path = "doome-raytracer" }
+doome-raytracer-shader-common = { path = "doome-raytracer-shader-common" }
 instant = "0.1"
 log = "0.4"
 pixels = "0.10.0"

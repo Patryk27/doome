@@ -454,6 +454,7 @@ dependencies = [
  "console_error_panic_hook",
  "console_log",
  "doome-raytracer",
+ "doome-raytracer-shader-common",
  "env_logger",
  "instant",
  "log",
