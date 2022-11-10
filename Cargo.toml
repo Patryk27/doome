@@ -19,3 +19,7 @@ members = [
 doome-engine = { path = "doome-engine" }
 doome-surface = { path = "doome-surface" }
 doome-text = { path = "doome-text" }
+
+[patch."crates-io"]
+wgpu-core = { git = "ssh://git@github.com/Patryk27/doome-wgpu.git" }
+wgpu-hal = { git = "ssh://git@github.com/Patryk27/doome-wgpu.git" }

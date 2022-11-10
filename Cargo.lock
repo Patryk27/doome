@@ -2112,8 +2112,7 @@ dependencies = [
 [[package]]
 name = "wgpu-core"
 version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89b92788dec9d0c1bed849a1b83f01b2ee12819bf04a79c90f68e4173f7b5ba2"
+source = "git+ssh://git@github.com/Patryk27/doome-wgpu.git#681929f2977dfd36967370df2cf566c1ca91a047"
 dependencies = [
  "arrayvec 0.7.2",
  "bit-vec",
@@ -2137,8 +2136,7 @@ dependencies = [
 [[package]]
 name = "wgpu-hal"
 version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20cbdfc3d0637dba3d5536b93adef3d26023a0b96f0e1ee5ee9560a401d9f646"
+source = "git+ssh://git@github.com/Patryk27/doome-wgpu.git#681929f2977dfd36967370df2cf566c1ca91a047"
 dependencies = [
  "android_system_properties",
  "arrayvec 0.7.2",
