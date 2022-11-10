@@ -1,21 +1,14 @@
 use std::slice;
 
-use bytemuck::Zeroable;
-use doome_raytracer_shader_common::Uniforms;
+use doome_raytracer_shader_common as sc;
 use pixels::wgpu;
-use wgpu::util::DeviceExt;
 
 pub struct Raytracer {
     pipeline: wgpu::RenderPipeline,
-
-    /// Uniforms
-    uniform_bind_group: wgpu::BindGroup,
-    uniform_buffer: wgpu::Buffer,
-
-    /// Geometry
-    #[allow(unused)] // TODO: Use it
-    geometry_buffer: wgpu::Buffer,
-    geometry_bind_group: wgpu::BindGroup,
+    context_buffer: wgpu::Buffer,
+    context_bind_group: wgpu::BindGroup,
+    objects_buffer: wgpu::Buffer,
+    objects_bind_group: wgpu::BindGroup,
 }
 
 impl Raytracer {
@@ -24,23 +17,17 @@ impl Raytracer {
         let shader = wgpu::include_spirv!(env!("doome_raytracer_shader.spv"));
         let module = device.create_shader_module(shader);
 
-        let uniforms = Uniforms {
-            time: 0.0,
-            screen_width: 0.0,
-            screen_height: 0.0,
-            ..Uniforms::zeroed()
-        };
+        let context_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("context_buffer"),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            // TODO extract into a constant
+            size: 1024,
+            mapped_at_creation: false,
+        });
 
-        let uniform_buffer =
-            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Uniform Buffer"),
-                contents: bytemuck::cast_slice(&[uniforms]),
-                usage: wgpu::BufferUsages::UNIFORM
-                    | wgpu::BufferUsages::COPY_DST,
-            });
-
-        let uniform_bind_group_layout =
+        let context_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("context_bind_group_layout"),
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
                     visibility: wgpu::ShaderStages::FRAGMENT,
@@ -51,69 +38,66 @@ impl Raytracer {
                     },
                     count: None,
                 }],
-                label: Some("uniform_bind_group_layout"),
             });
 
-        let uniform_bind_group =
+        let context_bind_group =
             device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &uniform_bind_group_layout,
+                label: Some("context_bind_group"),
+                layout: &context_bind_group_layout,
                 entries: &[wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: uniform_buffer.as_entire_binding(),
+                    resource: context_buffer.as_entire_binding(),
                 }],
-                label: Some("uniform_bind_group"),
             });
 
-        let geometry_buffer =
-            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Geometry Buffer"),
-                usage: wgpu::BufferUsages::STORAGE
-                    | wgpu::BufferUsages::COPY_DST,
-                contents: bytemuck::cast_slice::<f32, u8>(&[
-                    0.0, 0.2, 0.4, 0.6, 0.8, 1.0,
-                ]),
-            });
+        let objects_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("objects_buffer"),
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            // TODO extract into a constant
+            size: 1 * 1024 * 1024,
+            mapped_at_creation: false,
+        });
 
-        let geometry_bind_group_layout =
+        let objects_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("objects_bind_group_layout"),
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 1,
                     visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Storage {
-                            read_only: true,
+                            read_only: false,
                         },
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
                     count: None,
                 }],
-                label: Some("geometry_bind_group_layout"),
             });
 
-        let geometry_bind_group =
+        let objects_bind_group =
             device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &geometry_bind_group_layout,
+                label: Some("objects_bind_group"),
+                layout: &objects_bind_group_layout,
                 entries: &[wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: geometry_buffer.as_entire_binding(),
+                    resource: objects_buffer.as_entire_binding(),
                 }],
-                label: Some("geometry_bind_group"),
             });
 
         let pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Raytracer pipeline layout"),
                 bind_group_layouts: &[
-                    &uniform_bind_group_layout,
-                    &geometry_bind_group_layout,
+                    &context_bind_group_layout,
+                    &objects_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
 
         let pipeline =
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                label: Some("Raytracer pipeline"),
+                label: Some("raytracer_pipeline"),
                 layout: Some(&pipeline_layout),
                 vertex: wgpu::VertexState {
                     module: &module,
@@ -137,10 +121,10 @@ impl Raytracer {
 
         Self {
             pipeline,
-            uniform_bind_group,
-            uniform_buffer,
-            geometry_buffer,
-            geometry_bind_group,
+            context_buffer,
+            context_bind_group,
+            objects_buffer,
+            objects_bind_group,
         }
     }
 
@@ -149,18 +133,23 @@ impl Raytracer {
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
         view: &wgpu::TextureView,
-        uniforms: &Uniforms,
-        width: u32,
-        height: u32,
+        context: &sc::Context,
+        objects: &[sc::Object],
     ) {
         queue.write_buffer(
-            &self.uniform_buffer,
+            &self.context_buffer,
             0,
-            bytemuck::cast_slice(slice::from_ref(uniforms)),
+            bytemuck::cast_slice(slice::from_ref(context)),
+        );
+
+        queue.write_buffer(
+            &self.objects_buffer,
+            0,
+            bytemuck::cast_slice(objects),
         );
 
         let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("Raytracer render pass"),
+            label: Some("raytracer_render_pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 view,
                 resolve_target: None,
@@ -172,11 +161,16 @@ impl Raytracer {
             depth_stencil_attachment: None,
         });
 
-        pass.set_scissor_rect(0, 0, width, height);
-        pass.set_pipeline(&self.pipeline);
+        pass.set_scissor_rect(
+            0,
+            0,
+            context.screen_width as _,
+            (context.screen_height * 0.8) as _,
+        );
 
-        pass.set_bind_group(0, &self.uniform_bind_group, &[]);
-        pass.set_bind_group(1, &self.geometry_bind_group, &[]);
+        pass.set_pipeline(&self.pipeline);
+        pass.set_bind_group(0, &self.context_bind_group, &[]);
+        pass.set_bind_group(1, &self.objects_bind_group, &[]);
 
         pass.draw(0..3, 0..1);
     }

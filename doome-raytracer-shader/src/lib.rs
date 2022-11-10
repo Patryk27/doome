@@ -1,7 +1,7 @@
 #![no_std]
 
-use doome_raytracer_shader_common::Uniforms;
-use spirv_std::glam::{vec2, vec3, vec4, Vec2, Vec3, Vec4};
+use doome_raytracer_shader_common::{Context, Object};
+use spirv_std::glam::{vec2, vec3, Vec2, Vec3, Vec4, Vec4Swizzles};
 #[cfg(target_arch = "spirv")]
 use spirv_std::num_traits::real::Real;
 use spirv_std::spirv;
@@ -17,48 +17,31 @@ pub fn vs_main(
     *pos = uv.extend(0.0).extend(1.0);
 }
 
-fn hsv_to_rgb(rgb: Vec3) -> Vec3 {
-    let h = rgb.x;
-    let s = rgb.y;
-    let v = rgb.z;
-
-    let c = v * s;
-    let x = c * (1.0 - ((h * 6.0) % 2.0 - 1.0).abs());
-    let m = v - c;
-
-    let ret = if h < 1.0 / 6.0 {
-        vec3(c, x, 0.0)
-    } else if h < 2.0 / 6.0 {
-        vec3(x, c, 0.0)
-    } else if h < 3.0 / 6.0 {
-        vec3(0.0, c, x)
-    } else if h < 4.0 / 6.0 {
-        vec3(0.0, x, c)
-    } else if h < 5.0 / 6.0 {
-        vec3(x, 0.0, c)
-    } else {
-        vec3(c, 0.0, x)
-    };
-
-    ret + m
-}
-
 #[spirv(fragment)]
 pub fn fs_main(
     #[spirv(frag_coord)] coord: Vec4,
-    #[spirv(uniform, descriptor_set = 0, binding = 0)] uniforms: &Uniforms,
+    #[spirv(uniform, descriptor_set = 0, binding = 0)] context: &Context,
     #[spirv(storage_buffer, descriptor_set = 1, binding = 1)]
-    geometry: &[f32],
+    objects: &[Object],
     output: &mut Vec4,
 ) {
-    let coord = vec2(coord.x, coord.y)
-        / vec2(uniforms.screen_width, uniforms.screen_height);
+    let coord = coord.xy() / context.screen_size();
+    let mut color = Vec3::default();
+    let mut prev_hit_z = None;
+    let mut object_idx = 0;
 
-    let rgb_color = hsv_to_rgb(vec3(
-        coord.x * coord.y,
-        (2.0 * uniforms.time).sin().abs(),
-        1.0,
-    ));
+    while object_idx < context.object_count {
+        let object = objects[object_idx];
 
-    *output = vec4(rgb_color.x, rgb_color.y, rgb_color.z, 1.0);
+        if let Some(hit_z) = object.hit(coord) {
+            if hit_z < prev_hit_z.unwrap_or(1000.0) {
+                color = vec3(object.color_r, object.color_g, object.color_b);
+                prev_hit_z = Some(hit_z);
+            }
+        }
+
+        object_idx += 1;
+    }
+
+    *output = color.extend(1.0);
 }

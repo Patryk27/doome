@@ -3,10 +3,9 @@ mod canvas;
 use std::rc::Rc;
 
 use doome_raytracer::Raytracer;
-use doome_raytracer_shader_common::Uniforms;
+use doome_raytracer_shader_common as sc;
 use doome_surface::Color;
 use doome_text::TextEngine;
-use instant::Instant;
 use pixels::{Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
@@ -18,9 +17,6 @@ pub use self::canvas::*;
 
 pub const WIDTH: u16 = 320;
 pub const HEIGHT: u16 = 200;
-
-const FPS: f32 = 60.0;
-const SPF: f32 = 1.0 / FPS;
 
 pub trait App {
     fn update(&mut self);
@@ -122,41 +118,62 @@ async fn run(mut app: impl App + 'static) {
 
     let text_engine = TextEngine::default();
     let raytracer = Raytracer::new(&pixels);
-    let time_of_start = Instant::now();
-    let mut time_of_last_render = Instant::now();
 
-    let mut uniforms = Uniforms {
-        time: time_of_start.elapsed().as_secs_f32(),
+    let mut sc_context = sc::Context {
         screen_width: window.inner_size().width as f32,
         screen_height: window.inner_size().height as f32,
-        _padding: 0.0,
+        object_count: 3,
     };
+
+    let sc_objects = vec![
+        sc::Object {
+            center_x: 0.3,
+            center_y: 0.4,
+            center_z: 0.1,
+            radius: 0.4,
+            color_r: 1.0,
+            color_g: 0.0,
+            color_b: 0.0,
+        },
+        sc::Object {
+            center_x: 0.5,
+            center_y: 0.4,
+            center_z: 0.0,
+            radius: 0.4,
+            color_r: 0.0,
+            color_g: 1.0,
+            color_b: 0.0,
+        },
+        sc::Object {
+            center_x: 0.7,
+            center_y: 0.4,
+            center_z: 0.1,
+            radius: 0.4,
+            color_r: 0.0,
+            color_g: 0.0,
+            color_b: 1.0,
+        },
+    ];
 
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
-            if time_of_last_render.elapsed().as_secs_f32() > SPF {
-                time_of_last_render = Instant::now();
-                uniforms.time = time_of_start.elapsed().as_secs_f32();
+            app.draw(Canvas::new(&text_engine, pixels.get_frame_mut()));
 
-                app.draw(Canvas::new(&text_engine, pixels.get_frame_mut()));
+            pixels
+                .render_with(|encoder, view, context| {
+                    context.scaling_renderer.render(encoder, view);
 
-                pixels
-                    .render_with(|encoder, view, context| {
-                        context.scaling_renderer.render(encoder, view);
+                    raytracer.render(
+                        &context.queue,
+                        encoder,
+                        view,
+                        &sc_context,
+                        &sc_objects,
+                    );
 
-                        raytracer.render(
-                            &context.queue,
-                            encoder,
-                            view,
-                            &uniforms,
-                            uniforms.screen_width as _,
-                            (uniforms.screen_height * 0.8) as _,
-                        );
-
-                        Ok(())
-                    })
-                    .unwrap();
-            }
+                    Ok(())
+                })
+                .unwrap();
         }
 
         if input.update(&event) {
@@ -166,8 +183,8 @@ async fn run(mut app: impl App + 'static) {
             }
 
             if let Some(size) = input.window_resized() {
-                uniforms.screen_width = size.width as _;
-                uniforms.screen_height = size.height as _;
+                sc_context.screen_width = size.width as _;
+                sc_context.screen_height = size.height as _;
 
                 pixels.resize_surface(size.width, size.height);
             }
