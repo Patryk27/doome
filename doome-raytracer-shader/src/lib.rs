@@ -26,7 +26,7 @@ pub fn fs_main(
 ) {
     let ray = camera.ray(pos.xy());
 
-    let mut hit_color = Vec4::default();
+    let mut hit_color = vec4(0.0, 0.0, 0.0, 1.0);
     let mut hit_z = None;
     let objects = world.objects();
     let mut object_idx = 0;
