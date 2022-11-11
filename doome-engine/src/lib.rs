@@ -7,8 +7,11 @@ use doome_raytracer::Raytracer;
 use doome_raytracer_shader_common as sc;
 use doome_surface::Color;
 use doome_text::TextEngine;
-use glam::{vec2, vec3};
+use glam::{vec2, vec3, vec4};
 use pixels::{Pixels, SurfaceTexture};
+use sc::camera::Camera;
+use sc::object::Object;
+use sc::world::World;
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
@@ -38,6 +41,7 @@ pub fn main(app: impl App + 'static) {
 
     #[cfg(not(target_arch = "wasm32"))]
     {
+        dotenv::dotenv().ok();
         env_logger::init();
         pollster::block_on(run(app));
     }
@@ -133,55 +137,35 @@ async fn run(mut app: impl App + 'static) {
         [1.0, (RAYTRACER_HEIGHT as f32) / (HEIGHT as f32)],
     );
 
-    let mut objects = [sc::Object::default(); sc::MAX_OBJECTS as _];
+    let mut objects = [Object::default(); sc::MAX_OBJECTS as _];
 
-    objects[0] = sc::Object {
-        center: vec3(-4.0, 0.0, 0.0),
-        radius: 2.0,
-        color: vec3(1.0, 0.0, 0.0),
+    objects[0] = Object {
+        pos: vec4(-4.0, 0.0, 0.0, 2.0),
+        color: vec4(1.0, 0.0, 0.0, 1.0),
         ..Default::default()
     };
 
-    objects[1] = sc::Object {
-        center: vec3(4.0, 0.0, 0.0),
-        radius: 2.0,
-        color: vec3(0.0, 1.0, 0.0),
+    objects[1] = Object {
+        pos: vec4(4.0, 0.0, 0.0, 2.0),
+        color: vec4(0.0, 1.0, 0.0, 1.0),
         ..Default::default()
     };
 
-    objects[2] = sc::Object {
-        center: vec3(0.0, 0.0, 3.0),
-        radius: 2.0,
-        color: vec3(0.0, 0.0, 1.0),
+    objects[2] = Object {
+        pos: vec4(0.0, 0.0, 3.0, 2.0),
+        color: vec4(0.0, 0.0, 1.0, 1.0),
         ..Default::default()
     };
 
-    let sc_context = {
-        let (
-            camera_onb_u,
-            camera_onb_v,
-            camera_onb_w,
-            camera_origin,
-            camera_distance,
-        ) = sc::Camera::build(
-            vec3(0.0, 1.0, -8.0),
-            vec3(0.0, 0.0, 0.0),
-            vec3(0.0, -1.0, 0.0),
-            1.0,
-        );
+    let camera = Camera::new(
+        vec3(0.0, 1.0, -8.0),
+        vec3(0.0, 0.0, 0.0),
+        vec3(0.0, -1.0, 0.0),
+        1.0,
+        vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
+    );
 
-        sc::World {
-            camera_onb_u,
-            camera_onb_v,
-            camera_onb_w,
-            camera_origin,
-            camera_distance,
-            viewport_size: vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
-            objects,
-            objects_count: 3,
-            ..Default::default()
-        }
-    };
+    let world = World::new(objects, 3);
 
     let mut surface_size = window.inner_size();
 
@@ -195,7 +179,7 @@ async fn run(mut app: impl App + 'static) {
                     context.scaling_renderer.render(encoder, view);
 
                     // Draw raytracer
-                    raytracer.render(&sc_context, &context.queue, encoder);
+                    raytracer.render(&world, &camera, &context.queue, encoder);
                     raytracer_scaler.render(encoder, view, surface_size);
 
                     Ok(())

@@ -28,3 +28,4 @@ wgpu = { version = "0.13", features = ["webgl"] }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.9"
 pollster = "0.2"
+dotenv = "0.15"
