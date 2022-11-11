@@ -45,7 +45,7 @@ impl<'f> doome_surface::Surface<'f> for Surface<'f> {
             return;
         }
 
-        let idx = 4 * ((y * WIDTH + x) as usize);
+        let idx = 4 * ((y as usize) * (WIDTH as usize) + (x as usize));
 
         if color.a < 255 {
             color.r = blend(color.r, self.frame[idx], color.a);

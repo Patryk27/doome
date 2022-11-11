@@ -1,27 +1,25 @@
-use std::slice;
+use std::{mem, slice};
 
 use doome_raytracer_shader_common as sc;
-use pixels::wgpu;
 
 pub struct Raytracer {
+    width: u32,
+    height: u32,
     pipeline: wgpu::RenderPipeline,
+    output_texture: wgpu::Texture,
     context_buffer: wgpu::Buffer,
     context_bind_group: wgpu::BindGroup,
-    objects_buffer: wgpu::Buffer,
-    objects_bind_group: wgpu::BindGroup,
 }
 
 impl Raytracer {
-    pub fn new(pixels: &pixels::Pixels) -> Self {
-        let device = pixels.device();
+    pub fn new(device: &wgpu::Device, width: u32, height: u32) -> Self {
         let shader = wgpu::include_spirv!(env!("doome_raytracer_shader.spv"));
         let module = device.create_shader_module(shader);
 
         let context_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("context_buffer"),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            // TODO extract into a constant
-            size: 1024,
+            size: mem::size_of::<sc::Context>() as _,
             mapped_at_creation: false,
         });
 
@@ -50,48 +48,10 @@ impl Raytracer {
                 }],
             });
 
-        let objects_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("objects_buffer"),
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-            // TODO extract into a constant
-            size: 1 * 1024 * 1024,
-            mapped_at_creation: false,
-        });
-
-        let objects_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("objects_bind_group_layout"),
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage {
-                            read_only: false,
-                        },
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-            });
-
-        let objects_bind_group =
-            device.create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("objects_bind_group"),
-                layout: &objects_bind_group_layout,
-                entries: &[wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: objects_buffer.as_entire_binding(),
-                }],
-            });
-
         let pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Raytracer pipeline layout"),
-                bind_group_layouts: &[
-                    &context_bind_group_layout,
-                    &objects_bind_group_layout,
-                ],
+                bind_group_layouts: &[&context_bind_group_layout],
                 push_constant_ranges: &[],
             });
 
@@ -111,7 +71,7 @@ impl Raytracer {
                     module: &module,
                     entry_point: "fs_main",
                     targets: &[Some(wgpu::ColorTargetState {
-                        format: pixels.render_texture_format(),
+                        format: wgpu::TextureFormat::Rgba8UnormSrgb,
                         blend: Some(wgpu::BlendState::REPLACE),
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
@@ -119,22 +79,37 @@ impl Raytracer {
                 multiview: None,
             });
 
+        let output_texture = device.create_texture(&wgpu::TextureDescriptor {
+            size: wgpu::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
+            label: Some("raytracer_output"),
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            usage: wgpu::TextureUsages::COPY_SRC
+                | wgpu::TextureUsages::RENDER_ATTACHMENT
+                | wgpu::TextureUsages::TEXTURE_BINDING,
+        });
+
         Self {
+            width,
+            height,
             pipeline,
             context_buffer,
             context_bind_group,
-            objects_buffer,
-            objects_bind_group,
+            output_texture,
         }
     }
 
     pub fn render(
         &self,
+        context: &sc::Context,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
-        view: &wgpu::TextureView,
-        context: &sc::Context,
-        objects: &[sc::Object],
     ) {
         queue.write_buffer(
             &self.context_buffer,
@@ -142,36 +117,37 @@ impl Raytracer {
             bytemuck::cast_slice(slice::from_ref(context)),
         );
 
-        queue.write_buffer(
-            &self.objects_buffer,
-            0,
-            bytemuck::cast_slice(objects),
-        );
+        let view = self.output_texture.create_view(&Default::default());
 
-        let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("raytracer_render_pass"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Load,
-                    store: true,
-                },
-            })],
-            depth_stencil_attachment: None,
-        });
+        let mut rpass =
+            encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("raytracer_render_pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        store: true,
+                    },
+                })],
+                depth_stencil_attachment: None,
+            });
 
-        pass.set_scissor_rect(
-            0,
-            0,
-            context.screen_width as _,
-            (context.screen_height * 0.8) as _,
-        );
+        rpass.set_scissor_rect(0, 0, self.width as _, self.height as _);
+        rpass.set_pipeline(&self.pipeline);
+        rpass.set_bind_group(0, &self.context_bind_group, &[]);
+        rpass.draw(0..3, 0..1);
+    }
 
-        pass.set_pipeline(&self.pipeline);
-        pass.set_bind_group(0, &self.context_bind_group, &[]);
-        pass.set_bind_group(1, &self.objects_bind_group, &[]);
+    pub fn output_texture(&self) -> wgpu::TextureView {
+        self.output_texture.create_view(&Default::default())
+    }
 
-        pass.draw(0..3, 0..1);
+    pub fn output_size(&self) -> wgpu::Extent3d {
+        wgpu::Extent3d {
+            width: self.width,
+            height: self.height,
+            depth_or_array_layers: 1,
+        }
     }
 }

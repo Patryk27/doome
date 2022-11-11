@@ -466,6 +466,7 @@ dependencies = [
 name = "doome-engine"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "console_error_panic_hook",
  "console_log",
  "doome-raytracer",
@@ -491,7 +492,6 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "doome-raytracer-shader-common",
- "pixels",
  "spirv-builder",
  "spirv-std",
  "wgpu",

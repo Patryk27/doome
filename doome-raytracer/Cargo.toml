@@ -9,6 +9,5 @@ spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "dcf3
 [dependencies]
 bytemuck = "1"
 doome-raytracer-shader-common = { path = "../doome-raytracer-shader-common" }
-pixels = "0.10.0"
 spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = ["glam"] }
 wgpu = { version = "0.13", features = ["spirv"] }

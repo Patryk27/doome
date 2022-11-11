@@ -1,4 +1,5 @@
 mod canvas;
+mod scaling_texture_renderer;
 
 use std::rc::Rc;
 
@@ -14,9 +15,12 @@ use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
 pub use self::canvas::*;
+use self::scaling_texture_renderer::*;
 
 pub const WIDTH: u16 = 320;
-pub const HEIGHT: u16 = 200;
+pub const RAYTRACER_HEIGHT: u16 = 200;
+pub const HUD_HEIGHT: u16 = 50;
+pub const HEIGHT: u16 = RAYTRACER_HEIGHT + HUD_HEIGHT;
 
 pub trait App {
     fn update(&mut self);
@@ -117,43 +121,67 @@ async fn run(mut app: impl App + 'static) {
     };
 
     let text_engine = TextEngine::default();
-    let raytracer = Raytracer::new(&pixels);
 
-    let mut sc_context = sc::Context {
-        screen_width: window.inner_size().width as f32,
-        screen_height: window.inner_size().height as f32,
-        object_count: 3,
+    let raytracer =
+        Raytracer::new(pixels.device(), WIDTH as _, RAYTRACER_HEIGHT as _);
+
+    let raytracer_scaler = ScalingTextureRenderer::new(
+        pixels.device(),
+        &raytracer.output_texture(),
+        pixels.render_texture_format(),
+        [1.0, (RAYTRACER_HEIGHT as f32) / (HEIGHT as f32)],
+    );
+
+    let mut objects = [sc::Object::default(); sc::MAX_OBJECTS as _];
+
+    objects[0] = sc::Object {
+        center_x: 0.3,
+        center_y: 0.4,
+        center_z: 0.1,
+        radius: 0.4,
+        color_r: 1.0,
+        color_g: 0.0,
+        color_b: 0.0,
+        _pad1: 0.0,
     };
 
-    let sc_objects = vec![
-        sc::Object {
-            center_x: 0.3,
-            center_y: 0.4,
-            center_z: 0.1,
-            radius: 0.4,
-            color_r: 1.0,
-            color_g: 0.0,
-            color_b: 0.0,
+    objects[1] = sc::Object {
+        center_x: 0.5,
+        center_y: 0.4,
+        center_z: 0.0,
+        radius: 0.4,
+        color_r: 0.0,
+        color_g: 1.0,
+        color_b: 0.0,
+        _pad1: 0.0,
+    };
+
+    objects[2] = sc::Object {
+        center_x: 0.7,
+        center_y: 0.4,
+        center_z: 0.1,
+        radius: 0.4,
+        color_r: 0.0,
+        color_g: 0.0,
+        color_b: 1.0,
+        _pad1: 0.0,
+    };
+
+    let sc_context = sc::Context {
+        viewport: sc::Viewport {
+            width: WIDTH as _,
+            _pad1: 0.0,
+            height: RAYTRACER_HEIGHT as _,
+            _pad2: 0.0,
         },
-        sc::Object {
-            center_x: 0.5,
-            center_y: 0.4,
-            center_z: 0.0,
-            radius: 0.4,
-            color_r: 0.0,
-            color_g: 1.0,
-            color_b: 0.0,
-        },
-        sc::Object {
-            center_x: 0.7,
-            center_y: 0.4,
-            center_z: 0.1,
-            radius: 0.4,
-            color_r: 0.0,
-            color_g: 0.0,
-            color_b: 1.0,
-        },
-    ];
+        objects,
+        objects_count: 3,
+        _pad1: 0.0,
+        _pad2: 0.0,
+        _pad3: 0.0,
+    };
+
+    let mut surface_size = window.inner_size();
 
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
@@ -161,15 +189,12 @@ async fn run(mut app: impl App + 'static) {
 
             pixels
                 .render_with(|encoder, view, context| {
+                    // Draw UI
                     context.scaling_renderer.render(encoder, view);
 
-                    raytracer.render(
-                        &context.queue,
-                        encoder,
-                        view,
-                        &sc_context,
-                        &sc_objects,
-                    );
+                    // Draw raytracer
+                    raytracer.render(&sc_context, &context.queue, encoder);
+                    raytracer_scaler.render(encoder, view, surface_size);
 
                     Ok(())
                 })
@@ -182,11 +207,10 @@ async fn run(mut app: impl App + 'static) {
                 return;
             }
 
-            if let Some(size) = input.window_resized() {
-                sc_context.screen_width = size.width as _;
-                sc_context.screen_height = size.height as _;
+            if let Some(new_surface_size) = input.window_resized() {
+                surface_size = new_surface_size;
 
-                pixels.resize_surface(size.width, size.height);
+                pixels.resize_surface(surface_size.width, surface_size.height);
             }
 
             app.update();

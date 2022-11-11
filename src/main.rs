@@ -1,4 +1,4 @@
-use doome_engine::{Canvas, HEIGHT, WIDTH};
+use doome_engine::{Canvas, HEIGHT, HUD_HEIGHT, WIDTH};
 use doome_surface::Color;
 
 struct App {
@@ -30,7 +30,7 @@ impl doome_engine::App for App {
 
         canvas.text(
             10,
-            HEIGHT - 27,
+            HEIGHT - HUD_HEIGHT / 2 - 7,
             format!("Hello, World -- it's frame #{}!", self.frame),
         );
     }
