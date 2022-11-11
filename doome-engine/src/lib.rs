@@ -178,6 +178,8 @@ async fn run(mut app: impl App + 'static) {
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
             if time_of_last_update.elapsed().as_secs_f32() >= SPF {
+                app.update();
+
                 time_of_last_update = Instant::now();
 
                 // TODO: Add delta
@@ -240,7 +242,6 @@ async fn run(mut app: impl App + 'static) {
                 pixels.resize_surface(surface_size.width, surface_size.height);
             }
 
-            app.update();
             window.request_redraw();
         }
     });
