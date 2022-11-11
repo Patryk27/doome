@@ -95,15 +95,15 @@ impl Raytracer {
         encoder: &mut wgpu::CommandEncoder,
     ) {
         queue.write_buffer(
-            &self.camera.buffer,
-            0,
-            bytemuck::cast_slice(slice::from_ref(camera)),
-        );
-
-        queue.write_buffer(
             &self.world.buffer,
             0,
             bytemuck::cast_slice(slice::from_ref(world)),
+        );
+
+        queue.write_buffer(
+            &self.camera.buffer,
+            0,
+            bytemuck::cast_slice(slice::from_ref(camera)),
         );
 
         let view = self.output_texture.create_view(&Default::default());

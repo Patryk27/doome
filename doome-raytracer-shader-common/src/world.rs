@@ -1,5 +1,5 @@
 use bytemuck::{Pod, Zeroable};
-use glam::{vec3, Vec2};
+use glam::{vec4, Vec2, Vec4Swizzles};
 
 use crate::camera::{Camera, OrthonormalBasis, Ray};
 use crate::object::Object;
@@ -31,13 +31,14 @@ impl World {
 
     pub fn ray(&self, pos: Vec2, camera: &Camera) -> Ray {
         Ray {
-            origin: camera.camera_origin,
+            origin: camera.camera_origin.xyz(),
             direction: OrthonormalBasis::trace(
                 camera.camera_onb_u,
                 camera.camera_onb_v,
                 camera.camera_onb_w,
-                vec3(pos.x, pos.y, -camera.camera_distance),
-            ),
+                vec4(pos.x, pos.y, -camera.camera_origin.w, 0.0),
+            )
+            .xyz(),
         }
     }
 }

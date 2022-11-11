@@ -2,7 +2,7 @@
 
 use doome_raytracer_shader_common::camera::Camera;
 use doome_raytracer_shader_common::world::World;
-use spirv_std::glam::{vec2, Vec2, Vec4, Vec4Swizzles};
+use spirv_std::glam::{vec2, vec4, Vec2, Vec4, Vec4Swizzles};
 #[cfg(target_arch = "spirv")]
 use spirv_std::num_traits::real::Real;
 use spirv_std::spirv;
@@ -25,7 +25,7 @@ pub fn fs_main(
     #[spirv(uniform, descriptor_set = 1, binding = 0)] camera: &Camera,
     color: &mut Vec4,
 ) {
-    let ray = world.ray(pos.xy() / camera.viewport_size, camera);
+    let ray = world.ray(pos.xy() / camera.viewport_size.xy(), camera);
 
     let mut hit_color = Vec4::default();
     let mut hit_z = None;
@@ -44,5 +44,9 @@ pub fn fs_main(
         object_idx += 1;
     }
 
-    *color = hit_color;
+    if camera.camera_origin.w > 50.0 {
+        *color = vec4(1.0, 0.0, 0.0, 1.0);
+    } else {
+        *color = hit_color;
+    }
 }

@@ -157,11 +157,11 @@ async fn run(mut app: impl App + 'static) {
         ..Default::default()
     };
 
-    let camera = Camera::new(
+    let mut camera = Camera::new(
         vec3(0.0, 1.0, -8.0),
         vec3(0.0, 0.0, 0.0),
         vec3(0.0, -1.0, 0.0),
-        1.0,
+        100.0,
         vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
     );
 
@@ -191,6 +191,12 @@ async fn run(mut app: impl App + 'static) {
             if input.key_pressed(VirtualKeyCode::Escape) || input.quit() {
                 *control_flow = ControlFlow::Exit;
                 return;
+            }
+
+            if input.key_held(VirtualKeyCode::A) {
+                camera.camera_origin.w = 100.0;
+            } else {
+                camera.camera_origin.w = 1.0;
             }
 
             if let Some(new_surface_size) = input.window_resized() {
