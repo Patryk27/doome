@@ -1,18 +1,16 @@
 mod canvas;
 mod scaling_texture_renderer;
 
+use std::f32::consts::PI;
 use std::rc::Rc;
 
 use doome_raytracer::Raytracer;
 use doome_raytracer_shader_common as sc;
 use doome_surface::Color;
 use doome_text::TextEngine;
-use glam::{vec2, vec3, vec4};
+use glam::{vec2, vec3, Vec3Swizzles};
 use instant::Instant;
 use pixels::{Pixels, SurfaceTexture};
-use sc::camera::Camera;
-use sc::object::Object;
-use sc::world::World;
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
@@ -141,38 +139,35 @@ async fn run(mut app: impl App + 'static) {
         [1.0, (RAYTRACER_HEIGHT as f32) / (HEIGHT as f32)],
     );
 
-    let mut objects = [Object::default(); sc::MAX_OBJECTS as _];
+    let mut world = sc::World::default();
 
-    objects[0] = Object {
-        pos: vec4(-4.0, 0.0, 0.0, 2.0),
-        color: vec4(1.0, 0.0, 0.0, 1.0),
-        ..Default::default()
-    };
+    world.push_object(sc::Object::new(
+        vec3(-4.0, 0.0, 0.0),
+        2.0,
+        vec3(1.0, 0.0, 0.0),
+    ));
 
-    objects[1] = Object {
-        pos: vec4(4.0, 0.0, 0.0, 2.0),
-        color: vec4(0.0, 1.0, 0.0, 1.0),
-        ..Default::default()
-    };
+    world.push_object(sc::Object::new(
+        vec3(4.0, 0.0, 0.0),
+        2.0,
+        vec3(0.0, 1.0, 0.0),
+    ));
 
-    objects[2] = Object {
-        pos: vec4(0.0, 0.0, 3.0, 2.0),
-        color: vec4(0.0, 0.0, 1.0, 1.0),
-        ..Default::default()
-    };
+    world.push_object(sc::Object::new(
+        vec3(0.0, 0.0, 3.0),
+        2.0,
+        vec3(0.0, 0.0, 1.0),
+    ));
 
-    let mut camera = Camera::new(
-        vec3(0.0, 1.0, -8.0),
+    let mut camera = sc::Camera::new(
+        vec3(0.0, 0.0, -8.0),
         vec3(0.0, 0.0, 0.0),
         vec3(0.0, -1.0, 0.0),
         1.0,
         vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
     );
 
-    let world = World::new(objects, 3);
-
     let mut surface_size = window.inner_size();
-
     let mut time_of_last_update = Instant::now();
 
     event_loop.run(move |event, _, control_flow| {
@@ -184,28 +179,89 @@ async fn run(mut app: impl App + 'static) {
 
                 // TODO: Add delta
 
-                if input.key_held(VirtualKeyCode::Up) {
-                    camera.camera_origin.z += 1.0;
+                if input.key_held(VirtualKeyCode::W)
+                    || input.key_held(VirtualKeyCode::S)
+                {
+                    let sign = if input.key_held(VirtualKeyCode::W) {
+                        1.0
+                    } else {
+                        -1.0
+                    };
+
+                    camera.update(|origin, look_at, _| {
+                        let dist = *look_at - *origin;
+
+                        *origin += sign * dist * 0.05;
+                        *look_at += sign * dist * 0.05;
+                    });
                 }
 
-                if input.key_held(VirtualKeyCode::Down) {
-                    camera.camera_origin.z -= 1.0;
+                if input.key_held(VirtualKeyCode::A)
+                    || input.key_held(VirtualKeyCode::D)
+                {
+                    let sign = if input.key_held(VirtualKeyCode::A) {
+                        -1.0
+                    } else {
+                        1.0
+                    };
+
+                    camera.update(|origin, look_at, _| {
+                        let dir = look_at.xz() - origin.xz();
+                        let dir_len = dir.length();
+                        let dir_angle = dir.angle_between(vec2(0.0, 1.0));
+                        let dir_angle = dir_angle + 0.05 * sign;
+
+                        let new_dir = vec2(dir_len, dir_len)
+                            * vec2(dir_angle.sin(), dir_angle.cos());
+
+                        let new_look_at = origin.xz() + new_dir;
+
+                        look_at.x = new_look_at.x;
+                        look_at.z = new_look_at.y;
+                    });
                 }
 
-                if input.key_held(VirtualKeyCode::Left) {
-                    camera.camera_origin.x -= 1.0;
+                if input.key_held(VirtualKeyCode::Q)
+                    || input.key_held(VirtualKeyCode::E)
+                {
+                    let sign = if input.key_held(VirtualKeyCode::Q) {
+                        1.0
+                    } else {
+                        -1.0
+                    };
+
+                    camera.update(|origin, look_at, _| {
+                        let dir = look_at.xz() - origin.xz();
+                        let dir_angle = dir.angle_between(vec2(0.0, 1.0));
+                        let dir_angle_perpendicular = dir_angle + PI / 2.0 + PI;
+
+                        let delta = vec2(
+                            dir_angle_perpendicular.sin(),
+                            dir_angle_perpendicular.cos(),
+                        ) * 0.5
+                            * sign;
+
+                        origin.x += delta.x;
+                        origin.z += delta.y;
+
+                        look_at.x += delta.x;
+                        look_at.z += delta.y;
+                    });
                 }
 
-                if input.key_held(VirtualKeyCode::Right) {
-                    camera.camera_origin.x += 1.0;
-                }
+                if input.key_held(VirtualKeyCode::R)
+                    || input.key_held(VirtualKeyCode::F)
+                {
+                    let sign = if input.key_held(VirtualKeyCode::R) {
+                        1.0
+                    } else {
+                        -1.0
+                    };
 
-                if input.key_held(VirtualKeyCode::W) {
-                    camera.camera_origin.y += 1.0;
-                }
-
-                if input.key_held(VirtualKeyCode::S) {
-                    camera.camera_origin.y -= 1.0;
+                    camera.update(|origin, look_at, _| {
+                        origin.y += sign * 0.2;
+                        look_at.y += sign * 0.2;
+                    });
                 }
 
                 app.draw(Canvas::new(&text_engine, pixels.get_frame_mut()));

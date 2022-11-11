@@ -1,10 +1,21 @@
 #![no_std]
 
-pub const MAX_OBJECTS: u32 = 32;
+mod camera;
+mod object;
+mod ray;
+mod world;
 
-pub mod camera;
-pub mod object;
-pub mod world;
+use bytemuck::{Pod, Zeroable};
+use glam::{vec2, vec4, Vec2, Vec3, Vec4, Vec4Swizzles};
+#[cfg(target_arch = "spirv")]
+use spirv_std::num_traits::real::Real;
+
+pub use self::camera::*;
+pub use self::object::*;
+pub use self::ray::*;
+pub use self::world::*;
+
+pub const MAX_OBJECTS: u32 = 32;
 
 #[cfg(test)]
 mod tests {

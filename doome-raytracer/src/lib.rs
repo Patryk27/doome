@@ -22,9 +22,8 @@ impl Raytracer {
         let module = device.create_shader_module(shader);
 
         let camera =
-            uniforms::prepare_buffer::<sc::camera::Camera>(device, 0, "camera");
-        let world =
-            uniforms::prepare_buffer::<sc::world::World>(device, 0, "world");
+            uniforms::prepare_buffer::<sc::Camera>(device, 0, "camera");
+        let world = uniforms::prepare_buffer::<sc::World>(device, 0, "world");
 
         let pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -89,8 +88,8 @@ impl Raytracer {
 
     pub fn render(
         &self,
-        world: &sc::world::World,
-        camera: &sc::camera::Camera,
+        world: &sc::World,
+        camera: &sc::Camera,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
     ) {

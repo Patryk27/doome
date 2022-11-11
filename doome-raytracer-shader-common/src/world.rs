@@ -1,44 +1,26 @@
-use bytemuck::{Pod, Zeroable};
-use glam::{vec4, Vec2, Vec4Swizzles};
-
-use crate::camera::{Camera, OrthonormalBasis, Ray};
-use crate::object::Object;
-use crate::MAX_OBJECTS;
+use crate::*;
 
 #[repr(C)]
 #[derive(Copy, Clone, Default, Pod, Zeroable)]
 pub struct World {
-    pub objects: [Object; MAX_OBJECTS as _],
-    pub objects_count: u32,
+    objects: [Object; MAX_OBJECTS as _],
+    objects_count: u32,
     _pad1: u32,
     _pad2: u32,
     _pad3: u32,
 }
 
 impl World {
-    pub fn new(
-        objects: [Object; MAX_OBJECTS as _],
-        objects_count: u32,
-    ) -> Self {
-        Self {
-            objects,
-            objects_count,
-            _pad1: 0,
-            _pad2: 0,
-            _pad3: 0,
-        }
+    pub fn objects(&self) -> &[Object; MAX_OBJECTS as _] {
+        &self.objects
     }
 
-    pub fn ray(&self, pos: Vec2, camera: &Camera) -> Ray {
-        Ray {
-            origin: camera.camera_origin.xyz(),
-            direction: OrthonormalBasis::trace(
-                camera.camera_onb_u,
-                camera.camera_onb_v,
-                camera.camera_onb_w,
-                vec4(pos.x, pos.y, -camera.camera_origin.w, 0.0),
-            )
-            .xyz(),
-        }
+    pub fn objects_count(&self) -> u32 {
+        self.objects_count
+    }
+
+    pub fn push_object(&mut self, object: Object) {
+        self.objects[self.objects_count as usize] = object;
+        self.objects_count += 1;
     }
 }
