@@ -1,7 +1,7 @@
 use crate::*;
 
 #[repr(C)]
-#[derive(Copy, Clone, Default, Pod, Zeroable)]
+#[derive(Copy, Clone, Pod, Zeroable)]
 pub struct World {
     objects: [Object; MAX_OBJECTS as _],
     objects_count: u32,
@@ -22,5 +22,12 @@ impl World {
     pub fn push_object(&mut self, object: Object) {
         self.objects[self.objects_count as usize] = object;
         self.objects_count += 1;
+    }
+}
+
+#[cfg(not(target_arch = "spirv"))]
+impl Default for World {
+    fn default() -> Self {
+        World::zeroed()
     }
 }

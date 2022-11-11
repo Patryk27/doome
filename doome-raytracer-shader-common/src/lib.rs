@@ -15,7 +15,7 @@ pub use self::object::*;
 pub use self::ray::*;
 pub use self::world::*;
 
-pub const MAX_OBJECTS: u32 = 32;
+pub const MAX_OBJECTS: u32 = 1024;
 
 #[cfg(test)]
 mod tests {
