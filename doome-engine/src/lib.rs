@@ -8,6 +8,7 @@ use doome_raytracer_shader_common as sc;
 use doome_surface::Color;
 use doome_text::TextEngine;
 use glam::{vec2, vec3, vec4};
+use instant::Instant;
 use pixels::{Pixels, SurfaceTexture};
 use sc::camera::Camera;
 use sc::object::Object;
@@ -25,6 +26,9 @@ pub const WIDTH: u16 = 320;
 pub const RAYTRACER_HEIGHT: u16 = 200;
 pub const HUD_HEIGHT: u16 = 50;
 pub const HEIGHT: u16 = RAYTRACER_HEIGHT + HUD_HEIGHT;
+
+const FPS: f32 = 60.0;
+const SPF: f32 = 1.0 / FPS;
 
 pub trait App {
     fn update(&mut self);
@@ -161,7 +165,7 @@ async fn run(mut app: impl App + 'static) {
         vec3(0.0, 1.0, -8.0),
         vec3(0.0, 0.0, 0.0),
         vec3(0.0, -1.0, 0.0),
-        100.0,
+        1.0,
         vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
     );
 
@@ -169,34 +173,65 @@ async fn run(mut app: impl App + 'static) {
 
     let mut surface_size = window.inner_size();
 
+    let mut time_of_last_update = Instant::now();
+
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
-            app.draw(Canvas::new(&text_engine, pixels.get_frame_mut()));
+            if time_of_last_update.elapsed().as_secs_f32() >= SPF {
+                time_of_last_update = Instant::now();
 
-            pixels
-                .render_with(|encoder, view, context| {
-                    // Draw UI
-                    context.scaling_renderer.render(encoder, view);
+                // TODO: Add delta
 
-                    // Draw raytracer
-                    raytracer.render(&world, &camera, &context.queue, encoder);
-                    raytracer_scaler.render(encoder, view, surface_size);
+                if input.key_held(VirtualKeyCode::Up) {
+                    camera.camera_origin.z += 1.0;
+                }
 
-                    Ok(())
-                })
-                .unwrap();
+                if input.key_held(VirtualKeyCode::Down) {
+                    camera.camera_origin.z -= 1.0;
+                }
+
+                if input.key_held(VirtualKeyCode::Left) {
+                    camera.camera_origin.x -= 1.0;
+                }
+
+                if input.key_held(VirtualKeyCode::Right) {
+                    camera.camera_origin.x += 1.0;
+                }
+
+                if input.key_held(VirtualKeyCode::W) {
+                    camera.camera_origin.y += 1.0;
+                }
+
+                if input.key_held(VirtualKeyCode::S) {
+                    camera.camera_origin.y -= 1.0;
+                }
+
+                app.draw(Canvas::new(&text_engine, pixels.get_frame_mut()));
+
+                pixels
+                    .render_with(|encoder, view, context| {
+                        // Draw UI
+                        context.scaling_renderer.render(encoder, view);
+
+                        // Draw raytracer
+                        raytracer.render(
+                            &world,
+                            &camera,
+                            &context.queue,
+                            encoder,
+                        );
+                        raytracer_scaler.render(encoder, view, surface_size);
+
+                        Ok(())
+                    })
+                    .unwrap();
+            }
         }
 
         if input.update(&event) {
             if input.key_pressed(VirtualKeyCode::Escape) || input.quit() {
                 *control_flow = ControlFlow::Exit;
                 return;
-            }
-
-            if input.key_held(VirtualKeyCode::A) {
-                camera.camera_origin.w = 100.0;
-            } else {
-                camera.camera_origin.w = 1.0;
             }
 
             if let Some(new_surface_size) = input.window_resized() {
