@@ -1,85 +1,119 @@
 #![no_std]
 
 use bytemuck::{Pod, Zeroable};
-use spirv_std::glam::{vec2, Vec2};
+use glam::{vec3, Vec2, Vec3};
 
-pub const MAX_OBJECTS: u32 = 128;
+pub const MAX_OBJECTS: u32 = 3;
 
 #[repr(C)]
-#[derive(Copy, Clone, Pod, Zeroable)]
-pub struct Context {
-    pub viewport: Viewport,
-    pub objects: [Object; MAX_OBJECTS as _],
-    pub objects_count: u32,
+#[derive(Copy, Clone, Default, Pod, Zeroable)]
+pub struct World {
+    pub camera_onb_u: Vec3,
+    pub camera_onb_v: Vec3,
+    pub camera_onb_w: Vec3,
+    pub camera_origin: Vec3,
     pub _pad1: f32,
     pub _pad2: f32,
     pub _pad3: f32,
+    pub camera_distance: f32,
+    pub _pad4: f32,
+    pub _pad5: f32,
+    pub viewport_size: Vec2,
+    pub objects: [Object; MAX_OBJECTS as _],
+    pub _pad6: f32,
+    pub _pad7: f32,
+    pub _pad8: f32,
+    pub objects_count: u32,
 }
 
-#[repr(C)]
-#[derive(Copy, Clone, Pod, Zeroable)]
-pub struct Viewport {
-    pub width: f32,
-    pub _pad1: f32,
-    pub height: f32,
-    pub _pad2: f32,
+impl World {
+    pub fn ray(&self, pos: Vec2) -> Ray {
+        Ray {
+            origin: self.camera_origin,
+            direction: OrthonormalBasis::trace(
+                self.camera_onb_u,
+                self.camera_onb_v,
+                self.camera_onb_w,
+                vec3(pos.x, pos.y, -self.camera_distance),
+            ),
+        }
+    }
 }
 
-impl Viewport {
-    pub fn size(&self) -> Vec2 {
-        vec2(self.width, self.height)
+pub struct Camera;
+
+impl Camera {
+    pub fn build(
+        origin: Vec3,
+        look_at: Vec3,
+        up: Vec3,
+        distance: f32,
+    ) -> (Vec3, Vec3, Vec3, Vec3, f32) {
+        let (onb_u, onb_v, onb_w) =
+            OrthonormalBasis::build(origin, look_at, up);
+
+        (onb_u, onb_v, onb_w, origin, distance)
     }
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Default, Pod, Zeroable)]
 pub struct Object {
-    pub center_x: f32,
-    pub center_y: f32,
-    pub center_z: f32,
-    pub radius: f32,
-    pub color_r: f32,
-    pub color_g: f32,
-    pub color_b: f32,
+    pub center: Vec3,
     pub _pad1: f32,
+    pub _pad2: f32,
+    pub _pad3: f32,
+    pub radius: f32,
+    pub color: Vec3,
 }
 
 impl Object {
-    pub fn hit(&self, ray: Vec2) -> Option<f32> {
-        let is_hit = vec2(self.center_x, self.center_y).distance(ray)
-            <= (self.radius * self.radius);
+    pub fn hit(&self, ray: Ray) -> Option<f32> {
+        let distance = ray.origin - self.center;
+        let a = ray.direction.length_squared();
+        let b = (distance * 2.0).dot(ray.direction);
+        let c = distance.length_squared() - self.radius * self.radius;
+        let disc = b * b - 4.0 * a * c;
 
-        if is_hit {
-            Some(self.center_z)
-        } else {
-            None
+        if disc < 0.0 {
+            return None;
         }
+
+        let disc_sq = disc * disc;
+        let denom = 2.0 * a;
+
+        let mut t = (-b - disc_sq) / denom;
+
+        if t < f32::EPSILON {
+            t = (-b + disc_sq) / denom;
+        }
+
+        if t < f32::EPSILON {
+            return None;
+        }
+
+        Some(t)
     }
 }
 
-#[cfg(not(target_arch = "spirv"))]
-#[cfg(test)]
-mod tests {
-    use core::{any, mem};
+pub struct OrthonormalBasis;
 
-    use super::*;
+impl OrthonormalBasis {
+    pub fn build(eye: Vec3, look_at: Vec3, up: Vec3) -> (Vec3, Vec3, Vec3) {
+        let w = (eye - look_at).normalize();
+        let u = up.cross(w).normalize();
+        let v = w.cross(u);
 
-    fn assert_aligned<T>() {
-        let size_of = mem::size_of::<T>();
-
-        if size_of % 16 != 0 {
-            panic!(
-                "`{}` is not 16-byte aligned (missing padding: {})",
-                any::type_name::<T>(),
-                size_of - (16 * (size_of / 16)),
-            );
-        }
+        (u, v, w)
     }
 
-    #[test]
-    fn alignment() {
-        assert_aligned::<Context>();
-        assert_aligned::<Viewport>();
-        assert_aligned::<Object>();
+    pub fn trace(u: Vec3, v: Vec3, w: Vec3, vec: Vec3) -> Vec3 {
+        u * vec.x + v * vec.y + w * vec.z
     }
+}
+
+#[derive(Copy, Clone)]
+pub struct Ray {
+    pub origin: Vec3,
+    pub direction: Vec3,
 }

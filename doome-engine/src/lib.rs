@@ -7,6 +7,7 @@ use doome_raytracer::Raytracer;
 use doome_raytracer_shader_common as sc;
 use doome_surface::Color;
 use doome_text::TextEngine;
+use glam::{vec2, vec3};
 use pixels::{Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
@@ -46,7 +47,7 @@ async fn run(mut app: impl App + 'static) {
     let event_loop = EventLoop::new();
 
     let window = {
-        let size = LogicalSize::new(WIDTH, HEIGHT);
+        let size = LogicalSize::new(WIDTH * 4, HEIGHT * 4);
 
         WindowBuilder::new()
             .with_title("Doomé")
@@ -135,50 +136,51 @@ async fn run(mut app: impl App + 'static) {
     let mut objects = [sc::Object::default(); sc::MAX_OBJECTS as _];
 
     objects[0] = sc::Object {
-        center_x: 0.3,
-        center_y: 0.4,
-        center_z: 0.1,
-        radius: 0.4,
-        color_r: 1.0,
-        color_g: 0.0,
-        color_b: 0.0,
-        _pad1: 0.0,
+        center: vec3(-4.0, 0.0, 0.0),
+        radius: 2.0,
+        color: vec3(1.0, 0.0, 0.0),
+        ..Default::default()
     };
 
     objects[1] = sc::Object {
-        center_x: 0.5,
-        center_y: 0.4,
-        center_z: 0.0,
-        radius: 0.4,
-        color_r: 0.0,
-        color_g: 1.0,
-        color_b: 0.0,
-        _pad1: 0.0,
+        center: vec3(4.0, 0.0, 0.0),
+        radius: 2.0,
+        color: vec3(0.0, 1.0, 0.0),
+        ..Default::default()
     };
 
     objects[2] = sc::Object {
-        center_x: 0.7,
-        center_y: 0.4,
-        center_z: 0.1,
-        radius: 0.4,
-        color_r: 0.0,
-        color_g: 0.0,
-        color_b: 1.0,
-        _pad1: 0.0,
+        center: vec3(0.0, 0.0, 3.0),
+        radius: 2.0,
+        color: vec3(0.0, 0.0, 1.0),
+        ..Default::default()
     };
 
-    let sc_context = sc::Context {
-        viewport: sc::Viewport {
-            width: WIDTH as _,
-            _pad1: 0.0,
-            height: RAYTRACER_HEIGHT as _,
-            _pad2: 0.0,
-        },
-        objects,
-        objects_count: 3,
-        _pad1: 0.0,
-        _pad2: 0.0,
-        _pad3: 0.0,
+    let sc_context = {
+        let (
+            camera_onb_u,
+            camera_onb_v,
+            camera_onb_w,
+            camera_origin,
+            camera_distance,
+        ) = sc::Camera::build(
+            vec3(0.0, 1.0, -8.0),
+            vec3(0.0, 0.0, 0.0),
+            vec3(0.0, -1.0, 0.0),
+            1.0,
+        );
+
+        sc::World {
+            camera_onb_u,
+            camera_onb_v,
+            camera_onb_w,
+            camera_origin,
+            camera_distance,
+            viewport_size: vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
+            objects,
+            objects_count: 3,
+            ..Default::default()
+        }
     };
 
     let mut surface_size = window.inner_size();

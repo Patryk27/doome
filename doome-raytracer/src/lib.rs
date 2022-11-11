@@ -7,8 +7,8 @@ pub struct Raytracer {
     height: u32,
     pipeline: wgpu::RenderPipeline,
     output_texture: wgpu::Texture,
-    context_buffer: wgpu::Buffer,
-    context_bind_group: wgpu::BindGroup,
+    world_buffer: wgpu::Buffer,
+    world_bind_group: wgpu::BindGroup,
 }
 
 impl Raytracer {
@@ -16,16 +16,16 @@ impl Raytracer {
         let shader = wgpu::include_spirv!(env!("doome_raytracer_shader.spv"));
         let module = device.create_shader_module(shader);
 
-        let context_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("context_buffer"),
+        let world_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("world_buffer"),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            size: mem::size_of::<sc::Context>() as _,
+            size: mem::size_of::<sc::World>() as _,
             mapped_at_creation: false,
         });
 
-        let context_bind_group_layout =
+        let world_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("context_bind_group_layout"),
+                label: Some("world_bind_group_layout"),
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
                     visibility: wgpu::ShaderStages::FRAGMENT,
@@ -38,20 +38,20 @@ impl Raytracer {
                 }],
             });
 
-        let context_bind_group =
+        let world_bind_group =
             device.create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("context_bind_group"),
-                layout: &context_bind_group_layout,
+                label: Some("world_bind_group"),
+                layout: &world_bind_group_layout,
                 entries: &[wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: context_buffer.as_entire_binding(),
+                    resource: world_buffer.as_entire_binding(),
                 }],
             });
 
         let pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Raytracer pipeline layout"),
-                bind_group_layouts: &[&context_bind_group_layout],
+                bind_group_layouts: &[&world_bind_group_layout],
                 push_constant_ranges: &[],
             });
 
@@ -99,22 +99,22 @@ impl Raytracer {
             width,
             height,
             pipeline,
-            context_buffer,
-            context_bind_group,
+            world_buffer,
+            world_bind_group,
             output_texture,
         }
     }
 
     pub fn render(
         &self,
-        context: &sc::Context,
+        world: &sc::World,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
     ) {
         queue.write_buffer(
-            &self.context_buffer,
+            &self.world_buffer,
             0,
-            bytemuck::cast_slice(slice::from_ref(context)),
+            bytemuck::cast_slice(slice::from_ref(world)),
         );
 
         let view = self.output_texture.create_view(&Default::default());
@@ -135,7 +135,7 @@ impl Raytracer {
 
         rpass.set_scissor_rect(0, 0, self.width as _, self.height as _);
         rpass.set_pipeline(&self.pipeline);
-        rpass.set_bind_group(0, &self.context_bind_group, &[]);
+        rpass.set_bind_group(0, &self.world_bind_group, &[]);
         rpass.draw(0..3, 0..1);
     }
 

@@ -9,6 +9,7 @@ doome-raytracer = { path = "../doome-raytracer" }
 doome-raytracer-shader-common = { path = "../doome-raytracer-shader-common" }
 doome-surface = { path = "../doome-surface" }
 doome-text = { path = "../doome-text" }
+glam = { version = "0.22", default-features = false }
 instant = "0.1"
 log = "0.4"
 pixels = "0.10.0"

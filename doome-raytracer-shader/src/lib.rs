@@ -1,7 +1,7 @@
 #![no_std]
 
-use doome_raytracer_shader_common::Context;
-use spirv_std::glam::{vec2, vec3, Vec2, Vec3, Vec4, Vec4Swizzles};
+use doome_raytracer_shader_common::World;
+use spirv_std::glam::{vec2, Vec2, Vec3, Vec4, Vec4Swizzles};
 #[cfg(target_arch = "spirv")]
 use spirv_std::num_traits::real::Real;
 use spirv_std::spirv;
@@ -20,26 +20,27 @@ pub fn vs_main(
 #[spirv(fragment)]
 pub fn fs_main(
     #[spirv(frag_coord)] pos: Vec4,
-    #[spirv(uniform, descriptor_set = 0, binding = 0)] context: &Context,
-    output: &mut Vec4,
+    #[spirv(uniform, descriptor_set = 0, binding = 0)] world: &World,
+    color: &mut Vec4,
 ) {
-    let pos = pos.xy() / context.viewport.size();
-    let mut color = Vec3::default();
-    let mut prev_hit_z = None;
+    let ray = world.ray(pos.xy() / world.viewport_size);
+
+    let mut hit_color = Vec3::default();
+    let mut hit_z = None;
     let mut object_idx = 0;
 
-    while object_idx < context.objects_count {
-        let object = &context.objects[object_idx as usize];
+    while object_idx < world.objects_count {
+        let object = &world.objects[object_idx as usize];
 
-        if let Some(hit_z) = object.hit(pos) {
-            if hit_z < prev_hit_z.unwrap_or(1000.0) {
-                color = vec3(object.color_r, object.color_g, object.color_b);
-                prev_hit_z = Some(hit_z);
+        if let Some(new_hit_z) = object.hit(ray) {
+            if new_hit_z < hit_z.unwrap_or(1000.0) {
+                hit_color = object.color;
+                hit_z = Some(new_hit_z);
             }
         }
 
         object_idx += 1;
     }
 
-    *output = color.extend(1.0);
+    *color = hit_color.extend(1.0);
 }
