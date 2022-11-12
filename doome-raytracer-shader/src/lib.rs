@@ -49,15 +49,9 @@ fn fs_main_inner(
         let tri = &tris[tri_idx as usize];
         let tri_hit = tri.hit(ray);
 
-        // TODO that's pretty awful, but seems not to work otherwise (miscompilation?)
-        if tri_hit.is_some() {
-            if hit.is_none() {
-                hit = tri_hit;
-                hit_color = tri.color();
-            } else if tri_hit.t < hit.t {
-                hit = tri_hit;
-                hit_color = tri.color();
-            }
+        if tri_hit.is_closer_than(hit) {
+            hit = tri_hit;
+            hit_color = tri.color();
         }
 
         tri_idx += 1;

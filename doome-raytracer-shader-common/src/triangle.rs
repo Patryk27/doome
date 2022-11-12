@@ -52,7 +52,7 @@ impl Triangle {
 
         let t = v0v2.dot(qvec) * inv_det;
 
-        if t < f32::EPSILON {
+        if t < 10.0 * f32::EPSILON {
             return Hit::none();
         }
 

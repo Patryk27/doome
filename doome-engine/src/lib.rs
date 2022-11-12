@@ -291,7 +291,7 @@ async fn run(mut app: impl App + 'static) {
                         let delta = vec2(
                             dir_angle_perpendicular.sin(),
                             dir_angle_perpendicular.cos(),
-                        ) * 0.5
+                        ) * 0.25
                             * sign;
 
                         origin.x += delta.x;

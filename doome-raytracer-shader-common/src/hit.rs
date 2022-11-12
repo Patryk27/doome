@@ -10,9 +10,11 @@ pub struct Hit {
 }
 
 impl Hit {
+    const MAX_T: f32 = 1000.0;
+
     pub fn none() -> Self {
         Self {
-            t: 0.0,
+            t: Self::MAX_T,
             u: 0.0,
             v: 0.0,
             point: vec3(0.0, 0.0, 0.0),
@@ -21,10 +23,10 @@ impl Hit {
     }
 
     pub fn is_some(&self) -> bool {
-        self.t > 0.0
+        self.t < Self::MAX_T
     }
 
-    pub fn is_none(&self) -> bool {
-        !self.is_some()
+    pub fn is_closer_than(&self, other: Self) -> bool {
+        self.t < other.t
     }
 }

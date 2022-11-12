@@ -18,7 +18,7 @@ impl Geometry {
 
     pub fn any_obstacle_between(&self, a: Vec3, b: Vec3) -> bool {
         let mut idx = 0;
-        let len = (b - a).length().abs();
+        let len = (b - a).length();
 
         let ray = Ray {
             origin: a,
@@ -26,13 +26,8 @@ impl Geometry {
         };
 
         while idx < self.len() {
-            let hit = self.items[idx as usize].hit(ray);
-
-            // TODO
-            if hit.is_some() {
-                if hit.t.abs() < len {
-                    return true;
-                }
+            if self.items[idx as usize].hit(ray).t < len {
+                return true;
             }
 
             idx += 1;
