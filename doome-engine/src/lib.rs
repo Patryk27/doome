@@ -2,6 +2,7 @@ mod canvas;
 mod scaling_texture_renderer;
 
 use std::f32::consts::PI;
+use std::io::Cursor;
 use std::rc::Rc;
 
 use doome_raytracer::Raytracer;
@@ -142,26 +143,62 @@ async fn run(mut app: impl App + 'static) {
     let mut world = sc::World::default();
 
     world.push_object(sc::Object::new(
-        vec3(-4.0, 0.0, 0.0),
-        2.0,
-        vec3(1.0, 0.0, 0.0),
+        vec3(5.0, 0.0, -5.0),
+        vec3(5.0, 0.0, 5.0),
+        vec3(-5.0, 0.0, 5.0),
+        vec3(0.5, 0.5, 0.5),
     ));
 
     world.push_object(sc::Object::new(
-        vec3(4.0, 0.0, 0.0),
-        2.0,
-        vec3(0.0, 1.0, 0.0),
+        vec3(5.0, 0.0, -5.0),
+        vec3(-5.0, 0.0, 5.0),
+        vec3(-5.0, 0.0, -5.0),
+        vec3(0.5, 0.5, 0.5),
     ));
 
-    world.push_object(sc::Object::new(
-        vec3(0.0, 0.0, 3.0),
-        2.0,
-        vec3(0.0, 0.0, 1.0),
-    ));
+    {
+        let mut reader = Cursor::new(include_bytes!("../../icosphere.obj"));
+
+        let (models, _) =
+            tobj::load_obj_buf(&mut reader, &Default::default(), |_| todo!())
+                .unwrap();
+
+        for model in models {
+            let mesh = &model.mesh;
+
+            for indices in mesh.indices.chunks(3) {
+                let vertices: Vec<_> = indices
+                    .iter()
+                    .copied()
+                    .map(|index| {
+                        let index = index as usize;
+
+                        vec3(
+                            mesh.positions[3 * index],
+                            mesh.positions[3 * index + 1],
+                            mesh.positions[3 * index + 2],
+                        )
+                    })
+                    .map(|mut vertex| {
+                        vertex.z += 3.0;
+                        vertex.y += 1.0;
+                        vertex
+                    })
+                    .collect();
+
+                world.push_object(sc::Object::new(
+                    vertices[0],
+                    vertices[1],
+                    vertices[2],
+                    vec3(0.0, 0.0, 1.0),
+                ));
+            }
+        }
+    }
 
     let mut camera = sc::Camera::new(
-        vec3(0.0, 0.0, -8.0),
-        vec3(0.0, 0.0, 0.0),
+        vec3(0.0, 1.0, 0.0),
+        vec3(0.0, 1.0, 5.0),
         vec3(0.0, -1.0, 0.0),
         1.0,
         vec2(WIDTH as _, RAYTRACER_HEIGHT as _),

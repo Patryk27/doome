@@ -15,7 +15,27 @@ pub use self::object::*;
 pub use self::ray::*;
 pub use self::world::*;
 
-pub const MAX_OBJECTS: u32 = 1024;
+pub const MAX_OBJECTS: u32 = 256;
+
+pub struct Hit {
+    pub t: f32,
+    pub u: f32,
+    pub v: f32,
+}
+
+impl Hit {
+    pub fn none() -> Self {
+        Self {
+            t: 0.0,
+            u: 0.0,
+            v: 0.0,
+        }
+    }
+
+    pub fn is_some(&self) -> bool {
+        self.t > 0.0
+    }
+}
 
 #[cfg(test)]
 mod tests {

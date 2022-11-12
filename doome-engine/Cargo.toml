@@ -13,6 +13,7 @@ glam = { version = "0.22", default-features = false }
 instant = "0.1"
 log = "0.4"
 pixels = "0.10.0"
+tobj = "3.2"
 wgpu = "0.13"
 winit = "0.27"
 winit_input_helper = "0.13"

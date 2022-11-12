@@ -77,6 +77,7 @@ impl Camera {
     }
 }
 
+// Thanks to https://4programmers.net/Z_pogranicza/Raytracing
 struct OrthonormalBasis;
 
 impl OrthonormalBasis {

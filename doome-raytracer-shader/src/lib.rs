@@ -27,18 +27,17 @@ pub fn fs_main(
     let ray = camera.ray(pos.xy());
 
     let mut hit_color = vec4(0.0, 0.0, 0.0, 1.0);
-    let mut hit_z = None;
+    let mut hit_t = None;
     let objects = world.objects();
     let mut object_idx = 0;
 
     while object_idx < objects.len() {
         let object = &objects[object_idx as usize];
+        let hit = object.hit(ray);
 
-        if let Some(new_hit_z) = object.hit(ray) {
-            if new_hit_z < hit_z.unwrap_or(1000.0) {
-                hit_color = object.color();
-                hit_z = Some(new_hit_z);
-            }
+        if hit.is_some() && hit.t < hit_t.unwrap_or(1000.0) {
+            hit_color = object.color();
+            hit_t = Some(hit.t);
         }
 
         object_idx += 1;
