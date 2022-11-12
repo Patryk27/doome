@@ -16,12 +16,16 @@ impl Lightning {
         self.len += 1;
     }
 
-    pub fn len(&self) -> u32 {
-        self.len
+    pub fn get(&self, idx: u32) -> Light {
+        self.items[idx as usize]
     }
 
-    pub fn all(&self) -> &[Light; MAX_LIGHTS as _] {
-        &self.items
+    pub fn get_mut(&mut self, idx: u32) -> &mut Light {
+        &mut self.items[idx as usize]
+    }
+
+    pub fn len(&self) -> u32 {
+        self.len
     }
 }
 

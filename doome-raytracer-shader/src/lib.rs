@@ -42,11 +42,10 @@ fn fs_main_inner(
 
     // -----
 
-    let tris = geometry.all();
     let mut tri_idx = 0;
 
     while tri_idx < geometry.len() {
-        let tri = &tris[tri_idx as usize];
+        let tri = geometry.get(tri_idx);
         let tri_hit = tri.hit(ray);
 
         if tri_hit.is_closer_than(hit) {
@@ -60,13 +59,12 @@ fn fs_main_inner(
     // -----
 
     if hit.is_some() {
-        let lights = lightning.all();
         let mat_color = hit_color.truncate();
         let mut light_idx = 0;
         let mut new_hit_color = vec3(0.0, 0.0, 0.0);
 
         while light_idx < lightning.len() {
-            let light = lights[light_idx as usize];
+            let light = lightning.get(light_idx);
 
             if !geometry.any_obstacle_between(hit.point, light.pos.truncate()) {
                 new_hit_color += radiance(light, hit, mat_color);

@@ -212,20 +212,30 @@ async fn run(mut app: impl App + 'static) {
 
     let mut lightning = sc::Lightning::default();
 
-    lightning
-        .push(sc::Light::new(vec3(10.0, 10.0, -10.0), vec3(1.0, 0.0, 0.0)));
-    lightning.push(sc::Light::new(vec3(10.0, 10.0, 10.0), vec3(0.0, 1.0, 0.0)));
-    lightning
-        .push(sc::Light::new(vec3(-10.0, 10.0, 10.0), vec3(0.0, 0.0, 1.0)));
+    lightning.push(sc::Light::new(vec3(0.0, 5.0, 0.0), vec3(1.0, 0.0, 0.0)));
+    lightning.push(sc::Light::new(vec3(0.0, 8.0, 0.0), vec3(0.0, 1.0, 0.0)));
+    lightning.push(sc::Light::new(vec3(0.0, 12.0, 0.0), vec3(0.0, 0.0, 1.0)));
 
     // -----
 
     let mut surface_size = window.inner_size();
     let mut time_of_last_update = Instant::now();
+    let mut n: f32 = 0.0;
 
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
             if time_of_last_update.elapsed().as_secs_f32() >= SPF {
+                n += 0.02;
+
+                for i in 0..3 {
+                    let n = n + (i as f32) * (2.0 * PI / 3.0);
+
+                    lightning.get_mut(i).pos.x = 10.0 * n.sin();
+                    lightning.get_mut(i).pos.z = 10.0 * n.cos();
+                }
+
+                lightning.get_mut(0).pos.y = 3.0 + 5.0 * n.cos().abs();
+
                 app.update();
 
                 time_of_last_update = Instant::now();

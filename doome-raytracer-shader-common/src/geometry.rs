@@ -16,6 +16,19 @@ impl Geometry {
         self.len += 1;
     }
 
+
+    pub fn len(&self) -> u32 {
+        self.len
+    }
+
+    pub fn get(&self, idx: u32) -> Triangle {
+        self.items[idx as usize]
+    }
+
+    pub fn get_mut(&mut self, idx: u32) -> &mut Triangle {
+        &mut self.items[idx as usize]
+    }
+
     pub fn any_obstacle_between(&self, a: Vec3, b: Vec3) -> bool {
         let mut idx = 0;
         let len = (b - a).length();
@@ -34,14 +47,6 @@ impl Geometry {
         }
 
         false
-    }
-
-    pub fn len(&self) -> u32 {
-        self.len
-    }
-
-    pub fn all(&self) -> &[Triangle; MAX_OBJECTS as _] {
-        &self.items
     }
 }
 
