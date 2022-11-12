@@ -9,7 +9,7 @@ use doome_raytracer::Raytracer;
 use doome_raytracer_shader_common as sc;
 use doome_surface::Color;
 use doome_text::TextEngine;
-use glam::{vec2, vec3, Vec3Swizzles};
+use glam::{vec2, vec3, Vec3, Vec3Swizzles};
 use instant::Instant;
 use pixels::{Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
@@ -135,7 +135,7 @@ async fn run(mut app: impl App + 'static) {
 
     let raytracer_scaler = ScalingTextureRenderer::new(
         pixels.device(),
-        &raytracer.output_texture(),
+        &raytracer.output_texture_view(),
         pixels.render_texture_format(),
         [1.0, (RAYTRACER_HEIGHT as f32) / (HEIGHT as f32)],
     );
@@ -152,90 +152,64 @@ async fn run(mut app: impl App + 'static) {
 
     // -----
 
+    let mut materials = sc::Materials::default();
+
+    let m1 = materials.push(
+        sc::Material::default()
+            .with_color(0x1a1417)
+            .with_reflectivity(0.5, 0xffffff),
+    );
+    let m2 = materials.push(
+        sc::Material::default()
+            .with_color(0x505050)
+            .with_reflectivity(1.0, 0xffffff),
+    );
+    let m3 = materials.push(sc::Material::default().with_color(0x8db35e));
+    let m4 = materials.push(sc::Material::default().with_color(0x384d64));
+
+    // -----
+
     let mut geometry = sc::Geometry::default();
 
     geometry.push(sc::Triangle::new(
         vec3(-10.0, 0.0, 10.0),
         vec3(10.0, 0.0, 10.0),
         vec3(10.0, 0.0, -10.0),
-        vec3(1.0, 1.0, 1.0),
+        m1,
     ));
 
     geometry.push(sc::Triangle::new(
         vec3(-10.0, 0.0, -10.0),
         vec3(-10.0, 0.0, 10.0),
         vec3(10.0, 0.0, -10.0),
-        vec3(1.0, 1.0, 1.0),
+        m1,
     ));
 
-    {
-        let mut reader = Cursor::new(include_bytes!("../../icosphere.obj"));
-
-        let (models, _) =
-            tobj::load_obj_buf(&mut reader, &Default::default(), |_| todo!())
-                .unwrap();
-
-        for model in models {
-            let mesh = &model.mesh;
-
-            for indices in mesh.indices.chunks(3) {
-                let vertices: Vec<_> = indices
-                    .iter()
-                    .copied()
-                    .map(|index| {
-                        let index = index as usize;
-
-                        vec3(
-                            mesh.positions[3 * index],
-                            mesh.positions[3 * index + 1],
-                            mesh.positions[3 * index + 2],
-                        )
-                    })
-                    .map(|mut vertex| {
-                        vertex.z += 3.0;
-                        vertex.y += 1.0;
-                        vertex
-                    })
-                    .collect();
-
-                geometry.push(sc::Triangle::new(
-                    vertices[0],
-                    vertices[1],
-                    vertices[2],
-                    vec3(1.0, 1.0, 1.0),
-                ));
-            }
-        }
-    }
+    push_icosphere(&mut geometry, vec3(0.0, 1.0, 5.0), m2);
+    push_icosphere(&mut geometry, vec3(-2.0, 1.0, 4.0), m3);
+    push_icosphere(&mut geometry, vec3(2.0, 1.0, 4.0), m4);
 
     // -----
 
-    let mut lightning = sc::Lightning::default();
+    let mut lights = sc::Lights::default();
 
-    lightning.push(sc::Light::new(vec3(0.0, 5.0, 0.0), vec3(1.0, 0.0, 0.0)));
-    lightning.push(sc::Light::new(vec3(0.0, 8.0, 0.0), vec3(0.0, 1.0, 0.0)));
-    lightning.push(sc::Light::new(vec3(0.0, 12.0, 0.0), vec3(0.0, 0.0, 1.0)));
+    lights.push(sc::Light::new(vec3(0.0, 5.0, -2.0), 0xffffff));
+    lights.push(sc::Light::new(vec3(0.0, 3.0, 4.0), 0xffffff));
 
     // -----
 
     let mut surface_size = window.inner_size();
     let mut time_of_last_update = Instant::now();
-    let mut n: f32 = 0.0;
 
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
-            if time_of_last_update.elapsed().as_secs_f32() >= SPF {
-                n += 0.02;
+            #[cfg(target_arch = "wasm")]
+            let can_redraw = true;
 
-                for i in 0..3 {
-                    let n = n + (i as f32) * (2.0 * PI / 3.0);
+            #[cfg(not(target_arch = "wasm"))]
+            let can_redraw = time_of_last_update.elapsed().as_secs_f32() >= SPF;
 
-                    lightning.get_mut(i).pos.x = 10.0 * n.sin();
-                    lightning.get_mut(i).pos.z = 10.0 * n.cos();
-                }
-
-                lightning.get_mut(0).pos.y = 3.0 + 5.0 * n.cos().abs();
-
+            if can_redraw {
                 app.update();
 
                 time_of_last_update = Instant::now();
@@ -254,8 +228,8 @@ async fn run(mut app: impl App + 'static) {
                     camera.update(|origin, look_at, _| {
                         let dist = *look_at - *origin;
 
-                        *origin += sign * dist * 0.05;
-                        *look_at += sign * dist * 0.05;
+                        *origin += sign * dist * 0.025;
+                        *look_at += sign * dist * 0.025;
                     });
                 }
 
@@ -272,7 +246,7 @@ async fn run(mut app: impl App + 'static) {
                         let dir = look_at.xz() - origin.xz();
                         let dir_len = dir.length();
                         let dir_angle = dir.angle_between(vec2(0.0, 1.0));
-                        let dir_angle = dir_angle + 0.05 * sign;
+                        let dir_angle = dir_angle + 0.025 * sign;
 
                         let new_dir = vec2(dir_len, dir_len)
                             * vec2(dir_angle.sin(), dir_angle.cos());
@@ -301,7 +275,7 @@ async fn run(mut app: impl App + 'static) {
                         let delta = vec2(
                             dir_angle_perpendicular.sin(),
                             dir_angle_perpendicular.cos(),
-                        ) * 0.25
+                        ) * 0.1
                             * sign;
 
                         origin.x += delta.x;
@@ -338,7 +312,8 @@ async fn run(mut app: impl App + 'static) {
                         raytracer.render(
                             &camera,
                             &geometry,
-                            &lightning,
+                            &lights,
+                            &materials,
                             &context.queue,
                             encoder,
                         );
@@ -365,4 +340,41 @@ async fn run(mut app: impl App + 'static) {
             window.request_redraw();
         }
     });
+}
+
+// TODO temporary
+fn push_icosphere(geometry: &mut sc::Geometry, pos: Vec3, mat: sc::MaterialId) {
+    let mut reader = Cursor::new(include_bytes!("../../icosphere.obj"));
+
+    let (models, _) =
+        tobj::load_obj_buf(&mut reader, &Default::default(), |_| todo!())
+            .unwrap();
+
+    for model in models {
+        let mesh = &model.mesh;
+
+        for indices in mesh.indices.chunks(3) {
+            let vertices: Vec<_> = indices
+                .iter()
+                .copied()
+                .map(|index| {
+                    let index = index as usize;
+
+                    vec3(
+                        mesh.positions[3 * index],
+                        mesh.positions[3 * index + 1],
+                        mesh.positions[3 * index + 2],
+                    )
+                })
+                .map(|vertex| pos + vertex)
+                .collect();
+
+            geometry.push(sc::Triangle::new(
+                vertices[0],
+                vertices[1],
+                vertices[2],
+                mat,
+            ));
+        }
+    }
 }

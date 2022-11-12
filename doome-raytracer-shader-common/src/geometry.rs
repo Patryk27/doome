@@ -1,4 +1,3 @@
-use crate::padded::PadU32;
 use crate::*;
 
 #[repr(C)]
@@ -22,28 +21,9 @@ impl Geometry {
         self.items[idx as usize]
     }
 
+    #[cfg(not(target_arch = "spirv"))]
     pub fn get_mut(&mut self, idx: u32) -> &mut Triangle {
         &mut self.items[idx as usize]
-    }
-
-    pub fn any_obstacle_between(&self, a: Vec3, b: Vec3) -> bool {
-        let mut idx = 0;
-        let len = (b - a).length();
-
-        let ray = Ray {
-            origin: a,
-            direction: (b - a),
-        };
-
-        while idx < self.len() {
-            if self.items[idx as usize].hit(ray).t < len {
-                return true;
-            }
-
-            idx += 1;
-        }
-
-        false
     }
 }
 

@@ -1,14 +1,13 @@
-use crate::padded::PadU32;
 use crate::*;
 
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
-pub struct Lightning {
+pub struct Lights {
     items: [Light; MAX_LIGHTS as _],
     len: PadU32,
 }
 
-impl Lightning {
+impl Lights {
     pub fn push(&mut self, item: Light) {
         self.items[self.len.value as usize] = item;
         self.len += 1;
@@ -18,6 +17,7 @@ impl Lightning {
         self.items[idx as usize]
     }
 
+    #[cfg(not(target_arch = "spirv"))]
     pub fn get_mut(&mut self, idx: u32) -> &mut Light {
         &mut self.items[idx as usize]
     }
@@ -28,8 +28,8 @@ impl Lightning {
 }
 
 #[cfg(not(target_arch = "spirv"))]
-impl Default for Lightning {
+impl Default for Lights {
     fn default() -> Self {
-        Lightning::zeroed()
+        Lights::zeroed()
     }
 }

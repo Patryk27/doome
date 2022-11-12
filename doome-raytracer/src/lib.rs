@@ -12,7 +12,8 @@ pub struct Raytracer {
     output_texture: wgpu::Texture,
     camera: AllocatedUniform,
     geometry: AllocatedUniform,
-    lightning: AllocatedUniform,
+    lights: AllocatedUniform,
+    materials: AllocatedUniform,
 }
 
 impl Raytracer {
@@ -25,8 +26,10 @@ impl Raytracer {
         let geometry =
             uniforms::allocate::<sc::Geometry>(device, 0, "geometry");
 
-        let lightning =
-            uniforms::allocate::<sc::Lightning>(device, 0, "lightning");
+        let lights = uniforms::allocate::<sc::Lights>(device, 0, "lights");
+
+        let materials =
+            uniforms::allocate::<sc::Materials>(device, 0, "materials");
 
         let pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -34,7 +37,8 @@ impl Raytracer {
                 bind_group_layouts: &[
                     &camera.bind_group_layout,
                     &geometry.bind_group_layout,
-                    &lightning.bind_group_layout,
+                    &lights.bind_group_layout,
+                    &materials.bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -86,7 +90,8 @@ impl Raytracer {
             output_texture,
             camera,
             geometry,
-            lightning,
+            lights,
+            materials,
         }
     }
 
@@ -94,7 +99,8 @@ impl Raytracer {
         &self,
         camera: &sc::Camera,
         geometry: &sc::Geometry,
-        lightning: &sc::Lightning,
+        lights: &sc::Lights,
+        materials: &sc::Materials,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
     ) {
@@ -112,9 +118,15 @@ impl Raytracer {
         );
 
         queue.write_buffer(
-            &self.lightning.buffer,
+            &self.lights.buffer,
             0,
-            bytemuck::cast_slice(slice::from_ref(lightning)),
+            bytemuck::cast_slice(slice::from_ref(lights)),
+        );
+
+        queue.write_buffer(
+            &self.materials.buffer,
+            0,
+            bytemuck::cast_slice(slice::from_ref(materials)),
         );
 
         let view = self.output_texture.create_view(&Default::default());
@@ -138,20 +150,13 @@ impl Raytracer {
 
         rpass.set_bind_group(0, &self.camera.bind_group, &[]);
         rpass.set_bind_group(1, &self.geometry.bind_group, &[]);
-        rpass.set_bind_group(2, &self.lightning.bind_group, &[]);
+        rpass.set_bind_group(2, &self.lights.bind_group, &[]);
+        rpass.set_bind_group(3, &self.materials.bind_group, &[]);
 
         rpass.draw(0..3, 0..1);
     }
 
-    pub fn output_texture(&self) -> wgpu::TextureView {
+    pub fn output_texture_view(&self) -> wgpu::TextureView {
         self.output_texture.create_view(&Default::default())
-    }
-
-    pub fn output_size(&self) -> wgpu::Extent3d {
-        wgpu::Extent3d {
-            width: self.width,
-            height: self.height,
-            depth_or_array_layers: 1,
-        }
     }
 }

@@ -5,8 +5,10 @@ pub struct Hit {
     pub t: f32,
     pub u: f32,
     pub v: f32,
+    pub ray: Ray,
     pub point: Vec3,
     pub normal: Vec3,
+    pub material_id: MaterialId,
 }
 
 impl Hit {
@@ -15,10 +17,12 @@ impl Hit {
     pub fn none() -> Self {
         Self {
             t: Self::MAX_T,
-            u: 0.0,
-            v: 0.0,
-            point: vec3(0.0, 0.0, 0.0),
-            normal: vec3(0.0, 0.0, 0.0),
+            u: Default::default(),
+            v: Default::default(),
+            ray: Default::default(),
+            point: Default::default(),
+            normal: Default::default(),
+            material_id: MaterialId::new(0),
         }
     }
 

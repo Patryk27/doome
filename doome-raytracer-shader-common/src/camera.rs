@@ -56,19 +56,22 @@ impl Camera {
     }
 
     pub fn ray(&self, pos: Vec2) -> Ray {
-        let pos = pos / self.viewport_size.xy();
-        let pos = pos * 2.0 - vec2(1.0, 1.0);
+        let origin = self.origin.xyz();
 
-        Ray {
-            origin: self.origin.xyz(),
-            direction: OrthonormalBasis::trace(
+        let direction = {
+            let pos = pos / self.viewport_size.xy();
+            let pos = pos * 2.0 - vec2(1.0, 1.0);
+
+            OrthonormalBasis::trace(
                 self.onb_u,
                 self.onb_v,
                 self.onb_w,
                 vec4(pos.x, pos.y, -self.origin.w, 0.0),
             )
-            .xyz(),
-        }
+            .xyz()
+        };
+
+        Ray::new(origin, direction)
     }
 }
 

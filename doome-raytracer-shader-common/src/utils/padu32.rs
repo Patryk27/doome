@@ -1,4 +1,6 @@
-use bytemuck::{Pod, Zeroable};
+use core::ops;
+
+use crate::*;
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Pod, Zeroable)]
@@ -32,7 +34,7 @@ impl From<PadU32> for u32 {
     }
 }
 
-impl core::ops::Add<u32> for PadU32 {
+impl ops::Add<u32> for PadU32 {
     type Output = Self;
 
     fn add(self, rhs: u32) -> Self::Output {
@@ -40,13 +42,13 @@ impl core::ops::Add<u32> for PadU32 {
     }
 }
 
-impl core::ops::AddAssign<u32> for PadU32 {
+impl ops::AddAssign<u32> for PadU32 {
     fn add_assign(&mut self, rhs: u32) {
         self.value += rhs;
     }
 }
 
-impl core::ops::Sub<u32> for PadU32 {
+impl ops::Sub<u32> for PadU32 {
     type Output = Self;
 
     fn sub(self, rhs: u32) -> Self::Output {
@@ -54,7 +56,7 @@ impl core::ops::Sub<u32> for PadU32 {
     }
 }
 
-impl core::ops::SubAssign<u32> for PadU32 {
+impl ops::SubAssign<u32> for PadU32 {
     fn sub_assign(&mut self, rhs: u32) {
         self.value -= rhs;
     }
