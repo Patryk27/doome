@@ -2,14 +2,14 @@ use crate::*;
 
 #[repr(C)]
 #[derive(Copy, Clone, Default, Pod, Zeroable)]
-pub struct Object {
+pub struct Triangle {
     v0: Vec4,
     v1: Vec4,
     v2: Vec4,
     color: Vec4,
 }
 
-impl Object {
+impl Triangle {
     pub fn new(v0: Vec3, v1: Vec3, v2: Vec3, color: Vec3) -> Self {
         Self {
             v0: v0.extend(0.0),
@@ -52,6 +52,19 @@ impl Object {
 
         let t = v0v2.dot(qvec) * inv_det;
 
-        Hit { t, u, v }
+        if t < f32::EPSILON {
+            return Hit::none();
+        }
+
+        let point = ray.origin + ray.direction * t;
+        let normal = v0v1.cross(v0v2).normalize();
+
+        Hit {
+            t,
+            u,
+            v,
+            point,
+            normal,
+        }
     }
 }

@@ -1,16 +1,23 @@
-use std::mem;
+use std::{any, mem};
 
-pub struct BufferItems {
+pub struct AllocatedUniform {
     pub buffer: wgpu::Buffer,
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
 }
 
-pub fn prepare_buffer<T>(
+pub fn allocate<T>(
     device: &wgpu::Device,
     binding: u32,
     name: &str,
-) -> BufferItems {
+) -> AllocatedUniform {
+    assert!(
+        mem::size_of::<T>() % 16 == 0,
+        "`{}` is not padded to 16 bytes - actual size is {}",
+        any::type_name::<T>(),
+        mem::size_of::<T>()
+    );
+
     let size = mem::size_of::<T>();
     // pad size to 32 bytes
     let size = (size + 31) & !31;
@@ -53,7 +60,7 @@ pub fn prepare_buffer<T>(
         }],
     });
 
-    BufferItems {
+    AllocatedUniform {
         buffer,
         bind_group_layout,
         bind_group,

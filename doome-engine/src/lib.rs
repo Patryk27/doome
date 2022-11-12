@@ -140,20 +140,32 @@ async fn run(mut app: impl App + 'static) {
         [1.0, (RAYTRACER_HEIGHT as f32) / (HEIGHT as f32)],
     );
 
-    let mut world = sc::World::default();
+    // -----
 
-    world.push_object(sc::Object::new(
-        vec3(5.0, 0.0, -5.0),
-        vec3(5.0, 0.0, 5.0),
-        vec3(-5.0, 0.0, 5.0),
-        vec3(0.5, 0.5, 0.5),
+    let mut camera = sc::Camera::new(
+        vec3(0.0, 1.0, 0.0),
+        vec3(0.0, 1.0, 5.0),
+        vec3(0.0, -1.0, 0.0),
+        1.0,
+        vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
+    );
+
+    // -----
+
+    let mut geometry = sc::Geometry::default();
+
+    geometry.push(sc::Triangle::new(
+        vec3(-10.0, 0.0, 10.0),
+        vec3(10.0, 0.0, 10.0),
+        vec3(10.0, 0.0, -10.0),
+        vec3(1.0, 1.0, 1.0),
     ));
 
-    world.push_object(sc::Object::new(
-        vec3(5.0, 0.0, -5.0),
-        vec3(-5.0, 0.0, 5.0),
-        vec3(-5.0, 0.0, -5.0),
-        vec3(0.5, 0.5, 0.5),
+    geometry.push(sc::Triangle::new(
+        vec3(-10.0, 0.0, -10.0),
+        vec3(-10.0, 0.0, 10.0),
+        vec3(10.0, 0.0, -10.0),
+        vec3(1.0, 1.0, 1.0),
     ));
 
     {
@@ -186,23 +198,27 @@ async fn run(mut app: impl App + 'static) {
                     })
                     .collect();
 
-                world.push_object(sc::Object::new(
+                geometry.push(sc::Triangle::new(
                     vertices[0],
                     vertices[1],
                     vertices[2],
-                    vec3(0.0, 0.0, 1.0),
+                    vec3(1.0, 1.0, 1.0),
                 ));
             }
         }
     }
 
-    let mut camera = sc::Camera::new(
-        vec3(0.0, 1.0, 0.0),
-        vec3(0.0, 1.0, 5.0),
-        vec3(0.0, -1.0, 0.0),
-        1.0,
-        vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
-    );
+    // -----
+
+    let mut lightning = sc::Lightning::default();
+
+    lightning
+        .push(sc::Light::new(vec3(10.0, 10.0, -10.0), vec3(1.0, 0.0, 0.0)));
+    lightning.push(sc::Light::new(vec3(10.0, 10.0, 10.0), vec3(0.0, 1.0, 0.0)));
+    lightning
+        .push(sc::Light::new(vec3(-10.0, 10.0, 10.0), vec3(0.0, 0.0, 1.0)));
+
+    // -----
 
     let mut surface_size = window.inner_size();
     let mut time_of_last_update = Instant::now();
@@ -310,8 +326,9 @@ async fn run(mut app: impl App + 'static) {
 
                         // Draw raytracer
                         raytracer.render(
-                            &world,
                             &camera,
+                            &geometry,
+                            &lightning,
                             &context.queue,
                             encoder,
                         );

@@ -1,7 +1,7 @@
 use std::slice;
 
 use doome_raytracer_shader_common as sc;
-use uniforms::BufferItems;
+use uniforms::AllocatedUniform;
 
 mod uniforms;
 
@@ -10,10 +10,9 @@ pub struct Raytracer {
     height: u32,
     pipeline: wgpu::RenderPipeline,
     output_texture: wgpu::Texture,
-
-    // uniforms
-    camera: BufferItems,
-    world: BufferItems,
+    camera: AllocatedUniform,
+    geometry: AllocatedUniform,
+    lightning: AllocatedUniform,
 }
 
 impl Raytracer {
@@ -21,16 +20,21 @@ impl Raytracer {
         let shader = wgpu::include_spirv!(env!("doome_raytracer_shader.spv"));
         let module = device.create_shader_module(shader);
 
-        let camera =
-            uniforms::prepare_buffer::<sc::Camera>(device, 0, "camera");
-        let world = uniforms::prepare_buffer::<sc::World>(device, 0, "world");
+        let camera = uniforms::allocate::<sc::Camera>(device, 0, "camera");
+
+        let geometry =
+            uniforms::allocate::<sc::Geometry>(device, 0, "geometry");
+
+        let lightning =
+            uniforms::allocate::<sc::Lightning>(device, 0, "lightning");
 
         let pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Raytracer pipeline layout"),
                 bind_group_layouts: &[
                     &camera.bind_group_layout,
-                    &world.bind_group_layout,
+                    &geometry.bind_group_layout,
+                    &lightning.bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -80,29 +84,37 @@ impl Raytracer {
             height,
             pipeline,
             output_texture,
-
-            world,
             camera,
+            geometry,
+            lightning,
         }
     }
 
     pub fn render(
         &self,
-        world: &sc::World,
         camera: &sc::Camera,
+        geometry: &sc::Geometry,
+        lightning: &sc::Lightning,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
     ) {
-        queue.write_buffer(
-            &self.world.buffer,
-            0,
-            bytemuck::cast_slice(slice::from_ref(world)),
-        );
-
+        // TODO provide a method on `AllocatedUniform` instead
         queue.write_buffer(
             &self.camera.buffer,
             0,
             bytemuck::cast_slice(slice::from_ref(camera)),
+        );
+
+        queue.write_buffer(
+            &self.geometry.buffer,
+            0,
+            bytemuck::cast_slice(slice::from_ref(geometry)),
+        );
+
+        queue.write_buffer(
+            &self.lightning.buffer,
+            0,
+            bytemuck::cast_slice(slice::from_ref(lightning)),
         );
 
         let view = self.output_texture.create_view(&Default::default());
@@ -124,8 +136,9 @@ impl Raytracer {
         rpass.set_scissor_rect(0, 0, self.width as _, self.height as _);
         rpass.set_pipeline(&self.pipeline);
 
-        rpass.set_bind_group(0, &self.world.bind_group, &[]);
-        rpass.set_bind_group(1, &self.camera.bind_group, &[]);
+        rpass.set_bind_group(0, &self.camera.bind_group, &[]);
+        rpass.set_bind_group(1, &self.geometry.bind_group, &[]);
+        rpass.set_bind_group(2, &self.lightning.bind_group, &[]);
 
         rpass.draw(0..3, 0..1);
     }

@@ -1,70 +1,25 @@
 #![no_std]
 
 mod camera;
-mod object;
+mod geometry;
+mod hit;
+mod light;
+mod lightning;
 mod ray;
-mod world;
+mod triangle;
 
 use bytemuck::{Pod, Zeroable};
-use glam::{vec2, vec4, Vec2, Vec3, Vec4, Vec4Swizzles};
+use glam::{vec2, vec3, vec4, Vec2, Vec3, Vec4, Vec4Swizzles};
 #[cfg(target_arch = "spirv")]
 use spirv_std::num_traits::real::Real;
 
 pub use self::camera::*;
-pub use self::object::*;
+pub use self::geometry::*;
+pub use self::hit::*;
+pub use self::light::*;
+pub use self::lightning::*;
 pub use self::ray::*;
-pub use self::world::*;
+pub use self::triangle::*;
 
 pub const MAX_OBJECTS: u32 = 256;
-
-pub struct Hit {
-    pub t: f32,
-    pub u: f32,
-    pub v: f32,
-}
-
-impl Hit {
-    pub fn none() -> Self {
-        Self {
-            t: 0.0,
-            u: 0.0,
-            v: 0.0,
-        }
-    }
-
-    pub fn is_some(&self) -> bool {
-        self.t > 0.0
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn camera_padding() {
-        assert!(
-            core::mem::size_of::<camera::Camera>() % 16 == 0,
-            "Camera is not padded to 16 bytes, actual size is {}",
-            core::mem::size_of::<camera::Camera>()
-        );
-    }
-
-    #[test]
-    fn world_padding() {
-        assert!(
-            core::mem::size_of::<world::World>() % 16 == 0,
-            "World is not padded to 16 bytes, actual size is {}",
-            core::mem::size_of::<world::World>()
-        );
-    }
-
-    #[test]
-    fn object_padding() {
-        assert!(
-            core::mem::size_of::<object::Object>() % 16 == 0,
-            "Object is not padded to 16 bytes, actual size is {}",
-            core::mem::size_of::<object::Object>()
-        );
-    }
-}
+pub const MAX_LIGHTS: u32 = 16;

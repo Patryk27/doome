@@ -70,11 +70,6 @@ impl Camera {
             .xyz(),
         }
     }
-
-    // TODO HACK
-    pub fn is_debugging(&self) -> bool {
-        self.origin.w > 50.0
-    }
 }
 
 // Thanks to https://4programmers.net/Z_pogranicza/Raytracing
