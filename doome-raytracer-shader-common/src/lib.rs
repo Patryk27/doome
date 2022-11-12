@@ -5,6 +5,7 @@ mod geometry;
 mod hit;
 mod light;
 mod lightning;
+mod padded;
 mod ray;
 mod triangle;
 

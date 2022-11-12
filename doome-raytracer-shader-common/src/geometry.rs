@@ -1,24 +1,21 @@
+use crate::padded::PadU32;
 use crate::*;
 
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct Geometry {
     items: [Triangle; MAX_OBJECTS as _],
-    len: u32,
-    _pad1: u32,
-    _pad2: u32,
-    _pad3: u32,
+    len: PadU32,
 }
 
 impl Geometry {
     pub fn push(&mut self, item: Triangle) {
-        self.items[self.len as usize] = item;
+        self.items[self.len.value as usize] = item;
         self.len += 1;
     }
 
-
     pub fn len(&self) -> u32 {
-        self.len
+        self.len.value
     }
 
     pub fn get(&self, idx: u32) -> Triangle {
