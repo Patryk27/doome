@@ -159,6 +159,9 @@ async fn run(mut app: impl App + 'static) {
 
     let mat_wall = materials.push(sc::Material::default().with_color(0x0d2b45));
 
+    let mat_ceiling =
+        materials.push(sc::Material::default().with_color(0x544e68));
+
     let mat_sphere = materials.push(
         sc::Material::default()
             .with_color(0xff0000)
@@ -172,15 +175,17 @@ async fn run(mut app: impl App + 'static) {
     geometry.push_floor(-3, -3, 3, 3, mat_floor);
     geometry.push_wall(-3, 3, -1, 3, 0, mat_wall);
     geometry.push_wall(1, 3, 3, 3, 0, mat_wall);
-    // geometry.push_wall(3, 3, 3, -3, 1, mat_wall);
-    // geometry.push_wall(-3, -3, 3, -3, 2, mat_wall);
-    // geometry.push_wall(-3, -3, -3, 3, 3, mat_wall);
+    geometry.push_wall(3, 3, 3, -3, 1, mat_wall);
+    geometry.push_wall(-3, -3, 3, -3, 2, mat_wall);
+    geometry.push_wall(-3, -3, -3, 3, 3, mat_wall);
 
     geometry.push_floor(-1, 3, 1, 5, mat_floor);
     geometry.push_wall(-1, 5, 1, 5, 0, mat_wall);
     geometry.push_wall(1, 3, 1, 5, 1, mat_wall);
     geometry.push_wall(-1, 3, -1, 5, 3, mat_wall);
     geometry.push_icosphere(0, 2, mat_sphere);
+
+    geometry.push_ceiling(-10, -10, 10, 10, mat_ceiling);
 
     // -----
 
@@ -395,15 +400,15 @@ trait GeometryExt {
 
         self.push(sc::Triangle::new(
             vec3(x2, 4.0, z1),
-            vec3(x1, 4.0, z1),
             vec3(x1, 4.0, z2),
+            vec3(x1, 4.0, z1),
             mat,
         ));
 
         self.push(sc::Triangle::new(
             vec3(x2, 4.0, z1),
-            vec3(x1, 4.0, z2),
             vec3(x2, 4.0, z2),
+            vec3(x1, 4.0, z2),
             mat,
         ));
     }

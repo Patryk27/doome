@@ -22,11 +22,17 @@ impl Ray {
         self.direction
     }
 
-    pub fn hits_anything(self, geometry: &Geometry) -> bool {
+    pub fn hits_anything_up_to(
+        self,
+        geometry: &Geometry,
+        distance: f32,
+    ) -> bool {
         let mut triangle_idx = 0;
 
         while triangle_idx < geometry.len() {
-            if geometry.get(triangle_idx).hit(self).is_some() {
+            let hit = geometry.get(triangle_idx).hit(self);
+
+            if hit.t < distance {
                 return true;
             }
 

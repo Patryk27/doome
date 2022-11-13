@@ -70,8 +70,9 @@ impl Material {
         while light_idx < lights.len() {
             let light = lights.get(light_idx);
             let ray = Ray::new(hit.point, light.pos() - hit.point);
+            let distance = light.pos().distance(hit.point);
 
-            if !ray.hits_anything(geometry) {
+            if !ray.hits_anything_up_to(geometry, distance) {
                 let direction = (light.pos() - hit.point).normalize();
                 let diffuse_factor = direction.dot(hit.normal);
 
