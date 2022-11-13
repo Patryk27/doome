@@ -23,8 +23,8 @@ pub fn allocate<T>(
     let size = (size + 31) & !31;
     let size = size as _;
 
-    log::info!(
-        "Going to allocate buffer with name {name} and size {} padded to {}",
+    log::debug!(
+        "Allocating uniform `{name}`: size={}, padded to {}",
         mem::size_of::<T>(),
         size,
     );

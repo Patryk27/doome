@@ -71,12 +71,15 @@ impl Material {
             let light = lights.get(light_idx);
             let ray = Ray::new(hit.point, light.pos() - hit.point);
 
-            if !ray.hits_anything(&geometry) {
+            if !ray.hits_anything(geometry) {
                 let direction = (light.pos() - hit.point).normalize();
                 let diffuse_factor = direction.dot(hit.normal);
 
                 if diffuse_factor > 0.0 {
-                    radiance += light.color() * color * diffuse_factor;
+                    radiance += light.color()
+                        * light.intensity()
+                        * color
+                        * diffuse_factor;
                 }
             }
 

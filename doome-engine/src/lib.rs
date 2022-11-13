@@ -9,7 +9,7 @@ use doome_raytracer::Raytracer;
 use doome_raytracer_shader_common as sc;
 use doome_surface::Color;
 use doome_text::TextEngine;
-use glam::{vec2, vec3, Vec3, Vec3Swizzles};
+use glam::{vec2, vec3, Vec3Swizzles};
 use instant::Instant;
 use pixels::{Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
@@ -143,8 +143,8 @@ async fn run(mut app: impl App + 'static) {
     // -----
 
     let mut camera = sc::Camera::new(
-        vec3(0.0, 1.0, 0.0),
-        vec3(0.0, 1.0, 5.0),
+        vec3(0.0, 1.0, -3.0),
+        vec3(0.0, 1.0, 2.0),
         vec3(0.0, -1.0, 0.0),
         1.0,
         vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
@@ -154,52 +154,52 @@ async fn run(mut app: impl App + 'static) {
 
     let mut materials = sc::Materials::default();
 
-    let m1 = materials.push(
+    let mat_floor =
+        materials.push(sc::Material::default().with_color(0x544e68));
+
+    let mat_wall = materials.push(sc::Material::default().with_color(0x0d2b45));
+
+    let mat_sphere = materials.push(
         sc::Material::default()
-            .with_color(0x1a1417)
-            .with_reflectivity(0.5, 0xffffff),
+            .with_color(0xff0000)
+            .with_reflectivity(0.65, 0xffffff),
     );
-    let m2 = materials.push(
-        sc::Material::default()
-            .with_color(0x505050)
-            .with_reflectivity(1.0, 0xffffff),
-    );
-    let m3 = materials.push(sc::Material::default().with_color(0x8db35e));
-    let m4 = materials.push(sc::Material::default().with_color(0x384d64));
 
     // -----
 
     let mut geometry = sc::Geometry::default();
 
-    geometry.push(sc::Triangle::new(
-        vec3(-10.0, 0.0, 10.0),
-        vec3(10.0, 0.0, 10.0),
-        vec3(10.0, 0.0, -10.0),
-        m1,
-    ));
+    geometry.push_floor(-3, -3, 3, 3, mat_floor);
+    geometry.push_wall(-3, 3, -1, 3, 0, mat_wall);
+    geometry.push_wall(1, 3, 3, 3, 0, mat_wall);
+    // geometry.push_wall(3, 3, 3, -3, 1, mat_wall);
+    // geometry.push_wall(-3, -3, 3, -3, 2, mat_wall);
+    // geometry.push_wall(-3, -3, -3, 3, 3, mat_wall);
 
-    geometry.push(sc::Triangle::new(
-        vec3(-10.0, 0.0, -10.0),
-        vec3(-10.0, 0.0, 10.0),
-        vec3(10.0, 0.0, -10.0),
-        m1,
-    ));
-
-    push_icosphere(&mut geometry, vec3(0.0, 1.0, 5.0), m2);
-    push_icosphere(&mut geometry, vec3(-2.0, 1.0, 4.0), m3);
-    push_icosphere(&mut geometry, vec3(2.0, 1.0, 4.0), m4);
+    geometry.push_floor(-1, 3, 1, 5, mat_floor);
+    geometry.push_wall(-1, 5, 1, 5, 0, mat_wall);
+    geometry.push_wall(1, 3, 1, 5, 1, mat_wall);
+    geometry.push_wall(-1, 3, -1, 5, 3, mat_wall);
+    geometry.push_icosphere(0, 2, mat_sphere);
 
     // -----
 
     let mut lights = sc::Lights::default();
 
-    lights.push(sc::Light::new(vec3(0.0, 5.0, -2.0), 0xffffff));
-    lights.push(sc::Light::new(vec3(0.0, 3.0, 4.0), 0xffffff));
+    lights.push(
+        sc::Light::new(vec3(-2.5 * 2.0, 3.0, -2.5 * 2.0)).with_intensity(0.7),
+    );
+    lights.push(
+        sc::Light::new(vec3(2.5 * 2.0, 3.0, -2.5 * 2.0)).with_intensity(0.7),
+    );
 
     // -----
 
     let mut surface_size = window.inner_size();
     let mut time_of_last_update = Instant::now();
+
+    log::info!("Statistics:");
+    log::info!("- triangles: {}", geometry.len());
 
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
@@ -342,39 +342,150 @@ async fn run(mut app: impl App + 'static) {
     });
 }
 
-// TODO temporary
-fn push_icosphere(geometry: &mut sc::Geometry, pos: Vec3, mat: sc::MaterialId) {
-    let mut reader = Cursor::new(include_bytes!("../../icosphere.obj"));
+trait GeometryExt {
+    fn push(&mut self, tri: sc::Triangle);
 
-    let (models, _) =
-        tobj::load_obj_buf(&mut reader, &Default::default(), |_| todo!())
-            .unwrap();
+    fn map_coords(&self, x: i32, z: i32) -> (f32, f32) {
+        let x = (x as f32) * 2.0;
+        let z = (z as f32) * 2.0;
 
-    for model in models {
-        let mesh = &model.mesh;
+        (x, z)
+    }
 
-        for indices in mesh.indices.chunks(3) {
-            let vertices: Vec<_> = indices
-                .iter()
-                .copied()
-                .map(|index| {
-                    let index = index as usize;
+    fn push_floor(
+        &mut self,
+        x1: i32,
+        z1: i32,
+        x2: i32,
+        z2: i32,
+        mat: sc::MaterialId,
+    ) {
+        let (x1, x2) = (x1.min(x2), x1.max(x2));
+        let (z1, z2) = (z1.min(z2), z1.max(z2));
+        let (x1, z1) = self.map_coords(x1, z1);
+        let (x2, z2) = self.map_coords(x2, z2);
 
-                    vec3(
-                        mesh.positions[3 * index],
-                        mesh.positions[3 * index + 1],
-                        mesh.positions[3 * index + 2],
-                    )
-                })
-                .map(|vertex| pos + vertex)
-                .collect();
+        self.push(sc::Triangle::new(
+            vec3(x2, 0.0, z1),
+            vec3(x1, 0.0, z1),
+            vec3(x1, 0.0, z2),
+            mat,
+        ));
 
-            geometry.push(sc::Triangle::new(
-                vertices[0],
-                vertices[1],
-                vertices[2],
-                mat,
-            ));
+        self.push(sc::Triangle::new(
+            vec3(x2, 0.0, z1),
+            vec3(x1, 0.0, z2),
+            vec3(x2, 0.0, z2),
+            mat,
+        ));
+    }
+
+    fn push_ceiling(
+        &mut self,
+        x1: i32,
+        z1: i32,
+        x2: i32,
+        z2: i32,
+        mat: sc::MaterialId,
+    ) {
+        let (x1, x2) = (x1.min(x2), x1.max(x2));
+        let (z1, z2) = (z1.min(z2), z1.max(z2));
+        let (x1, z1) = self.map_coords(x1, z1);
+        let (x2, z2) = self.map_coords(x2, z2);
+
+        self.push(sc::Triangle::new(
+            vec3(x2, 4.0, z1),
+            vec3(x1, 4.0, z1),
+            vec3(x1, 4.0, z2),
+            mat,
+        ));
+
+        self.push(sc::Triangle::new(
+            vec3(x2, 4.0, z1),
+            vec3(x1, 4.0, z2),
+            vec3(x2, 4.0, z2),
+            mat,
+        ));
+    }
+
+    fn push_wall(
+        &mut self,
+        x1: i32,
+        z1: i32,
+        x2: i32,
+        z2: i32,
+        rot: u8,
+        mat: sc::MaterialId,
+    ) {
+        let (x1, x2) = (x1.min(x2), x1.max(x2));
+        let (z1, z2) = (z1.min(z2), z1.max(z2));
+        let (x1, z1) = self.map_coords(x1, z1);
+        let (x2, z2) = self.map_coords(x2, z2);
+        let rot = (rot as f32) * (PI / 2.0);
+
+        let vertex = |dx, y, dz| {
+            let x = if dx < 0.0 { x1 } else { x2 };
+            let z = if dz < 0.0 { z1 } else { z2 };
+
+            vec3(x, y, z)
+        };
+
+        self.push(sc::Triangle::new(
+            vertex(1.0 * rot.cos(), 0.0, -1.0 * rot.sin()),
+            vertex(-1.0 * rot.cos(), 0.0, 1.0 * rot.sin()),
+            vertex(-1.0 * rot.cos(), 4.0, 1.0 * rot.sin()),
+            mat,
+        ));
+
+        self.push(sc::Triangle::new(
+            vertex(1.0 * rot.cos(), 0.0, -1.0 * rot.sin()),
+            vertex(-1.0 * rot.cos(), 4.0, 1.0 * rot.sin()),
+            vertex(1.0 * rot.cos(), 4.0, -1.0 * rot.sin()),
+            mat,
+        ));
+    }
+
+    // TODO temporary
+    fn push_icosphere(&mut self, x: i32, z: i32, mat: sc::MaterialId) {
+        let (x, z) = self.map_coords(x, z);
+        let mut reader = Cursor::new(include_bytes!("../../icosphere.obj"));
+
+        let (models, _) =
+            tobj::load_obj_buf(&mut reader, &Default::default(), |_| todo!())
+                .unwrap();
+
+        for model in models {
+            let mesh = &model.mesh;
+
+            for indices in mesh.indices.chunks(3) {
+                let vertices: Vec<_> = indices
+                    .iter()
+                    .copied()
+                    .map(|index| {
+                        let index = index as usize;
+
+                        vec3(
+                            mesh.positions[3 * index],
+                            mesh.positions[3 * index + 1],
+                            mesh.positions[3 * index + 2],
+                        )
+                    })
+                    .map(|vertex| vertex + vec3(x, 1.0, z))
+                    .collect();
+
+                self.push(sc::Triangle::new(
+                    vertices[0],
+                    vertices[1],
+                    vertices[2],
+                    mat,
+                ));
+            }
         }
+    }
+}
+
+impl GeometryExt for sc::Geometry {
+    fn push(&mut self, tri: sc::Triangle) {
+        sc::Geometry::push(self, tri)
     }
 }

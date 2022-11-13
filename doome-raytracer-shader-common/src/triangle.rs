@@ -25,7 +25,7 @@ impl Triangle {
         let pvec = ray.direction().cross(v0v2);
         let det = v0v1.dot(pvec);
 
-        if det.abs() < f32::EPSILON {
+        if det < f32::EPSILON {
             return Hit::none();
         }
 
@@ -46,7 +46,7 @@ impl Triangle {
 
         let t = v0v2.dot(qvec) * inv_det;
 
-        if t < 100.0 * f32::EPSILON {
+        if t < 0.0 {
             return Hit::none();
         }
 
@@ -55,7 +55,7 @@ impl Triangle {
             u,
             v,
             ray,
-            point: ray.origin() + ray.direction() * t,
+            point: ray.origin() + ray.direction() * (t - 0.01),
             normal: v0v1.cross(v0v2).normalize(),
             material_id: self.material_id(),
         }

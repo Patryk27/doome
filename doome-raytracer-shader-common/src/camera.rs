@@ -37,6 +37,10 @@ impl Camera {
         }
     }
 
+    pub fn origin(&self) -> Vec3 {
+        self.origin.xyz()
+    }
+
     pub fn update(&mut self, f: impl FnOnce(&mut Vec3, &mut Vec3, &mut Vec3)) {
         let mut origin = self.origin.xyz();
         let mut look_at = self.look_at.xyz();
