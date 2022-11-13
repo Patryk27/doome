@@ -65,13 +65,14 @@ impl Ray {
         geometry: &Geometry,
         lights: &Lights,
         materials: &Materials,
+        texture: &Texture,
     ) -> Vec3 {
         let hit = self.trace(geometry);
 
         if hit.is_some() {
             materials
                 .get(hit.material_id)
-                .shade(geometry, lights, materials, hit)
+                .shade(geometry, lights, materials, texture, hit)
         } else {
             vec3(0.0, 0.0, 0.0)
         }
@@ -90,13 +91,14 @@ impl Ray {
         geometry: &Geometry,
         lights: &Lights,
         materials: &Materials,
+        texture: &Texture,
     ) -> Vec3 {
         let hit = self.trace(geometry);
 
         if hit.is_some() {
             materials
                 .get(hit.material_id)
-                .shade_basic(geometry, lights, hit)
+                .shade_basic(geometry, lights, texture, hit)
         } else {
             vec3(0.0, 0.0, 0.0)
         }

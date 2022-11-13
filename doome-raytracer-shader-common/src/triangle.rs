@@ -70,10 +70,16 @@ impl Triangle {
             return Hit::none();
         }
 
+        // convert u, v to tex coords based on triangle vertices uvs
+        let uv0 = vec2(self.v1.w, self.v2.w);
+        let uv1 = vec2(self.uvs.x, self.uvs.y);
+        let uv2 = vec2(self.uvs.z, self.uvs.w);
+
+        let uv = uv0 + (uv1 - uv0) * u + (uv2 - uv0) * v;
+
         Hit {
             t,
-            u,
-            v,
+            uv,
             ray,
             point: ray.origin() + ray.direction() * (t - 0.01),
             normal: v0v1.cross(v0v2).normalize(),

@@ -28,8 +28,10 @@ pub fn fs_main(
     #[spirv(descriptor_set = 4, binding = 1)] sampler: &Sampler,
     color: &mut Vec4,
 ) {
+    let texture = Texture { texture, sampler };
+
     *color = camera
         .ray(pos.xy())
-        .shade(geometry, lights, materials)
+        .shade(geometry, lights, materials, &texture)
         .extend(1.0);
 }

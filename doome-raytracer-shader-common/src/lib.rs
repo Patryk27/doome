@@ -8,6 +8,7 @@ mod lights;
 mod material;
 mod materials;
 mod ray;
+mod sampling;
 mod triangle;
 mod utils;
 
@@ -24,6 +25,7 @@ pub use self::lights::*;
 pub use self::material::*;
 pub use self::materials::*;
 pub use self::ray::*;
+pub use self::sampling::*;
 pub use self::triangle::*;
 use self::utils::*;
 

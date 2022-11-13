@@ -161,17 +161,15 @@ async fn run(mut app: impl App + 'static) {
 
     let mut materials = sc::Materials::default();
 
-    let mat_floor =
-        materials.push(sc::Material::default().with_color(0x544e68));
+    let mat_floor = materials.push(sc::Material::default());
 
-    let mat_wall = materials.push(sc::Material::default().with_color(0x0d2b45));
+    let mat_wall = materials.push(sc::Material::default());
 
-    let mat_ceiling =
-        materials.push(sc::Material::default().with_color(0x0d2b45));
+    let mat_ceiling = materials.push(sc::Material::default());
 
     let mat_sphere = materials.push(
         sc::Material::default()
-            .with_color(0xff0000)
+            // .with_color(0xff0000)
             .with_reflectivity(0.65, 0xffffff),
     );
 
@@ -523,9 +521,9 @@ trait GeometryExt {
                     vertices[0],
                     vertices[1],
                     vertices[2],
-                    vec2(0.0, 0.0),
-                    vec2(0.0, 0.0),
-                    vec2(0.0, 0.0),
+                    vec2(0.0, 1.0),
+                    vec2(1.0, 1.0),
+                    vec2(1.0, 0.0),
                     mat,
                 ));
             }

@@ -3,8 +3,7 @@ use crate::*;
 #[derive(Copy, Clone)]
 pub struct Hit {
     pub t: f32,
-    pub u: f32,
-    pub v: f32,
+    pub uv: Vec2,
     pub ray: Ray,
     pub point: Vec3,
     pub normal: Vec3,
@@ -17,8 +16,7 @@ impl Hit {
     pub fn none() -> Self {
         Self {
             t: Self::MAX_T,
-            u: Default::default(),
-            v: Default::default(),
+            uv: Default::default(),
             ray: Default::default(),
             point: Default::default(),
             normal: Default::default(),

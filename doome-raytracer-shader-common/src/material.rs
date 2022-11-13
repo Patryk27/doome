@@ -3,16 +3,16 @@ use crate::*;
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct Material {
-    color: Vec4,
+    // color: Vec4,
     reflectivity: Vec4,
 }
 
 impl Material {
-    #[cfg(not(target_arch = "spirv"))]
-    pub fn with_color(mut self, color: u32) -> Self {
-        self.color = rgb_to_srgb(color).extend(1.0);
-        self
-    }
+    // #[cfg(not(target_arch = "spirv"))]
+    // pub fn with_color(mut self, color: u32) -> Self {
+    //     self.color = rgb_to_srgb(color).extend(1.0);
+    //     self
+    // }
 
     #[cfg(not(target_arch = "spirv"))]
     pub fn with_reflectivity(
@@ -29,9 +29,10 @@ impl Material {
         geometry: &Geometry,
         lights: &Lights,
         materials: &Materials,
+        texture: &Texture,
         hit: Hit,
     ) -> Vec3 {
-        let mut color = self.radiance(geometry, lights, hit);
+        let mut color = self.radiance(geometry, lights, texture, hit);
         let reflectivity = self.reflectivity.w;
 
         if reflectivity > 0.0 {
@@ -44,7 +45,7 @@ impl Material {
             };
 
             let ray_color = Ray::new(hit.point, reflection_dir)
-                .shade_basic(geometry, lights, materials);
+                .shade_basic(geometry, lights, materials, texture);
 
             color += ray_color * reflection_color * reflectivity;
         }
@@ -57,14 +58,22 @@ impl Material {
         &self,
         geometry: &Geometry,
         lights: &Lights,
+        texture: &Texture,
         hit: Hit,
     ) -> Vec3 {
-        self.radiance(geometry, lights, hit)
+        self.radiance(geometry, lights, texture, hit)
     }
 
-    fn radiance(&self, geometry: &Geometry, lights: &Lights, hit: Hit) -> Vec3 {
+    fn radiance(
+        &self,
+        geometry: &Geometry,
+        lights: &Lights,
+        texture: &Texture,
+        hit: Hit,
+    ) -> Vec3 {
+        let color = texture.sample(hit.uv).truncate();
         let mut radiance = vec3(0.0, 0.0, 0.0);
-        let color = self.color.xyz();
+
         let mut light_idx = 0;
 
         while light_idx < lights.len() {

@@ -19,3 +19,6 @@ members = [
 doome-engine = { path = "doome-engine" }
 doome-surface = { path = "doome-surface" }
 doome-text = { path = "doome-text" }
+
+[profile.dev]
+overflow-checks = false
