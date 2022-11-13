@@ -2,7 +2,6 @@
 
 use doome_raytracer_shader_common::*;
 use spirv_std::glam::{vec2, Vec2, Vec4, Vec4Swizzles};
-use spirv_std::image::SampledImage;
 #[cfg(target_arch = "spirv")]
 use spirv_std::num_traits::real::Real;
 use spirv_std::{spirv, Image, Sampler};
