@@ -25,6 +25,14 @@ impl Geometry {
     pub fn get_mut(&mut self, idx: u32) -> &mut Triangle {
         &mut self.items[idx as usize]
     }
+
+    #[cfg(not(target_arch = "spirv"))]
+    pub fn iter(&self) -> impl Iterator<Item = (u16, Triangle)> + '_ {
+        self.items[0..(self.len() as usize)]
+            .iter()
+            .enumerate()
+            .map(|(triangle_id, triangle)| (triangle_id as _, *triangle))
+    }
 }
 
 #[cfg(not(target_arch = "spirv"))]

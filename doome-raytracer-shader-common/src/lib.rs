@@ -2,6 +2,7 @@
 
 mod camera;
 mod geometry;
+mod geometry_index;
 mod hit;
 mod light;
 mod lights;
@@ -19,6 +20,7 @@ use spirv_std::num_traits::real::Real;
 
 pub use self::camera::*;
 pub use self::geometry::*;
+pub use self::geometry_index::*;
 pub use self::hit::*;
 pub use self::light::*;
 pub use self::lights::*;

@@ -31,6 +31,28 @@ impl Triangle {
         }
     }
 
+    pub fn v0(&self) -> Vec3 {
+        self.v0.xyz()
+    }
+
+    pub fn v1(&self) -> Vec3 {
+        self.v1.xyz()
+    }
+
+    pub fn v2(&self) -> Vec3 {
+        self.v2.xyz()
+    }
+
+    #[cfg(not(target_arch = "spirv"))]
+    pub fn vertices(&self) -> [Vec3; 3] {
+        [self.v0(), self.v1(), self.v2()]
+    }
+
+    #[cfg(not(target_arch = "spirv"))]
+    pub fn center(&self) -> Vec3 {
+        self.vertices().iter().sum::<Vec3>() / 3.0
+    }
+
     pub fn hit(&self, ray: Ray) -> Hit {
         // Following the Möller-Trumbore algorithm
 
@@ -48,7 +70,7 @@ impl Triangle {
         let mut u = tvec.dot(pvec) * inv_det;
 
         // HACK prevents funky artifacts that happen when camera is aligned in
-        //      the same direction at the triangle
+        //      the same direction as the triangle
         if u > -0.0001 && u < 0.0 {
             u = f32::EPSILON;
         }

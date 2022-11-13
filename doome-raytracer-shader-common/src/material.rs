@@ -27,6 +27,7 @@ impl Material {
     pub fn shade(
         &self,
         geometry: &Geometry,
+        geometry_index: &GeometryIndex,
         lights: &Lights,
         materials: &Materials,
         texture: &Texture,
@@ -44,8 +45,13 @@ impl Material {
                 hit.normal * hit.normal.dot(camera_dir) * 2.0 - camera_dir
             };
 
-            let ray_color = Ray::new(hit.point, reflection_dir)
-                .shade_basic(geometry, lights, materials, texture);
+            let ray_color = Ray::new(hit.point, reflection_dir).shade_basic(
+                geometry,
+                geometry_index,
+                lights,
+                materials,
+                texture,
+            );
 
             color += ray_color * reflection_color * reflectivity;
         }
@@ -73,7 +79,6 @@ impl Material {
     ) -> Vec3 {
         let color = texture.sample(hit.uv).truncate();
         let mut radiance = vec3(0.0, 0.0, 0.0);
-
         let mut light_idx = 0;
 
         while light_idx < lights.len() {

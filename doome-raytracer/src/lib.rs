@@ -13,6 +13,7 @@ pub struct Raytracer {
     output_texture: wgpu::Texture,
     camera: AllocatedUniform,
     geometry: AllocatedUniform,
+    geometry_index: AllocatedUniform,
     lights: AllocatedUniform,
     materials: AllocatedUniform,
 
@@ -33,6 +34,12 @@ impl Raytracer {
 
         let geometry =
             uniforms::allocate::<sc::Geometry>(device, 0, "geometry");
+
+        let geometry_index = uniforms::allocate::<sc::GeometryIndex>(
+            device,
+            0,
+            "geometry_index",
+        );
 
         let lights = uniforms::allocate::<sc::Lights>(device, 0, "lights");
 
@@ -141,6 +148,7 @@ impl Raytracer {
                 bind_group_layouts: &[
                     &camera.bind_group_layout,
                     &geometry.bind_group_layout,
+                    &geometry_index.bind_group_layout,
                     &lights.bind_group_layout,
                     &materials.bind_group_layout,
                     &tex_bind_group_layout,
@@ -195,6 +203,7 @@ impl Raytracer {
             output_texture,
             camera,
             geometry,
+            geometry_index,
             lights,
             materials,
             tex_bind_group,
@@ -205,6 +214,7 @@ impl Raytracer {
         &self,
         camera: &sc::Camera,
         geometry: &sc::Geometry,
+        geometry_index: &sc::GeometryIndex,
         lights: &sc::Lights,
         materials: &sc::Materials,
         queue: &wgpu::Queue,
@@ -221,6 +231,12 @@ impl Raytracer {
             &self.geometry.buffer,
             0,
             bytemuck::cast_slice(slice::from_ref(geometry)),
+        );
+
+        queue.write_buffer(
+            &self.geometry_index.buffer,
+            0,
+            bytemuck::cast_slice(slice::from_ref(geometry_index)),
         );
 
         queue.write_buffer(
@@ -256,9 +272,10 @@ impl Raytracer {
 
         rpass.set_bind_group(0, &self.camera.bind_group, &[]);
         rpass.set_bind_group(1, &self.geometry.bind_group, &[]);
-        rpass.set_bind_group(2, &self.lights.bind_group, &[]);
-        rpass.set_bind_group(3, &self.materials.bind_group, &[]);
-        rpass.set_bind_group(4, &self.tex_bind_group, &[]);
+        rpass.set_bind_group(2, &self.geometry_index.bind_group, &[]);
+        rpass.set_bind_group(3, &self.lights.bind_group, &[]);
+        rpass.set_bind_group(4, &self.materials.bind_group, &[]);
+        rpass.set_bind_group(5, &self.tex_bind_group, &[]);
 
         rpass.draw(0..3, 0..1);
     }

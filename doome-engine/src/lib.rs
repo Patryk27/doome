@@ -1,4 +1,5 @@
 mod canvas;
+mod geometry_indexer;
 mod pipeline;
 mod scaling_texture_renderer;
 
@@ -20,6 +21,7 @@ use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
 pub use self::canvas::*;
+use self::geometry_indexer::*;
 use self::scaling_texture_renderer::*;
 use crate::pipeline::Pipeline;
 
@@ -205,8 +207,20 @@ async fn run(mut app: impl App + 'static) {
     geometry.push_wall(1, 3, 1, 5, 1, mat_wall);
     geometry.push_wall(-1, 3, -1, 5, 3, mat_wall);
     geometry.push_icosphere(0, 2, mat_sphere);
+    geometry.push_icosphere(-2, 1, mat_sphere);
+    geometry.push_icosphere(2, 1, mat_sphere);
 
     geometry.push_ceiling(-10, -10, 10, 10, mat_ceiling);
+
+    // -----
+
+    let mut geometry_indexer = GeometryIndexer::default();
+
+    for (triangle_id, triangle) in geometry.iter() {
+        geometry_indexer.add(triangle, triangle_id);
+    }
+
+    let geometry_index = geometry_indexer.build();
 
     // -----
 
@@ -223,19 +237,28 @@ async fn run(mut app: impl App + 'static) {
 
     let mut surface_size = window.inner_size();
     let mut time_of_last_update = Instant::now();
+    let mut fps_counter = 0;
+    let mut fps_timer = Instant::now();
 
     log::info!("Statistics:");
     log::info!("- triangles: {}", geometry.len());
 
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
-            #[cfg(target_arch = "wasm")]
+            #[cfg(target_arch = "wasm32")]
             let can_redraw = true;
 
-            #[cfg(not(target_arch = "wasm"))]
+            #[cfg(not(target_arch = "wasm32"))]
             let can_redraw = time_of_last_update.elapsed().as_secs_f32() >= SPF;
 
             if can_redraw {
+                if fps_timer.elapsed().as_secs_f32() >= 1.0 {
+                    log::error!("fps = {}", fps_counter);
+
+                    fps_counter = 0;
+                    fps_timer = Instant::now();
+                }
+
                 app.update();
 
                 time_of_last_update = Instant::now();
@@ -338,6 +361,7 @@ async fn run(mut app: impl App + 'static) {
                         raytracer.render(
                             &camera,
                             &geometry,
+                            &geometry_index,
                             &lights,
                             &materials,
                             &context.queue,
@@ -348,6 +372,8 @@ async fn run(mut app: impl App + 'static) {
                         Ok(())
                     })
                     .unwrap();
+
+                fps_counter += 1;
             }
         }
 

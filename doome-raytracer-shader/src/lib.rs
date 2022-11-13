@@ -22,16 +22,18 @@ pub fn fs_main(
     #[spirv(frag_coord)] pos: Vec4,
     #[spirv(uniform, descriptor_set = 0, binding = 0)] camera: &Camera,
     #[spirv(uniform, descriptor_set = 1, binding = 0)] geometry: &Geometry,
-    #[spirv(uniform, descriptor_set = 2, binding = 0)] lights: &Lights,
-    #[spirv(uniform, descriptor_set = 3, binding = 0)] materials: &Materials,
-    #[spirv(descriptor_set = 4, binding = 0)] texture: &Image!(2D, type=f32, sampled),
-    #[spirv(descriptor_set = 4, binding = 1)] sampler: &Sampler,
+    #[spirv(uniform, descriptor_set = 2, binding = 0)]
+    geometry_index: &GeometryIndex,
+    #[spirv(uniform, descriptor_set = 3, binding = 0)] lights: &Lights,
+    #[spirv(uniform, descriptor_set = 4, binding = 0)] materials: &Materials,
+    #[spirv(descriptor_set = 5, binding = 0)] texture: &Image!(2D, type=f32, sampled),
+    #[spirv(descriptor_set = 5, binding = 1)] sampler: &Sampler,
     color: &mut Vec4,
 ) {
     let texture = Texture { texture, sampler };
 
     *color = camera
         .ray(pos.xy())
-        .shade(geometry, lights, materials, &texture)
+        .shade(geometry, geometry_index, lights, materials, &texture)
         .extend(1.0);
 }
