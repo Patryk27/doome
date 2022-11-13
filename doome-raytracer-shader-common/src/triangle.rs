@@ -31,7 +31,13 @@ impl Triangle {
 
         let inv_det = 1.0 / det;
         let tvec = ray.origin() - self.v0.truncate();
-        let u = tvec.dot(pvec) * inv_det;
+        let mut u = tvec.dot(pvec) * inv_det;
+
+        // HACK prevents funky artifacts that happen when camera is aligned in
+        //      the same direction at the triangle
+        if u > -0.0001 && u < 0.0 {
+            u = f32::EPSILON;
+        }
 
         if u < 0.0 || u > 1.0 {
             return Hit::none();
