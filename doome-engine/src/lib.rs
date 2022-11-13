@@ -11,10 +11,10 @@ use doome_raytracer::Raytracer;
 use doome_raytracer_shader_common as sc;
 use doome_surface::Color;
 use doome_text::TextEngine;
-use glam::{vec2, vec3, Vec3Swizzles};
+use glam::{vec2, vec3, Quat, Vec3Swizzles};
 use instant::Instant;
 use pixels::{Pixels, SurfaceTexture};
-use winit::dpi::LogicalSize;
+use winit::dpi::{LogicalSize, PhysicalPosition};
 use winit::event::{Event, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
@@ -66,6 +66,8 @@ async fn run(mut app: impl App + 'static) {
             .build(&event_loop)
             .unwrap()
     };
+
+    window.set_cursor_visible(false);
 
     let window = Rc::new(window);
 
@@ -240,6 +242,12 @@ async fn run(mut app: impl App + 'static) {
     let mut fps_counter = 0;
     let mut fps_timer = Instant::now();
 
+    let window_middle =
+        PhysicalPosition::new(surface_size.width / 2, surface_size.height / 2);
+
+    let mut track_mouse = true;
+    let mut mouse_diff = (0.0, 0.0);
+
     log::info!("Statistics:");
     log::info!("- triangles: {}", geometry.len());
 
@@ -263,7 +271,26 @@ async fn run(mut app: impl App + 'static) {
 
                 time_of_last_update = Instant::now();
 
-                // TODO: Add delta
+                let mouse_delta = mouse_diff;
+                mouse_diff = (0.0, 0.0);
+
+                camera.update(|origin, look_at, up| {
+                    let dir = *look_at - *origin;
+
+                    const MOUSE_ROTATION_SENSITIVITY: f32 = 0.001;
+
+                    let rot = Quat::from_axis_angle(
+                        up.normalize(),
+                        // For some reason the up direction here is negative, hence the minus sign
+                        -MOUSE_ROTATION_SENSITIVITY * mouse_delta.0,
+                    );
+
+                    let new_dir = rot * dir;
+                    let new_look_at = *origin + new_dir;
+
+                    look_at.x = new_look_at.x;
+                    look_at.z = new_look_at.z;
+                });
 
                 if input.key_held(VirtualKeyCode::W)
                     || input.key_held(VirtualKeyCode::S)
@@ -286,31 +313,6 @@ async fn run(mut app: impl App + 'static) {
                     || input.key_held(VirtualKeyCode::D)
                 {
                     let sign = if input.key_held(VirtualKeyCode::A) {
-                        -1.0
-                    } else {
-                        1.0
-                    };
-
-                    camera.update(|origin, look_at, _| {
-                        let dir = look_at.xz() - origin.xz();
-                        let dir_len = dir.length();
-                        let dir_angle = dir.angle_between(vec2(0.0, 1.0));
-                        let dir_angle = dir_angle + 0.025 * sign;
-
-                        let new_dir = vec2(dir_len, dir_len)
-                            * vec2(dir_angle.sin(), dir_angle.cos());
-
-                        let new_look_at = origin.xz() + new_dir;
-
-                        look_at.x = new_look_at.x;
-                        look_at.z = new_look_at.y;
-                    });
-                }
-
-                if input.key_held(VirtualKeyCode::Q)
-                    || input.key_held(VirtualKeyCode::E)
-                {
-                    let sign = if input.key_held(VirtualKeyCode::Q) {
                         1.0
                     } else {
                         -1.0
@@ -381,6 +383,24 @@ async fn run(mut app: impl App + 'static) {
             if input.key_pressed(VirtualKeyCode::Escape) || input.quit() {
                 *control_flow = ControlFlow::Exit;
                 return;
+            }
+
+            // TODO: Very hacky, essentially we only track every other mouse position update
+            //       so in theory we should get only the updates that are not the result of `set_cursor_position`
+            //       if you're wondering why we update the mouse_diff in both cases, the answer is I don't know
+            //       for some reason it just feels smoother that way
+            let diff = input.mouse_diff();
+            if diff != (0.0, 0.0) {
+                if track_mouse {
+                    mouse_diff.0 -= diff.0;
+                    mouse_diff.1 -= diff.1;
+                    track_mouse = false;
+                } else {
+                    mouse_diff.0 += diff.0;
+                    mouse_diff.1 += diff.1;
+                    window.set_cursor_position(window_middle).ok();
+                    track_mouse = true;
+                }
             }
 
             if let Some(new_surface_size) = input.window_resized() {
