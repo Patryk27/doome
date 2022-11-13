@@ -1,4 +1,5 @@
 mod canvas;
+mod pipeline;
 mod scaling_texture_renderer;
 
 use std::f32::consts::PI;
@@ -20,6 +21,7 @@ use winit_input_helper::WinitInputHelper;
 
 pub use self::canvas::*;
 use self::scaling_texture_renderer::*;
+use crate::pipeline::Pipeline;
 
 pub const WIDTH: u16 = 320;
 pub const RAYTRACER_HEIGHT: u16 = 200;
@@ -130,8 +132,12 @@ async fn run(mut app: impl App + 'static) {
 
     let text_engine = TextEngine::default();
 
-    let raytracer =
-        Raytracer::new(pixels.device(), WIDTH as _, RAYTRACER_HEIGHT as _);
+    let raytracer = Raytracer::new(
+        pixels.device(),
+        pixels.queue(),
+        WIDTH as _,
+        RAYTRACER_HEIGHT as _,
+    );
 
     let raytracer_scaler = ScalingTextureRenderer::new(
         pixels.device(),
@@ -172,6 +178,22 @@ async fn run(mut app: impl App + 'static) {
     // -----
 
     let mut geometry = sc::Geometry::default();
+
+    Pipeline::load_model("referenceCube.obj").unwrap();
+
+    // let mut reader =
+    //     Cursor::new(include_bytes!("../../models/referenceCube.obj"));
+    // let (models, model_materials) =
+    //     tobj::load_obj_buf(&mut reader, &Default::default(), |mat| {
+    //         let mat = Path::from("../../models").join(mat);
+    //         log::info!("Loading material from {}", mat.display());
+
+    //         tobj::load_mtl(mat)
+    //     })
+    //     .unwrap();
+
+    // log::info!("Models: {models:?}");
+    // log::info!("Materials: {model_materials:?}");
 
     geometry.push_floor(-3, -3, 3, 3, mat_floor);
     geometry.push_wall(-3, 3, -1, 3, 0, mat_wall);

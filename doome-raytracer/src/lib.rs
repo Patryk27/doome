@@ -1,3 +1,4 @@
+use std::num::NonZeroU32;
 use std::slice;
 
 use doome_raytracer_shader_common as sc;
@@ -14,10 +15,18 @@ pub struct Raytracer {
     geometry: AllocatedUniform,
     lights: AllocatedUniform,
     materials: AllocatedUniform,
+
+    tex: wgpu::Texture,
+    tex_bind_group: wgpu::BindGroup,
 }
 
 impl Raytracer {
-    pub fn new(device: &wgpu::Device, width: u32, height: u32) -> Self {
+    pub fn new(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        width: u32,
+        height: u32,
+    ) -> Self {
         let shader = wgpu::include_spirv!(env!("doome_raytracer_shader.spv"));
         let module = device.create_shader_module(shader);
 
@@ -31,6 +40,102 @@ impl Raytracer {
         let materials =
             uniforms::allocate::<sc::Materials>(device, 0, "materials");
 
+        let tex_size = wgpu::Extent3d {
+            width: 1024,
+            height: 1024,
+            depth_or_array_layers: 1,
+        };
+
+        let tex = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("tex"),
+            size: tex_size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT
+                | wgpu::TextureUsages::TEXTURE_BINDING
+                | wgpu::TextureUsages::COPY_DST,
+        });
+
+        let img_data = include_bytes!("../../assets/tex.png");
+        let img = image::load_from_memory(img_data.as_slice()).unwrap();
+        let img = img.to_rgba8();
+        let img_data = img.as_raw();
+
+        queue.write_texture(
+            wgpu::ImageCopyTexture {
+                texture: &tex,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            img_data,
+            wgpu::ImageDataLayout {
+                offset: 0,
+                bytes_per_row: NonZeroU32::new(1024 * 4),
+                rows_per_image: NonZeroU32::new(1024),
+            },
+            tex_size,
+        );
+
+        let tex_view = tex.create_view(&wgpu::TextureViewDescriptor::default());
+        let tex_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            compare: Some(wgpu::CompareFunction::LessEqual),
+            lod_min_clamp: -100.0,
+            lod_max_clamp: 100.0,
+            ..Default::default()
+        });
+
+        let tex_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float {
+                                filterable: true,
+                            },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(
+                            wgpu::SamplerBindingType::Comparison,
+                        ),
+                        count: None,
+                    },
+                ],
+                label: Some("tex_bind_group_layout"),
+            });
+
+        let tex_bind_group =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &tex_bind_group_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(&tex_view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(&tex_sampler),
+                    },
+                ],
+                label: Some("tex_bind_group"),
+            });
+
         let pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Raytracer pipeline layout"),
@@ -39,6 +144,7 @@ impl Raytracer {
                     &geometry.bind_group_layout,
                     &lights.bind_group_layout,
                     &materials.bind_group_layout,
+                    &tex_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -92,6 +198,8 @@ impl Raytracer {
             geometry,
             lights,
             materials,
+            tex,
+            tex_bind_group,
         }
     }
 
@@ -152,6 +260,7 @@ impl Raytracer {
         rpass.set_bind_group(1, &self.geometry.bind_group, &[]);
         rpass.set_bind_group(2, &self.lights.bind_group, &[]);
         rpass.set_bind_group(3, &self.materials.bind_group, &[]);
+        rpass.set_bind_group(4, &self.tex_bind_group, &[]);
 
         rpass.draw(0..3, 0..1);
     }

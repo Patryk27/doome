@@ -2,9 +2,10 @@
 
 use doome_raytracer_shader_common::*;
 use spirv_std::glam::{vec2, Vec2, Vec4, Vec4Swizzles};
+use spirv_std::image::SampledImage;
 #[cfg(target_arch = "spirv")]
 use spirv_std::num_traits::real::Real;
-use spirv_std::spirv;
+use spirv_std::{spirv, Image};
 
 #[spirv(vertex)]
 pub fn vs_main(
@@ -24,10 +25,16 @@ pub fn fs_main(
     #[spirv(uniform, descriptor_set = 1, binding = 0)] geometry: &Geometry,
     #[spirv(uniform, descriptor_set = 2, binding = 0)] lights: &Lights,
     #[spirv(uniform, descriptor_set = 3, binding = 0)] materials: &Materials,
+    #[spirv(descriptor_set = 4, binding = 0)] texture: &SampledImage<
+        Image!(2D, type=f32, sampled),
+    >,
     color: &mut Vec4,
 ) {
-    *color = camera
-        .ray(pos.xy())
-        .shade(geometry, lights, materials)
-        .extend(1.0);
+    let c: Vec4 = unsafe { texture.sample(pos.xy()) };
+
+    *color = c;
+    // *color = camera
+    //     .ray(pos.xy())
+    //     .shade(geometry, lights, materials)
+    //     .extend(1.0);
 }

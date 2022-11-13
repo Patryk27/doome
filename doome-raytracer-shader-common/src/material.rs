@@ -31,6 +31,10 @@ impl Material {
         materials: &Materials,
         hit: Hit,
     ) -> Vec3 {
+        if hit.u < 0.01 || hit.v < 0.01 || hit.u + hit.v > (1.0 - 0.01 / 2.0) {
+            return vec3(1.0, 1.0, 1.0);
+        }
+
         let mut color = self.radiance(geometry, lights, hit);
         let reflectivity = self.reflectivity.w;
 
