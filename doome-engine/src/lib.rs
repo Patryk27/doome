@@ -473,8 +473,8 @@ trait GeometryExt {
             vertex(-1.0 * rot.cos(), 0.0, 1.0 * rot.sin()),
             vertex(-1.0 * rot.cos(), 4.0, 1.0 * rot.sin()),
             vec2(0.0, 0.0),
-            vec2(0.0, 1.0),
             vec2(1.0, 0.0),
+            vec2(1.0, 1.0),
             mat,
         ));
 
@@ -483,8 +483,8 @@ trait GeometryExt {
             vertex(-1.0 * rot.cos(), 4.0, 1.0 * rot.sin()),
             vertex(1.0 * rot.cos(), 4.0, -1.0 * rot.sin()),
             vec2(0.0, 0.0),
+            vec2(1.0, 1.0),
             vec2(0.0, 1.0),
-            vec2(1.0, 0.0),
             mat,
         ));
     }

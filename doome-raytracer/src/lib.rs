@@ -16,7 +16,6 @@ pub struct Raytracer {
     lights: AllocatedUniform,
     materials: AllocatedUniform,
 
-    tex: wgpu::Texture,
     tex_bind_group: wgpu::BindGroup,
 }
 
@@ -198,7 +197,6 @@ impl Raytracer {
             geometry,
             lights,
             materials,
-            tex,
             tex_bind_group,
         }
     }
