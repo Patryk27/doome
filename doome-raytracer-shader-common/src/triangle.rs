@@ -3,17 +3,31 @@ use crate::*;
 #[repr(C)]
 #[derive(Copy, Clone, Default, Pod, Zeroable)]
 pub struct Triangle {
+    /// x,y,z is position, w is material id
     v0: Vec4,
+    /// x,y,z is position of V1, w is uv.u of V0
     v1: Vec4,
+    /// x,y,z is position of V2, w is uv.v of V0
     v2: Vec4,
+    /// x,y is uv of V1, z,w is uv of V2
+    uvs: Vec4,
 }
 
 impl Triangle {
-    pub fn new(v0: Vec3, v1: Vec3, v2: Vec3, material_id: MaterialId) -> Self {
+    pub fn new(
+        v0: Vec3,
+        v1: Vec3,
+        v2: Vec3,
+        uv0: Vec2,
+        uv1: Vec2,
+        uv2: Vec2,
+        material_id: MaterialId,
+    ) -> Self {
         Self {
             v0: v0.extend(material_id.get() as f32),
-            v1: v1.extend(0.0),
-            v2: v2.extend(0.0),
+            v1: v1.extend(uv0.x),
+            v2: v2.extend(uv0.y),
+            uvs: vec4(uv1.x, uv1.y, uv2.x, uv2.y),
         }
     }
 

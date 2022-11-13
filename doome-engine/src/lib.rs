@@ -397,6 +397,9 @@ trait GeometryExt {
             vec3(x2, 0.0, z1),
             vec3(x1, 0.0, z1),
             vec3(x1, 0.0, z2),
+            vec2(0.0, 0.0),
+            vec2(0.0, 0.0),
+            vec2(0.0, 0.0),
             mat,
         ));
 
@@ -404,6 +407,9 @@ trait GeometryExt {
             vec3(x2, 0.0, z1),
             vec3(x1, 0.0, z2),
             vec3(x2, 0.0, z2),
+            vec2(0.0, 0.0),
+            vec2(0.0, 0.0),
+            vec2(0.0, 0.0),
             mat,
         ));
     }
@@ -425,6 +431,9 @@ trait GeometryExt {
             vec3(x2, 4.0, z1),
             vec3(x1, 4.0, z2),
             vec3(x1, 4.0, z1),
+            vec2(0.0, 0.0),
+            vec2(0.0, 0.0),
+            vec2(0.0, 0.0),
             mat,
         ));
 
@@ -432,6 +441,9 @@ trait GeometryExt {
             vec3(x2, 4.0, z1),
             vec3(x2, 4.0, z2),
             vec3(x1, 4.0, z2),
+            vec2(0.0, 0.0),
+            vec2(0.0, 0.0),
+            vec2(0.0, 0.0),
             mat,
         ));
     }
@@ -462,6 +474,9 @@ trait GeometryExt {
             vertex(1.0 * rot.cos(), 0.0, -1.0 * rot.sin()),
             vertex(-1.0 * rot.cos(), 0.0, 1.0 * rot.sin()),
             vertex(-1.0 * rot.cos(), 4.0, 1.0 * rot.sin()),
+            vec2(0.0, 0.0),
+            vec2(0.0, 0.0),
+            vec2(0.0, 0.0),
             mat,
         ));
 
@@ -469,6 +484,9 @@ trait GeometryExt {
             vertex(1.0 * rot.cos(), 0.0, -1.0 * rot.sin()),
             vertex(-1.0 * rot.cos(), 4.0, 1.0 * rot.sin()),
             vertex(1.0 * rot.cos(), 4.0, -1.0 * rot.sin()),
+            vec2(0.0, 0.0),
+            vec2(0.0, 0.0),
+            vec2(0.0, 0.0),
             mat,
         ));
     }
@@ -505,6 +523,9 @@ trait GeometryExt {
                     vertices[0],
                     vertices[1],
                     vertices[2],
+                    vec2(0.0, 0.0),
+                    vec2(0.0, 0.0),
+                    vec2(0.0, 0.0),
                     mat,
                 ));
             }
