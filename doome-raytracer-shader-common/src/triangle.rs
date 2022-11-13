@@ -55,7 +55,7 @@ impl Triangle {
             u,
             v,
             ray,
-            point: ray.origin() + ray.direction() * (t - 0.05),
+            point: ray.origin() + ray.direction() * (t - 0.01),
             normal: v0v1.cross(v0v2).normalize(),
             material_id: self.material_id(),
         }

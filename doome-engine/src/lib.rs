@@ -148,6 +148,7 @@ async fn run(mut app: impl App + 'static) {
         vec3(0.0, -1.0, 0.0),
         1.0,
         vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
+        PI / 2.0,
     );
 
     // -----
@@ -160,7 +161,7 @@ async fn run(mut app: impl App + 'static) {
     let mat_wall = materials.push(sc::Material::default().with_color(0x0d2b45));
 
     let mat_ceiling =
-        materials.push(sc::Material::default().with_color(0x544e68));
+        materials.push(sc::Material::default().with_color(0x0d2b45));
 
     let mat_sphere = materials.push(
         sc::Material::default()

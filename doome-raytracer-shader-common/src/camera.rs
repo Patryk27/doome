@@ -22,6 +22,7 @@ impl Camera {
         up: Vec3,
         distance: f32,
         viewport_size: Vec2,
+        viewport_fov: f32,
     ) -> Self {
         let (onb_u, onb_v, onb_w) =
             OrthonormalBasis::build(origin, look_at, up);
@@ -30,7 +31,7 @@ impl Camera {
             origin: origin.extend(distance),
             look_at: look_at.extend(0.0),
             up: up.extend(0.0),
-            viewport_size: viewport_size.extend(0.0).extend(0.0),
+            viewport_size: viewport_size.extend(viewport_fov).extend(0.0),
             onb_u,
             onb_v,
             onb_w,
@@ -41,6 +42,7 @@ impl Camera {
         self.origin.xyz()
     }
 
+    #[cfg(not(target_arch = "spirv"))]
     pub fn update(&mut self, f: impl FnOnce(&mut Vec3, &mut Vec3, &mut Vec3)) {
         let mut origin = self.origin.xyz();
         let mut look_at = self.look_at.xyz();
@@ -63,8 +65,13 @@ impl Camera {
         let origin = self.origin.xyz();
 
         let direction = {
+            let viewport_ratio = self.viewport_size.y / self.viewport_size.x;
+            let viewport_fov = self.viewport_size.z;
+
             let pos = pos / self.viewport_size.xy();
-            let pos = pos * 2.0 - vec2(1.0, 1.0);
+            let pos = 2.0 * pos - 1.0;
+            let pos = vec2(pos.x / viewport_ratio, pos.y);
+            let pos = pos * (viewport_fov / 2.0).tan();
 
             OrthonormalBasis::trace(
                 self.onb_u,
