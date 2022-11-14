@@ -1,6 +1,8 @@
 use doome_engine::{Canvas, HEIGHT, HUD_HEIGHT, WIDTH};
 use doome_surface::Color;
 
+const ASSETS: include_dir::Dir = include_dir::include_dir!("assets");
+
 struct App {
     frame: usize,
 }
@@ -33,5 +35,9 @@ impl doome_engine::App for App {
         //     HEIGHT - HUD_HEIGHT / 2 - 7,
         //     format!("Hello, World -- it's frame #{}!", self.frame),
         // );
+    }
+
+    fn dir(&self) -> &'static include_dir::Dir<'static> {
+        &ASSETS
     }
 }

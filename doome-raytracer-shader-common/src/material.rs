@@ -147,6 +147,7 @@ impl Default for Material {
 }
 
 #[derive(Copy, Clone)]
+#[cfg_attr(not(target_arch = "spirv"), derive(Debug))]
 pub struct MaterialId(u32);
 
 impl MaterialId {

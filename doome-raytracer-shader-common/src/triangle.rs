@@ -1,3 +1,5 @@
+use core::fmt::Debug;
+
 use glam::Mat4;
 
 use crate::*;
@@ -35,6 +37,27 @@ impl Triangle {
     pub fn center(&self) -> Vec3 {
         self.vertices().iter().sum::<Vec3>() / 3.0
     }
+
+    pub fn set_uvs(&mut self, uv0: Vec2, uv1: Vec2, uv2: Vec2) {
+        self.v1.w = uv0.x;
+        self.v2.w = uv0.y;
+        self.uvs = Vec4::new(uv1.x, uv1.y, uv2.x, uv2.y);
+    }
+}
+
+#[cfg(not(target_arch = "spirv"))]
+impl Debug for Triangle {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Triangle")
+            .field("material_id", &self.material_id())
+            .field("v0", &self.v0())
+            .field("v1", &self.v1())
+            .field("v2", &self.v2())
+            .field("uv0", &self.uv0())
+            .field("uv1", &self.uv1())
+            .field("uv2", &self.uv2())
+            .finish()
+    }
 }
 
 impl Triangle {
@@ -65,6 +88,18 @@ impl Triangle {
 
     pub fn v2(&self) -> Vec3 {
         self.v2.xyz()
+    }
+
+    pub fn uv0(&self) -> Vec2 {
+        vec2(self.v1.w, self.v2.w)
+    }
+
+    pub fn uv1(&self) -> Vec2 {
+        vec2(self.uvs.x, self.uvs.y)
+    }
+
+    pub fn uv2(&self) -> Vec2 {
+        vec2(self.uvs.z, self.uvs.w)
     }
 
     pub fn hit(&self, ray: Ray) -> Hit {
@@ -107,9 +142,9 @@ impl Triangle {
         }
 
         // convert u, v to tex coords based on triangle vertices uvs
-        let uv0 = vec2(self.v1.w, self.v2.w);
-        let uv1 = vec2(self.uvs.x, self.uvs.y);
-        let uv2 = vec2(self.uvs.z, self.uvs.w);
+        let uv0 = self.uv0();
+        let uv1 = self.uv1();
+        let uv2 = self.uv2();
 
         let uv = uv0 + (uv1 - uv0) * u + (uv2 - uv0) * v;
 

@@ -4,6 +4,10 @@ pub fn identity() -> Mat4 {
     Mat4::IDENTITY
 }
 
+pub fn translated(v: Vec3) -> Mat4 {
+    Mat4::from_translation(v)
+}
+
 /// Translates the transformation matrix by the given translation vector.
 pub fn translate(xform: &mut Mat4, v: Vec3) -> &mut Mat4 {
     *xform *= Mat4::from_translation(v);

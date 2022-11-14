@@ -6,6 +6,9 @@ use uniforms::AllocatedUniform;
 
 mod uniforms;
 
+pub const ATLAS_WIDTH: u32 = 256;
+pub const ATLAS_HEIGHT: u32 = 256;
+
 pub struct Raytracer {
     width: u32,
     height: u32,
@@ -26,6 +29,7 @@ impl Raytracer {
         queue: &wgpu::Queue,
         width: u32,
         height: u32,
+        atlas_data: &[u8],
     ) -> Self {
         let shader = wgpu::include_spirv!(env!("doome_raytracer_shader.spv"));
         let module = device.create_shader_module(shader);
@@ -47,8 +51,8 @@ impl Raytracer {
             uniforms::allocate::<sc::Materials>(device, 0, "materials");
 
         let tex_size = wgpu::Extent3d {
-            width: 1024,
-            height: 1024,
+            width: ATLAS_WIDTH,
+            height: ATLAS_HEIGHT,
             depth_or_array_layers: 1,
         };
 
@@ -64,11 +68,6 @@ impl Raytracer {
                 | wgpu::TextureUsages::COPY_DST,
         });
 
-        let img_data = include_bytes!("../../assets/tex.png");
-        let img = image::load_from_memory(img_data.as_slice()).unwrap();
-        let img = img.to_rgba8();
-        let img_data = img.as_raw();
-
         queue.write_texture(
             wgpu::ImageCopyTexture {
                 texture: &tex,
@@ -76,11 +75,11 @@ impl Raytracer {
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
             },
-            img_data,
+            atlas_data,
             wgpu::ImageDataLayout {
                 offset: 0,
-                bytes_per_row: NonZeroU32::new(1024 * 4),
-                rows_per_image: NonZeroU32::new(1024),
+                bytes_per_row: NonZeroU32::new(ATLAS_HEIGHT * 4),
+                rows_per_image: NonZeroU32::new(ATLAS_WIDTH),
             },
             tex_size,
         );

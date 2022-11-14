@@ -1,4 +1,4 @@
-# Blender 3.1.0 MTL File: 'monke.blend'
+# Blender 3.1.0 MTL File: 'diamond.blend'
 # www.blender.org
 
 newmtl Material
@@ -10,4 +10,4 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd  monkeTex.png
+map_Kd  diamond.png

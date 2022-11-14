@@ -20,5 +20,7 @@ doome-engine = { path = "doome-engine" }
 doome-surface = { path = "doome-surface" }
 doome-text = { path = "doome-text" }
 
+include_dir = "0.7"
+
 [profile.dev]
 overflow-checks = false

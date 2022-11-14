@@ -37,6 +37,7 @@ const SPF: f32 = 1.0 / FPS;
 pub trait App {
     fn update(&mut self);
     fn draw(&self, canvas: Canvas<'_>);
+    fn dir(&self) -> &'static include_dir::Dir<'static>;
 }
 
 pub fn main(app: impl App + 'static) {
@@ -152,8 +153,24 @@ async fn run(mut app: impl App + 'static) {
 
     let mut materials = sc::Materials::default();
 
-    let mat_monke = materials
-        .push(sc::Material::default().with_reflectivity(0.8, 0xffffff));
+    let mat_monke = materials.push(
+        sc::Material::default()
+            .with_reflectivity(0.1, 0xffffff)
+            .with_texture(true),
+    );
+
+    let mat_reference_cube = materials.push(
+        sc::Material::default()
+            .with_reflectivity(0.0, 0xffffff)
+            .with_texture(true),
+    );
+
+    let mat_diamond = materials.push(
+        sc::Material::default()
+            .with_color(0xff0000)
+            .with_reflectivity(0.3, 0xff0000)
+            .with_texture(true),
+    );
 
     let mat_matte =
         materials.push(sc::Material::default().with_color(0x666666));
@@ -164,9 +181,13 @@ async fn run(mut app: impl App + 'static) {
             .with_reflectivity(0.65, 0xffffff),
     );
 
-    let mut pipeline = Pipeline::builder();
+    let mut pipeline = Pipeline::builder(app.dir());
 
     let monke_mesh = pipeline.load_model("monke.obj", mat_monke).unwrap();
+    let reference_cube = pipeline
+        .load_model("referenceCube.obj", mat_reference_cube)
+        .unwrap();
+    let diamond_mesh = pipeline.load_model("diamond.obj", mat_diamond).unwrap();
 
     let pipeline = pipeline.build();
 
@@ -177,6 +198,7 @@ async fn run(mut app: impl App + 'static) {
         pixels.queue(),
         WIDTH as _,
         RAYTRACER_HEIGHT as _,
+        pipeline.atlas().as_raw(),
     );
 
     let raytracer_scaler = ScalingTextureRenderer::new(
@@ -191,6 +213,9 @@ async fn run(mut app: impl App + 'static) {
     let mut monke_xform = sc::math::identity();
     sc::math::translate(&mut monke_xform, vec3(0.0, 1.0, 0.0));
     sc::math::rotate(&mut monke_xform, 45.0, vec3(0.0, 1.0, 0.0));
+
+    let mut ref_cube_xform = sc::math::identity();
+    sc::math::translate(&mut ref_cube_xform, vec3(2.0, 1.0, 0.0));
 
     // -----
 
@@ -214,8 +239,20 @@ async fn run(mut app: impl App + 'static) {
 
     geometry.push_ceiling(-10, -10, 10, 10, mat_matte);
 
-    let monke =
+    let _monke =
         pipeline.insert_to_geometry(monke_mesh, &mut geometry, monke_xform);
+
+    let _ref_cube = pipeline.insert_to_geometry(
+        reference_cube,
+        &mut geometry,
+        ref_cube_xform,
+    );
+
+    let _diamond = pipeline.insert_to_geometry(
+        diamond_mesh,
+        &mut geometry,
+        sc::math::translated(vec3(-3.0, 1.0, -1.0)),
+    );
 
     // -----
 
@@ -270,14 +307,14 @@ async fn run(mut app: impl App + 'static) {
                     fps_timer = Instant::now();
                 }
 
-                sc::math::rotate(&mut monke_xform, 0.1, vec3(0.0, 1.0, 0.0));
+                // sc::math::rotate(&mut monke_xform, 0.1, vec3(0.0, 1.0, 0.0));
 
-                pipeline.update_geometry(
-                    monke,
-                    monke_mesh,
-                    &mut geometry,
-                    monke_xform,
-                );
+                // pipeline.update_geometry(
+                //     monke,
+                //     monke_mesh,
+                //     &mut geometry,
+                //     monke_xform,
+                // );
 
                 app.update();
 
