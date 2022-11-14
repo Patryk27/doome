@@ -18,6 +18,7 @@ use bytemuck::{Pod, Zeroable};
 use glam::{vec2, vec3, vec4, Vec2, Vec3, Vec4, Vec4Swizzles};
 #[cfg(target_arch = "spirv")]
 use spirv_std::num_traits::real::Real;
+use spirv_std::{Image, Sampler};
 
 pub use self::camera::*;
 pub use self::geometry::*;
