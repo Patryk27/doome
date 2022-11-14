@@ -152,17 +152,11 @@ async fn run(mut app: impl App + 'static) {
 
     let mut materials = sc::Materials::default();
 
-    let mat_basic = materials.push(
-        sc::Material::default()
-            .with_texture(true)
-            .with_reflectivity(0.65, 0xffffffff),
-    );
+    let mat_monke = materials
+        .push(sc::Material::default().with_reflectivity(0.8, 0xffffff));
 
-    let mat_floor = materials.push(sc::Material::default());
-
-    let mat_wall = materials.push(sc::Material::default());
-
-    let mat_ceiling = materials.push(sc::Material::default());
+    let mat_matte =
+        materials.push(sc::Material::default().with_color(0x666666));
 
     let mat_sphere = materials.push(
         sc::Material::default()
@@ -171,8 +165,8 @@ async fn run(mut app: impl App + 'static) {
     );
 
     let mut pipeline = Pipeline::builder();
-    let reference_cube =
-        pipeline.load_model("referenceCube.obj", mat_basic).unwrap();
+
+    let reference_cube = pipeline.load_model("monke.obj", mat_monke).unwrap();
 
     let pipeline = pipeline.build();
 
@@ -196,22 +190,23 @@ async fn run(mut app: impl App + 'static) {
 
     let mut geometry = sc::Geometry::default();
 
-    geometry.push_floor(-3, -3, 3, 3, mat_floor);
-    geometry.push_wall(-3, 3, -1, 3, 0, mat_wall);
-    geometry.push_wall(1, 3, 3, 3, 0, mat_wall);
-    geometry.push_wall(3, 3, 3, -3, 1, mat_wall);
-    geometry.push_wall(-3, -3, 3, -3, 2, mat_wall);
-    geometry.push_wall(-3, -3, -3, 3, 3, mat_wall);
+    geometry.push_floor(-3, -3, 3, 3, mat_matte);
+    geometry.push_wall(-3, 3, -1, 3, 0, mat_matte);
+    geometry.push_wall(1, 3, 3, 3, 0, mat_matte);
+    geometry.push_wall(3, 3, 3, -3, 1, mat_matte);
+    geometry.push_wall(-3, -3, 3, -3, 2, mat_matte);
+    geometry.push_wall(-3, -3, -3, 3, 3, mat_matte);
 
-    geometry.push_floor(-1, 3, 1, 5, mat_floor);
-    geometry.push_wall(-1, 5, 1, 5, 0, mat_wall);
-    geometry.push_wall(1, 3, 1, 5, 1, mat_wall);
-    geometry.push_wall(-1, 3, -1, 5, 3, mat_wall);
+    geometry.push_floor(-1, 3, 1, 5, mat_matte);
+    geometry.push_wall(-1, 5, 1, 5, 0, mat_matte);
+    geometry.push_wall(1, 3, 1, 5, 1, mat_matte);
+    geometry.push_wall(-1, 3, -1, 5, 3, mat_matte);
+
     geometry.push_icosphere(0, 2, mat_sphere);
     geometry.push_icosphere(-2, 1, mat_sphere);
     geometry.push_icosphere(2, 1, mat_sphere);
 
-    geometry.push_ceiling(-10, -10, 10, 10, mat_ceiling);
+    geometry.push_ceiling(-10, -10, 10, 10, mat_matte);
 
     pipeline.insert_to_geometry(
         reference_cube,

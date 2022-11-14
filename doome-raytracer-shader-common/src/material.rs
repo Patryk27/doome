@@ -9,10 +9,24 @@ pub struct Material {
     reflectivity: Vec4,
 }
 
+#[cfg(not(target_arch = "spirv"))]
 impl Material {
-    #[cfg(not(target_arch = "spirv"))]
     pub fn with_color(mut self, color: u32) -> Self {
-        self.color = rgb_to_srgb(color).extend(1.0);
+        self.color = rgb_to_srgb(color).extend(self.color.w);
+        self
+    }
+
+    pub fn with_color_rgb(mut self, r: u8, g: u8, b: u8) -> Self {
+        self.color =
+            rgb_to_srgb(u32::from_be_bytes([0, r, g, b])).extend(self.color.w);
+        self
+    }
+
+    pub fn with_color_rgb_unorm(mut self, r: f32, g: f32, b: f32) -> Self {
+        let (r, g, b) = (r * 255.0, g * 255.0, b * 255.0);
+        self.color =
+            rgb_to_srgb(u32::from_be_bytes([0, r as u8, g as u8, b as u8]))
+                .extend(self.color.w);
         self
     }
 
@@ -21,7 +35,6 @@ impl Material {
         self
     }
 
-    #[cfg(not(target_arch = "spirv"))]
     pub fn with_reflectivity(
         mut self,
         reflectivity: f32,
@@ -30,7 +43,9 @@ impl Material {
         self.reflectivity = rgb_to_srgb(reflection_color).extend(reflectivity);
         self
     }
+}
 
+impl Material {
     pub fn shade(
         &self,
         geometry: &Geometry,
@@ -88,7 +103,12 @@ impl Material {
         texture: &Texture,
         hit: Hit,
     ) -> Vec3 {
-        let color = (texture.sample(hit.uv) * self.color).truncate();
+        let color = if self.color.w == 1.0 {
+            (texture.sample(hit.uv) * self.color).truncate()
+        } else {
+            self.color.truncate()
+        };
+
         let mut radiance = vec3(0.0, 0.0, 0.0);
         let mut light_idx = 0;
 
