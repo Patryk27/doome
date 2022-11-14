@@ -22,7 +22,7 @@ impl Material {
         self
     }
 
-    pub fn with_color_rgb_unorm(mut self, r: f32, g: f32, b: f32) -> Self {
+    pub fn with_color_rgb_norm(mut self, r: f32, g: f32, b: f32) -> Self {
         let (r, g, b) = (r * 255.0, g * 255.0, b * 255.0);
         self.color =
             rgb_to_srgb(u32::from_be_bytes([0, r as u8, g as u8, b as u8]))
