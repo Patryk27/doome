@@ -1,15 +1,27 @@
+use std::collections::HashMap;
 use std::path::Path;
 
 use anyhow::anyhow;
+use doome_raytracer_shader_common::Triangle;
 use include_dir::{include_dir, Dir};
 use tobj::LoadOptions;
 
 const ASSETS: Dir = include_dir!("assets");
 
-pub struct Pipeline {}
+pub struct ModelHandle(u32);
+
+pub struct Pipeline {
+    models: HashMap<ModelHandle, Vec<Triangle>>,
+}
 
 impl Pipeline {
-    pub fn load_model(path: impl AsRef<Path>) -> anyhow::Result<()> {
+    pub fn new() -> Self {
+        Self {
+            models: HashMap::new(),
+        }
+    }
+
+    pub fn load_model(&mut self, path: impl AsRef<Path>) -> anyhow::Result<()> {
         let path = path.as_ref();
         let model_file = ASSETS
             .get_file(path)
