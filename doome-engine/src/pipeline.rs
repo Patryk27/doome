@@ -3,7 +3,7 @@ use std::path::Path;
 
 use anyhow::{anyhow, bail};
 use doome_raytracer_shader_common as sc;
-use glam::{vec2, vec3, Vec2, Vec3};
+use glam::{vec2, vec3, Mat4, Vec2, Vec3};
 use include_dir::{include_dir, Dir};
 use tobj::LoadOptions;
 
@@ -28,12 +28,31 @@ impl Pipeline {
         &self,
         model_handle: ModelHandle,
         geometry: &mut sc::Geometry,
-        pos: Vec3,
-    ) {
+        xform: Mat4,
+    ) -> u32 {
         let model = &self.models[model_handle.0];
+        let offset = geometry.len();
+
         for tri in model {
-            geometry.push(tri.offset(pos));
+            geometry.push(tri.apply(xform));
         }
+
+        offset
+    }
+
+    pub fn update_geometry(
+        &self,
+        offset: u32,
+        model_handle: ModelHandle,
+        geometry: &mut sc::Geometry,
+        xform: Mat4,
+    ) {
+        let triangles: Vec<_> = self.models[model_handle.0]
+            .iter()
+            .map(|tri| tri.apply(xform))
+            .collect();
+
+        geometry.write(offset, &triangles);
     }
 }
 

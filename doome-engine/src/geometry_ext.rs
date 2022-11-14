@@ -5,7 +5,7 @@ use doome_raytracer_shader_common as sc;
 use glam::{vec2, vec3};
 
 pub trait GeometryExt {
-    fn push(&mut self, tri: sc::Triangle);
+    fn push(&mut self, tri: sc::Triangle) -> u32;
 
     fn map_coords(&self, x: i32, z: i32) -> (f32, f32) {
         let x = (x as f32) * 2.0;
@@ -168,7 +168,7 @@ pub trait GeometryExt {
 }
 
 impl GeometryExt for sc::Geometry {
-    fn push(&mut self, tri: sc::Triangle) {
+    fn push(&mut self, tri: sc::Triangle) -> u32 {
         sc::Geometry::push(self, tri)
     }
 }

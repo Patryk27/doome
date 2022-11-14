@@ -166,7 +166,7 @@ async fn run(mut app: impl App + 'static) {
 
     let mut pipeline = Pipeline::builder();
 
-    let reference_cube = pipeline.load_model("monke.obj", mat_monke).unwrap();
+    let monke_mesh = pipeline.load_model("monke.obj", mat_monke).unwrap();
 
     let pipeline = pipeline.build();
 
@@ -185,6 +185,12 @@ async fn run(mut app: impl App + 'static) {
         pixels.render_texture_format(),
         [1.0, (RAYTRACER_HEIGHT as f32) / (HEIGHT as f32)],
     );
+
+    // -----
+
+    let mut monke_xform = sc::math::identity();
+    sc::math::translate(&mut monke_xform, vec3(0.0, 1.0, 0.0));
+    sc::math::rotate(&mut monke_xform, 45.0, vec3(0.0, 1.0, 0.0));
 
     // -----
 
@@ -208,11 +214,8 @@ async fn run(mut app: impl App + 'static) {
 
     geometry.push_ceiling(-10, -10, 10, 10, mat_matte);
 
-    pipeline.insert_to_geometry(
-        reference_cube,
-        &mut geometry,
-        vec3(0.0, 1.0, 0.0),
-    );
+    let monke =
+        pipeline.insert_to_geometry(monke_mesh, &mut geometry, monke_xform);
 
     // -----
 
@@ -266,6 +269,15 @@ async fn run(mut app: impl App + 'static) {
                     fps_counter = 0;
                     fps_timer = Instant::now();
                 }
+
+                sc::math::rotate(&mut monke_xform, 0.1, vec3(0.0, 1.0, 0.0));
+
+                pipeline.update_geometry(
+                    monke,
+                    monke_mesh,
+                    &mut geometry,
+                    monke_xform,
+                );
 
                 app.update();
 

@@ -8,6 +8,7 @@ mod light;
 mod lights;
 mod material;
 mod materials;
+pub mod math;
 mod ray;
 mod sampling;
 mod triangle;

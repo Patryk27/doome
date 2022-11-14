@@ -1,3 +1,5 @@
+use glam::Mat4;
+
 use crate::*;
 
 #[repr(C)]
@@ -15,18 +17,13 @@ pub struct Triangle {
 
 #[cfg(not(target_arch = "spirv"))]
 impl Triangle {
-    pub fn offset(mut self, offset: Vec3) -> Self {
-        self.v0.x += offset.x;
-        self.v0.y += offset.y;
-        self.v0.z += offset.z;
-
-        self.v1.x += offset.x;
-        self.v1.y += offset.y;
-        self.v1.z += offset.z;
-
-        self.v2.x += offset.x;
-        self.v2.y += offset.y;
-        self.v2.z += offset.z;
+    pub fn apply(mut self, xform: Mat4) -> Self {
+        self.v0 =
+            math::apply_transformation(self.v0.xyz(), xform).extend(self.v0.w);
+        self.v1 =
+            math::apply_transformation(self.v1.xyz(), xform).extend(self.v1.w);
+        self.v2 =
+            math::apply_transformation(self.v2.xyz(), xform).extend(self.v2.w);
 
         self
     }
