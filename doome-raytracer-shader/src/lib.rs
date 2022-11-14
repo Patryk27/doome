@@ -31,17 +31,9 @@ pub fn fs_main(
     color: &mut Vec4,
 ) {
     let texture = Texture { texture, sampler };
-    let mut geometry_index_visitor = GeometryIndexVisitor::new();
 
     *color = camera
         .ray(pos.xy())
-        .shade(
-            geometry,
-            geometry_index,
-            &mut geometry_index_visitor,
-            lights,
-            materials,
-            &texture,
-        )
+        .shade(geometry, geometry_index, lights, materials, &texture)
         .extend(1.0);
 }

@@ -35,20 +35,13 @@ impl Material {
         &self,
         geometry: &Geometry,
         geometry_index: &GeometryIndex,
-        geometry_index_visitor: &mut GeometryIndexVisitor,
         lights: &Lights,
         materials: &Materials,
         texture: &Texture,
         hit: Hit,
     ) -> Vec3 {
-        let mut color = self.radiance(
-            geometry,
-            geometry_index,
-            geometry_index_visitor,
-            lights,
-            texture,
-            hit,
-        );
+        let mut color =
+            self.radiance(geometry, geometry_index, lights, texture, hit);
 
         let reflectivity = self.reflectivity.w;
 
@@ -64,7 +57,6 @@ impl Material {
             let ray_color = Ray::new(hit.point, reflection_dir).shade_basic(
                 geometry,
                 geometry_index,
-                geometry_index_visitor,
                 lights,
                 materials,
                 texture,
@@ -81,26 +73,17 @@ impl Material {
         &self,
         geometry: &Geometry,
         geometry_index: &GeometryIndex,
-        geometry_index_visitor: &mut GeometryIndexVisitor,
         lights: &Lights,
         texture: &Texture,
         hit: Hit,
     ) -> Vec3 {
-        self.radiance(
-            geometry,
-            geometry_index,
-            geometry_index_visitor,
-            lights,
-            texture,
-            hit,
-        )
+        self.radiance(geometry, geometry_index, lights, texture, hit)
     }
 
     fn radiance(
         &self,
         geometry: &Geometry,
         geometry_index: &GeometryIndex,
-        geometry_index_visitor: &mut GeometryIndexVisitor,
         lights: &Lights,
         texture: &Texture,
         hit: Hit,
@@ -114,12 +97,7 @@ impl Material {
             let ray = Ray::new(hit.point, light.pos() - hit.point);
             let distance = light.pos().distance(hit.point);
 
-            if !ray.hits_anything_up_to(
-                geometry,
-                geometry_index,
-                geometry_index_visitor,
-                distance,
-            ) {
+            if !ray.hits_anything_up_to(geometry, geometry_index, distance) {
                 let direction = (light.pos() - hit.point).normalize();
                 let diffuse_factor = direction.dot(hit.normal);
 

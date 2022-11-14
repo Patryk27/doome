@@ -4,18 +4,13 @@ use crate::*;
 pub struct Ray {
     origin: Vec3,
     direction: Vec3,
-    inv_direction: Vec3,
 }
 
 impl Ray {
     pub fn new(origin: Vec3, direction: Vec3) -> Self {
         let direction = direction.normalize();
 
-        Self {
-            origin,
-            direction,
-            inv_direction: 1.0 / direction,
-        }
+        Self { origin, direction }
     }
 
     pub fn origin(&self) -> Vec3 {
@@ -26,10 +21,9 @@ impl Ray {
         self.direction
     }
 
-    // TODO optimizable
     pub fn hits_box(&self, bb_min: Vec3, bb_max: Vec3) -> bool {
-        let hit_min = (bb_min - self.origin) * self.inv_direction;
-        let hit_max = (bb_max - self.origin) * self.inv_direction;
+        let hit_min = (bb_min - self.origin) / self.direction;
+        let hit_max = (bb_max - self.origin) / self.direction;
 
         let x_entry = hit_min.x.min(hit_max.x);
         let y_entry = hit_min.y.min(hit_max.y);
@@ -48,97 +42,72 @@ impl Ray {
         self,
         geometry: &Geometry,
         geometry_index: &GeometryIndex,
-        visitor: &mut GeometryIndexVisitor,
         distance: f32,
     ) -> bool {
-        let hit = self.trace(geometry, geometry_index, visitor);
+        let mut ptr = 0;
 
-        // TODO optimizable
-        hit.is_some() && hit.t < distance
+        loop {
+            let v1 = geometry_index.read(ptr);
+            let v2 = geometry_index.read(ptr + 1);
+
+            let is_leaf = v1.xyz() == vec3(0.0, 0.0, 0.0)
+                && v2.xyz() == vec3(0.0, 0.0, 0.0);
+
+            if is_leaf {
+                let hit = geometry.get(v1.w as _).hit(self);
+
+                if hit.t < distance {
+                    return true;
+                }
+
+                ptr = v2.w as _;
+            } else {
+                if self.hits_box(v1.xyz(), v2.xyz()) {
+                    ptr = v1.w as _;
+                } else {
+                    ptr = v2.w as _;
+                }
+            }
+
+            if ptr == 0 {
+                break false;
+            }
+        }
     }
 
     pub fn trace(
         self,
         geometry: &Geometry,
         geometry_index: &GeometryIndex,
-        visitor: &mut GeometryIndexVisitor,
     ) -> Hit {
         let mut hit = Hit::none();
-
-        visitor.reset();
+        let mut ptr = 0;
 
         loop {
-            let mut ptr = visitor.pop();
+            let v1 = geometry_index.read(ptr);
+            let v2 = geometry_index.read(ptr + 1);
+
+            let is_leaf = v1.xyz() == vec3(0.0, 0.0, 0.0)
+                && v2.xyz() == vec3(0.0, 0.0, 0.0);
+
+            if is_leaf {
+                let curr_hit = geometry.get(v1.w as _).hit(self);
+
+                if curr_hit.is_closer_than(hit) {
+                    hit = curr_hit;
+                }
+
+                ptr = v2.w as _;
+            } else {
+                if self.hits_box(v1.xyz(), v2.xyz()) {
+                    ptr = v1.w as _;
+                } else {
+                    ptr = v2.w as _;
+                }
+            }
 
             if ptr == 0 {
                 break;
-            }
-
-            let bb_min = geometry_index.read(ptr);
-            let bb_max = geometry_index.read(ptr + 1);
-
-            ptr += 2;
-
-            let left_len = bb_min.w as usize;
-
-            if left_len == 0 {
-                let triangles = bb_max.w as usize;
-                let mut triangle_idx = 0;
-
-                while triangle_idx < triangles {
-                    let triangle_id = geometry_index.read(ptr);
-
-                    ptr += 1;
-                    triangle_idx += 4;
-
-                    // Check .x
-                    let triangle_hit =
-                        geometry.get(triangle_id.x as _).hit(self);
-
-                    if triangle_hit.is_closer_than(hit) {
-                        hit = triangle_hit;
-                    }
-
-                    // Check .y
-                    let triangle_hit =
-                        geometry.get(triangle_id.y as _).hit(self);
-
-                    if triangle_hit.is_closer_than(hit) {
-                        hit = triangle_hit;
-                    }
-
-                    // Check .z
-                    let triangle_hit =
-                        geometry.get(triangle_id.z as _).hit(self);
-
-                    if triangle_hit.is_closer_than(hit) {
-                        hit = triangle_hit;
-                    }
-
-                    // Check .w
-                    let triangle_hit =
-                        geometry.get(triangle_id.w as _).hit(self);
-
-                    if triangle_hit.is_closer_than(hit) {
-                        hit = triangle_hit;
-                    }
-                }
-            } else {
-                // TODO prioritize left/right depending on the distance
-
-                let left_bb_min = geometry_index.read(ptr);
-                let left_bb_max = geometry_index.read(ptr + 1);
-
-                if self.hits_box(left_bb_min.xyz(), left_bb_max.xyz()) {
-                    visitor.push(ptr);
-                }
-
-                let right_bb_min = geometry_index.read(ptr + left_len);
-                let right_bb_max = geometry_index.read(ptr + left_len + 1);
-
-                if self.hits_box(right_bb_min.xyz(), right_bb_max.xyz()) {
-                    visitor.push(ptr + left_len);
-                }
             }
         }
 
@@ -149,18 +118,16 @@ impl Ray {
         self,
         geometry: &Geometry,
         geometry_index: &GeometryIndex,
-        geometry_index_visitor: &mut GeometryIndexVisitor,
         lights: &Lights,
         materials: &Materials,
         texture: &Texture,
     ) -> Vec3 {
-        let hit = self.trace(geometry, geometry_index, geometry_index_visitor);
+        let hit = self.trace(geometry, geometry_index);
 
         if hit.is_some() {
             materials.get(hit.material_id).shade(
                 geometry,
                 geometry_index,
-                geometry_index_visitor,
                 lights,
                 materials,
                 texture,
@@ -183,18 +150,16 @@ impl Ray {
         self,
         geometry: &Geometry,
         geometry_index: &GeometryIndex,
-        geometry_index_visitor: &mut GeometryIndexVisitor,
         lights: &Lights,
         materials: &Materials,
         texture: &Texture,
     ) -> Vec3 {
-        let hit = self.trace(geometry, geometry_index, geometry_index_visitor);
+        let hit = self.trace(geometry, geometry_index);
 
         if hit.is_some() {
             materials.get(hit.material_id).shade_basic(
                 geometry,
                 geometry_index,
-                geometry_index_visitor,
                 lights,
                 texture,
                 hit,

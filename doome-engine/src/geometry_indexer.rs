@@ -7,6 +7,9 @@ use glam::{vec4, Vec3, Vec4};
 
 type TriangleId = u16;
 
+/// An BVH + LBVH geometry indexer.
+///
+/// Thanks to https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/.
 #[derive(Default)]
 pub struct GeometryIndexer {
     triangles: HashMap<TriangleId, Triangle>,
@@ -18,23 +21,29 @@ impl GeometryIndexer {
     }
 
     pub fn build(self) -> GeometryIndex {
-        let mut root = Tree::new(&self.triangles);
+        log::trace!("Building BVH");
+
+        let mut bvh = BvhNode::new(&self.triangles);
 
         for &triangle_id in self.triangles.keys() {
-            root.add(triangle_id);
+            bvh.add(triangle_id);
         }
 
-        root.balance();
+        log::info!("Balancing BVH");
+        bvh.balance();
+        log::trace!("... BVH:\n{}", bvh);
 
-        // ---
+        // -----
 
-        log::info!("BVH:\n{}", root);
+        log::info!("Linearizing BVH");
+        let lbvh = bvh.linearize();
+        log::trace!("... LBVH:\n{}", lbvh);
 
-        // ---
+        // -----
 
-        let mut data = root.serialize(true);
+        let mut data = lbvh.serialize();
 
-        while data.len() < 2048 {
+        while data.len() < 4096 {
             data.push(vec4(0.0, 0.0, 0.0, 0.0));
         }
 
@@ -49,14 +58,14 @@ impl GeometryIndexer {
     }
 }
 
-struct Tree<'a> {
+struct BvhNode<'a> {
     lookup: &'a HashMap<TriangleId, Triangle>,
     bb: BoundingBox,
     triangles: Vec<TriangleId>,
     children: Option<[Box<Self>; 2]>,
 }
 
-impl<'a> Tree<'a> {
+impl<'a> BvhNode<'a> {
     fn new(lookup: &'a HashMap<TriangleId, Triangle>) -> Self {
         Self {
             lookup,
@@ -126,10 +135,8 @@ impl<'a> Tree<'a> {
             }
         }
 
-        // TODO the hard-coded 100.0 here feels kinda arbitrary
-        let cost = 100.0
-            + (left as f32) * left_bb.area()
-            + (right as f32) * right_bb.area();
+        let cost =
+            (left as f32) * left_bb.area() + (right as f32) * right_bb.area();
 
         cost.max(1.0)
     }
@@ -152,60 +159,55 @@ impl<'a> Tree<'a> {
         self.children = Some([Box::new(left), Box::new(right)]);
     }
 
-    fn serialize(&self, root: bool) -> Vec<Vec4> {
-        let mut out = Vec::new();
+    fn linearize(self) -> LinearBvh {
+        let mut lbvh = LinearBvh::default();
 
-        if root {
-            out.push(vec4(1.0, 2.0, 3.0, 4.0));
-        }
+        self.linearize_ex(&mut lbvh, None);
 
-        if let Some(children) = &self.children {
-            let left = children[0].serialize(false);
-            let right = children[1].serialize(false);
+        lbvh
+    }
 
-            assert!(left.len() > 0);
+    fn linearize_ex(
+        self,
+        lbvh: &mut LinearBvh,
+        backtrack_to: Option<usize>,
+    ) -> usize {
+        if let Some([left, right]) = self.children {
+            let id = lbvh.add_non_leaf(self.bb);
+            let right_id = right.linearize_ex(lbvh, backtrack_to);
+            let left_id = left.linearize_ex(lbvh, Some(right_id));
 
-            out.push(self.bb.min().extend(left.len() as _));
-            out.push(self.bb.max().extend(0.0));
-            out.extend(left);
-            out.extend(right);
+            lbvh.fixup_non_leaf(id, left_id, backtrack_to);
+
+            id
         } else {
-            assert!(self.triangles.len() > 0);
+            let mut id = None;
+            let mut prev_node_id = None;
 
-            out.push(self.bb.min().extend(0.0));
-            out.push(self.bb.max().extend(self.triangles.len() as _));
+            for triangle in self.triangles {
+                let node_id = lbvh.add_leaf(triangle);
 
-            for mut triangles in self.triangles.chunks(4) {
-                let mut vec = vec4(0.0, 0.0, 0.0, 0.0);
-
-                if !triangles.is_empty() {
-                    vec.x = triangles[0] as _;
-                    triangles = &triangles[1..];
+                if id.is_none() {
+                    id = Some(node_id);
                 }
 
-                if !triangles.is_empty() {
-                    vec.y = triangles[0] as _;
-                    triangles = &triangles[1..];
+                if let Some(prev_node_id) = prev_node_id {
+                    lbvh.fixup_leaf(prev_node_id, node_id);
                 }
 
-                if !triangles.is_empty() {
-                    vec.z = triangles[0] as _;
-                    triangles = &triangles[1..];
-                }
-
-                if !triangles.is_empty() {
-                    vec.w = triangles[0] as _;
-                }
-
-                out.push(vec);
+                prev_node_id = Some(node_id);
             }
-        }
 
-        out
+            if let Some(backtrack_to) = backtrack_to {
+                lbvh.fixup_leaf(prev_node_id.unwrap(), backtrack_to);
+            }
+
+            id.unwrap()
+        }
     }
 }
 
-impl fmt::Display for Tree<'_> {
+impl fmt::Display for BvhNode<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} .. {}", self.bb.min(), self.bb.max())?;
 
@@ -244,6 +246,161 @@ impl fmt::Display for Tree<'_> {
         Ok(())
     }
 }
+
+// -----
+
+#[derive(Default)]
+struct LinearBvh {
+    nodes: Vec<LinearBvhNode>,
+}
+
+impl LinearBvh {
+    fn add_leaf(&mut self, triangle: TriangleId) -> usize {
+        let id = self.nodes.len();
+
+        self.nodes.push(LinearBvhNode::Leaf {
+            triangle,
+            goto_id: None,
+        });
+
+        id
+    }
+
+    fn fixup_leaf(&mut self, id: usize, goto_id_val: usize) {
+        match &mut self.nodes[id] {
+            LinearBvhNode::Leaf { goto_id, .. } => {
+                *goto_id = Some(goto_id_val);
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    fn add_non_leaf(&mut self, bb: BoundingBox) -> usize {
+        let id = self.nodes.len();
+
+        self.nodes.push(LinearBvhNode::NonLeaf {
+            bb,
+            on_hit_goto_id: None,
+            on_miss_goto_id: None,
+        });
+
+        id
+    }
+
+    fn fixup_non_leaf(
+        &mut self,
+        id: usize,
+        on_hit_goto_id_val: usize,
+        on_miss_goto_it_val: Option<usize>,
+    ) {
+        match &mut self.nodes[id] {
+            LinearBvhNode::NonLeaf {
+                on_hit_goto_id,
+                on_miss_goto_id,
+                ..
+            } => {
+                *on_hit_goto_id = Some(on_hit_goto_id_val);
+                *on_miss_goto_id = on_miss_goto_it_val;
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    fn serialize(self) -> Vec<Vec4> {
+        let mut out = Vec::new();
+
+        for node in self.nodes {
+            let v1;
+            let v2;
+
+            match node {
+                LinearBvhNode::Leaf { triangle, goto_id } => {
+                    let goto_ptr = goto_id.map(|id| id * 2).unwrap_or_default();
+
+                    v1 = vec4(0.0, 0.0, 0.0, triangle as _);
+                    v2 = vec4(0.0, 0.0, 0.0, goto_ptr as _);
+                }
+
+                LinearBvhNode::NonLeaf {
+                    bb,
+                    on_hit_goto_id,
+                    on_miss_goto_id,
+                } => {
+                    let on_hit_goto_ptr =
+                        on_hit_goto_id.map(|id| id * 2).unwrap_or_default();
+
+                    let on_miss_goto_ptr =
+                        on_miss_goto_id.map(|id| id * 2).unwrap_or_default();
+
+                    v1 = bb.min().extend(on_hit_goto_ptr as _);
+                    v2 = bb.max().extend(on_miss_goto_ptr as _);
+                }
+            }
+
+            out.push(v1);
+            out.push(v2);
+        }
+
+        out
+    }
+}
+
+impl fmt::Display for LinearBvh {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for (node_id, node) in self.nodes.iter().enumerate() {
+            writeln!(f, "[{}]: {}", node_id, node)?;
+        }
+
+        Ok(())
+    }
+}
+
+enum LinearBvhNode {
+    Leaf {
+        triangle: TriangleId,
+        goto_id: Option<usize>,
+    },
+
+    NonLeaf {
+        bb: BoundingBox,
+        on_hit_goto_id: Option<usize>,
+        on_miss_goto_id: Option<usize>,
+    },
+}
+
+impl fmt::Display for LinearBvhNode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LinearBvhNode::Leaf { triangle, goto_id } => {
+                write!(f, "match-triangle {}", triangle)?;
+
+                if let Some(id) = goto_id {
+                    write!(f, ", goto {}", id)?;
+                }
+            }
+
+            LinearBvhNode::NonLeaf {
+                bb,
+                on_hit_goto_id,
+                on_miss_goto_id,
+            } => {
+                write!(f, "match-aabb {}..{}", bb.min(), bb.max())?;
+
+                if let Some(id) = on_hit_goto_id {
+                    write!(f, ", on-hit-goto {}", id)?;
+                }
+
+                if let Some(id) = on_miss_goto_id {
+                    write!(f, ", on-miss-goto {}", id)?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+}
+
+// -----
 
 #[derive(Clone, Copy, Debug, Default)]
 struct BoundingBox {
