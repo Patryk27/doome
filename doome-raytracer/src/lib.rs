@@ -14,11 +14,11 @@ pub struct Raytracer {
     height: u32,
     pipeline: wgpu::RenderPipeline,
     output_texture: wgpu::Texture,
-    camera: AllocatedUniform,
-    geometry: AllocatedUniform,
-    geometry_index: AllocatedUniform,
-    lights: AllocatedUniform,
-    materials: AllocatedUniform,
+    camera: AllocatedUniform<sc::Camera>,
+    geometry: AllocatedUniform<sc::Geometry>,
+    geometry_index: AllocatedUniform<sc::GeometryIndex>,
+    lights: AllocatedUniform<sc::Lights>,
+    materials: AllocatedUniform<sc::Materials>,
 
     tex_bind_group: wgpu::BindGroup,
 }
@@ -219,36 +219,11 @@ impl Raytracer {
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
     ) {
-        // TODO provide a method on `AllocatedUniform` instead
-        queue.write_buffer(
-            &self.camera.buffer,
-            0,
-            bytemuck::cast_slice(slice::from_ref(camera)),
-        );
-
-        queue.write_buffer(
-            &self.geometry.buffer,
-            0,
-            bytemuck::cast_slice(slice::from_ref(geometry)),
-        );
-
-        queue.write_buffer(
-            &self.geometry_index.buffer,
-            0,
-            bytemuck::cast_slice(slice::from_ref(geometry_index)),
-        );
-
-        queue.write_buffer(
-            &self.lights.buffer,
-            0,
-            bytemuck::cast_slice(slice::from_ref(lights)),
-        );
-
-        queue.write_buffer(
-            &self.materials.buffer,
-            0,
-            bytemuck::cast_slice(slice::from_ref(materials)),
-        );
+        self.camera.write(queue, camera);
+        self.geometry.write(queue, geometry);
+        self.geometry_index.write(queue, geometry_index);
+        self.lights.write(queue, lights);
+        self.materials.write(queue, materials);
 
         let view = self.output_texture.create_view(&Default::default());
 

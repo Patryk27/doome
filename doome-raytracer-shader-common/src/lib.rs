@@ -1,3 +1,4 @@
+#![allow(clippy::len_without_is_empty)]
 #![no_std]
 
 mod camera;

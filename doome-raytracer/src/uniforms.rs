@@ -1,16 +1,33 @@
-use std::{any, mem};
+use std::marker::PhantomData;
+use std::{any, mem, slice};
 
-pub struct AllocatedUniform {
+use bytemuck::Pod;
+
+pub struct AllocatedUniform<T> {
     pub buffer: wgpu::Buffer,
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
+    _data: PhantomData<T>,
+}
+
+impl<T> AllocatedUniform<T>
+where
+    T: Pod,
+{
+    pub fn write(&self, queue: &wgpu::Queue, data: &T) {
+        queue.write_buffer(
+            &self.buffer,
+            0,
+            bytemuck::cast_slice(slice::from_ref(data)),
+        );
+    }
 }
 
 pub fn allocate<T>(
     device: &wgpu::Device,
     binding: u32,
     name: &str,
-) -> AllocatedUniform {
+) -> AllocatedUniform<T> {
     assert!(
         mem::size_of::<T>() % 16 == 0,
         "`{}` is not padded to 16 bytes - actual size is {}",
@@ -64,5 +81,6 @@ pub fn allocate<T>(
         buffer,
         bind_group_layout,
         bind_group,
+        _data: PhantomData,
     }
 }

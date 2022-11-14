@@ -3,7 +3,7 @@ use core::ops;
 use crate::*;
 
 #[repr(C)]
-#[derive(Clone, Copy, Debug, Default, PartialEq, Pod, Zeroable)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Pod, Zeroable)]
 pub struct PadU32 {
     pub value: u32,
     _pad1: u32,

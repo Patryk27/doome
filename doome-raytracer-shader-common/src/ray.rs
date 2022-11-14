@@ -61,12 +61,10 @@ impl Ray {
                 }
 
                 ptr = v2.w as _;
+            } else if self.hits_box(v1.xyz(), v2.xyz()) {
+                ptr = v1.w as _;
             } else {
-                if self.hits_box(v1.xyz(), v2.xyz()) {
-                    ptr = v1.w as _;
-                } else {
-                    ptr = v2.w as _;
-                }
+                ptr = v2.w as _;
             }
 
             if ptr == 0 {
@@ -98,12 +96,10 @@ impl Ray {
                 }
 
                 ptr = v2.w as _;
+            } else if self.hits_box(v1.xyz(), v2.xyz()) {
+                ptr = v1.w as _;
             } else {
-                if self.hits_box(v1.xyz(), v2.xyz()) {
-                    ptr = v1.w as _;
-                } else {
-                    ptr = v2.w as _;
-                }
+                ptr = v2.w as _;
             }
 
             if ptr == 0 {

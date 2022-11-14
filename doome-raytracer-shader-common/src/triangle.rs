@@ -124,7 +124,7 @@ impl Triangle {
             u = f32::EPSILON;
         }
 
-        if u < 0.0 || u > 1.0 {
+        if !(0.0..=1.0).contains(&u) {
             return Hit::none();
         }
 
