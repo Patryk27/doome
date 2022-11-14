@@ -1,6 +1,8 @@
 use doome_engine::{Canvas, HEIGHT, HUD_HEIGHT, WIDTH};
 use doome_surface::Color;
 
+// TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
+//       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
 const ASSETS: include_dir::Dir = include_dir::include_dir!("assets");
 
 struct App {
