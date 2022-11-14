@@ -13,6 +13,33 @@ pub struct Triangle {
     uvs: Vec4,
 }
 
+#[cfg(not(target_arch = "spirv"))]
+impl Triangle {
+    pub fn offset(mut self, offset: Vec3) -> Self {
+        self.v0.x += offset.x;
+        self.v0.y += offset.y;
+        self.v0.z += offset.z;
+
+        self.v1.x += offset.x;
+        self.v1.y += offset.y;
+        self.v1.z += offset.z;
+
+        self.v2.x += offset.x;
+        self.v2.y += offset.y;
+        self.v2.z += offset.z;
+
+        self
+    }
+
+    pub fn vertices(&self) -> [Vec3; 3] {
+        [self.v0(), self.v1(), self.v2()]
+    }
+
+    pub fn center(&self) -> Vec3 {
+        self.vertices().iter().sum::<Vec3>() / 3.0
+    }
+}
+
 impl Triangle {
     pub fn new(
         v0: Vec3,
@@ -41,16 +68,6 @@ impl Triangle {
 
     pub fn v2(&self) -> Vec3 {
         self.v2.xyz()
-    }
-
-    #[cfg(not(target_arch = "spirv"))]
-    pub fn vertices(&self) -> [Vec3; 3] {
-        [self.v0(), self.v1(), self.v2()]
-    }
-
-    #[cfg(not(target_arch = "spirv"))]
-    pub fn center(&self) -> Vec3 {
-        self.vertices().iter().sum::<Vec3>() / 3.0
     }
 
     pub fn hit(&self, ray: Ray) -> Hit {

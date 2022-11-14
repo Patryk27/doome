@@ -538,11 +538,13 @@ dependencies = [
  "dotenv",
  "env_logger",
  "glam",
+ "image",
  "include_dir",
  "instant",
  "log",
  "pixels",
  "pollster",
+ "rectangle-pack",
  "tobj",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -1615,6 +1617,12 @@ dependencies = [
  "crossbeam-utils",
  "num_cpus",
 ]
+
+[[package]]
+name = "rectangle-pack"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0d463f2884048e7153449a55166f91028d5b0ea53c79377099ce4e8cf0cf9bb"
 
 [[package]]
 name = "redox_syscall"

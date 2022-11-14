@@ -3,16 +3,23 @@ use crate::*;
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct Material {
-    // color: Vec4,
+    // x,y,z is color, w is 1.0 indicates texture is present, 0.0 indicates texture is not present
+    color: Vec4,
+    // x,y,z is reflectivity color, w is reflectivity
     reflectivity: Vec4,
 }
 
 impl Material {
-    // #[cfg(not(target_arch = "spirv"))]
-    // pub fn with_color(mut self, color: u32) -> Self {
-    //     self.color = rgb_to_srgb(color).extend(1.0);
-    //     self
-    // }
+    #[cfg(not(target_arch = "spirv"))]
+    pub fn with_color(mut self, color: u32) -> Self {
+        self.color = rgb_to_srgb(color).extend(1.0);
+        self
+    }
+
+    pub fn with_texture(mut self, with_texture: bool) -> Self {
+        self.color.w = if with_texture { 1.0 } else { 0.0 };
+        self
+    }
 
     #[cfg(not(target_arch = "spirv"))]
     pub fn with_reflectivity(
@@ -98,7 +105,7 @@ impl Material {
         texture: &Texture,
         hit: Hit,
     ) -> Vec3 {
-        let color = texture.sample(hit.uv).truncate();
+        let color = (texture.sample(hit.uv) * self.color).truncate();
         let mut radiance = vec3(0.0, 0.0, 0.0);
         let mut light_idx = 0;
 
@@ -134,7 +141,10 @@ impl Material {
 #[cfg(not(target_arch = "spirv"))]
 impl Default for Material {
     fn default() -> Self {
-        Material::zeroed()
+        Material {
+            color: vec4(1.0, 1.0, 1.0, 0.0),
+            reflectivity: vec4(0.0, 0.0, 0.0, 0.0),
+        }
     }
 }
 

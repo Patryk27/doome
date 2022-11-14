@@ -13,10 +13,12 @@ doome-text = { path = "../doome-text" }
 anyhow = "1"
 bytemuck = "1"
 glam = { version = "0.22", default-features = false }
+image = "0.24"
 include_dir = "0.7.3"
 instant = "0.1"
 log = "0.4"
 pixels = "0.10.0"
+rectangle-pack = "0.4"
 tobj = "3.2"
 wgpu = "0.13"
 winit = "0.27"

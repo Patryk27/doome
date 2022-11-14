@@ -137,6 +137,47 @@ async fn run(mut app: impl App + 'static) {
 
     let text_engine = TextEngine::default();
 
+    // -----
+
+    let mut camera = sc::Camera::new(
+        vec3(0.0, 1.0, -3.0),
+        vec3(0.0, 1.0, 2.0),
+        vec3(0.0, -1.0, 0.0),
+        1.0,
+        vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
+        PI / 2.0,
+    );
+
+    // -----
+
+    let mut materials = sc::Materials::default();
+
+    let mat_basic = materials.push(
+        sc::Material::default()
+            .with_texture(true)
+            .with_reflectivity(0.65, 0xffffffff),
+    );
+
+    let mat_floor = materials.push(sc::Material::default());
+
+    let mat_wall = materials.push(sc::Material::default());
+
+    let mat_ceiling = materials.push(sc::Material::default());
+
+    let mat_sphere = materials.push(
+        sc::Material::default()
+            .with_color(0xff0000)
+            .with_reflectivity(0.65, 0xffffff),
+    );
+
+    let mut pipeline = Pipeline::builder();
+    let reference_cube =
+        pipeline.load_model("referenceCube.obj", mat_basic).unwrap();
+
+    let pipeline = pipeline.build();
+
+    // -----
+
     let raytracer = Raytracer::new(
         pixels.device(),
         pixels.queue(),
@@ -153,51 +194,7 @@ async fn run(mut app: impl App + 'static) {
 
     // -----
 
-    let mut camera = sc::Camera::new(
-        vec3(0.0, 1.0, -3.0),
-        vec3(0.0, 1.0, 2.0),
-        vec3(0.0, -1.0, 0.0),
-        1.0,
-        vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
-        PI / 2.0,
-    );
-
-    // -----
-
-    let mut materials = sc::Materials::default();
-
-    let mat_floor = materials.push(sc::Material::default());
-
-    let mat_wall = materials.push(sc::Material::default());
-
-    let mat_ceiling = materials.push(sc::Material::default());
-
-    let mat_sphere = materials.push(
-        sc::Material::default()
-            // .with_color(0xff0000)
-            .with_reflectivity(0.65, 0xffffff),
-    );
-
-    let mut pipeline = Pipeline::new();
-    pipeline.load_model("referenceCube.obj").unwrap();
-
-    // -----
-
     let mut geometry = sc::Geometry::default();
-
-    // let mut reader =
-    //     Cursor::new(include_bytes!("../../models/referenceCube.obj"));
-    // let (models, model_materials) =
-    //     tobj::load_obj_buf(&mut reader, &Default::default(), |mat| {
-    //         let mat = Path::from("../../models").join(mat);
-    //         log::info!("Loading material from {}", mat.display());
-
-    //         tobj::load_mtl(mat)
-    //     })
-    //     .unwrap();
-
-    // log::info!("Models: {models:?}");
-    // log::info!("Materials: {model_materials:?}");
 
     geometry.push_floor(-3, -3, 3, 3, mat_floor);
     geometry.push_wall(-3, 3, -1, 3, 0, mat_wall);
@@ -215,6 +212,12 @@ async fn run(mut app: impl App + 'static) {
     geometry.push_icosphere(2, 1, mat_sphere);
 
     geometry.push_ceiling(-10, -10, 10, 10, mat_ceiling);
+
+    pipeline.insert_to_geometry(
+        reference_cube,
+        &mut geometry,
+        vec3(0.0, 1.0, 0.0),
+    );
 
     // -----
 
