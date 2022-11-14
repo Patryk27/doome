@@ -16,18 +16,22 @@ impl GeometryIndex {
     }
 }
 
-pub struct PendingNodes {
-    ptrs: [usize; 128],
+pub struct GeometryIndexVisitor {
+    ptrs: [usize; 32],
     len: usize,
 }
 
-impl PendingNodes {
+impl GeometryIndexVisitor {
     pub fn new() -> Self {
-        let mut ptrs = [0; 128];
+        Self {
+            ptrs: [0; 32],
+            len: 0,
+        }
+    }
 
-        ptrs[0] = 1;
-
-        Self { ptrs, len: 1 }
+    pub fn reset(&mut self) {
+        self.ptrs[0] = 1;
+        self.len = 1;
     }
 
     pub fn push(&mut self, ptr: usize) {
@@ -51,7 +55,7 @@ mod tests {
 
     #[test]
     fn pending_nodes() {
-        let mut target = PendingNodes::new();
+        let mut target = GeometryIndexVisitor::new();
 
         assert_eq!(1, target.pop());
 

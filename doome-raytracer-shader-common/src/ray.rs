@@ -4,13 +4,17 @@ use crate::*;
 pub struct Ray {
     origin: Vec3,
     direction: Vec3,
+    inv_direction: Vec3,
 }
 
 impl Ray {
     pub fn new(origin: Vec3, direction: Vec3) -> Self {
+        let direction = direction.normalize();
+
         Self {
             origin,
-            direction: direction.normalize(),
+            direction,
+            inv_direction: 1.0 / direction,
         }
     }
 
@@ -22,102 +26,119 @@ impl Ray {
         self.direction
     }
 
+    // TODO optimizable
     pub fn hits_box(&self, bb_min: Vec3, bb_max: Vec3) -> bool {
-        let inv_direction = 1.0 / self.direction;
+        let hit_min = (bb_min - self.origin) * self.inv_direction;
+        let hit_max = (bb_max - self.origin) * self.inv_direction;
 
-        let hit_min_x = (bb_min.x - self.origin.x) * inv_direction.x;
-        let hit_max_x = (bb_max.x - self.origin.x) * inv_direction.x;
-
-        let hit_min_y = (bb_min.y - self.origin.y) * inv_direction.y;
-        let hit_max_y = (bb_max.y - self.origin.y) * inv_direction.y;
-
-        let hit_min_z = (bb_min.z - self.origin.z) * inv_direction.z;
-        let hit_max_z = (bb_max.z - self.origin.z) * inv_direction.z;
-
-        let x_entry = hit_min_x.min(hit_max_x);
-        let y_entry = hit_min_y.min(hit_max_y);
-        let z_entry = hit_min_z.min(hit_max_z);
-        let x_exit = hit_min_x.max(hit_max_x);
-        let y_exit = hit_min_y.max(hit_max_y);
-        let z_exit = hit_min_z.max(hit_max_z);
+        let x_entry = hit_min.x.min(hit_max.x);
+        let y_entry = hit_min.y.min(hit_max.y);
+        let z_entry = hit_min.z.min(hit_max.z);
+        let x_exit = hit_min.x.max(hit_max.x);
+        let y_exit = hit_min.y.max(hit_max.y);
+        let z_exit = hit_min.z.max(hit_max.z);
 
         let latest_entry = x_entry.max(y_entry).max(z_entry);
         let earliest_exit = x_exit.min(y_exit).min(z_exit);
 
-        latest_entry < earliest_exit && earliest_exit > 0.0
+        latest_entry <= earliest_exit && earliest_exit > 0.0
     }
 
     pub fn hits_anything_up_to(
         self,
         geometry: &Geometry,
+        geometry_index: &GeometryIndex,
+        visitor: &mut GeometryIndexVisitor,
         distance: f32,
     ) -> bool {
-        let mut triangle_idx = 0;
+        let hit = self.trace(geometry, geometry_index, visitor);
 
-        while triangle_idx < geometry.len() {
-            let hit = geometry.get(triangle_idx).hit(self);
-
-            if hit.t < distance {
-                return true;
-            }
-
-            triangle_idx += 1;
-        }
-
-        false
+        // TODO optimizable
+        hit.is_some() && hit.t < distance
     }
 
     pub fn trace(
         self,
         geometry: &Geometry,
         geometry_index: &GeometryIndex,
+        visitor: &mut GeometryIndexVisitor,
     ) -> Hit {
         let mut hit = Hit::none();
-        let mut nodes = PendingNodes::new();
+
+        visitor.reset();
 
         loop {
-            let mut ptr = nodes.pop();
+            let mut ptr = visitor.pop();
 
             if ptr == 0 {
                 break;
             }
 
-            let v1 = geometry_index.read(ptr);
-            ptr += 1;
+            let bb_min = geometry_index.read(ptr);
+            let bb_max = geometry_index.read(ptr + 1);
 
-            let v2 = geometry_index.read(ptr);
-            ptr += 1;
+            ptr += 2;
 
-            let bb_min = v1.xyz();
-            let left_len = v1.w as usize;
-
-            let bb_max = v2.xyz();
-            let triangles = v2.w as usize;
-
-            if !self.hits_box(bb_min, bb_max) {
-                continue;
-            }
+            let left_len = bb_min.w as usize;
 
             if left_len == 0 {
+                let triangles = bb_max.w as usize;
                 let mut triangle_idx = 0;
 
                 while triangle_idx < triangles {
                     let triangle_id = geometry_index.read(ptr);
-                    ptr += 1;
 
-                    let triangle_id = triangle_id.x as u32;
-                    let triangle = geometry.get(triangle_id);
-                    let triangle_hit = triangle.hit(self);
+                    ptr += 1;
+                    triangle_idx += 4;
+
+                    // Check .x
+                    let triangle_hit =
+                        geometry.get(triangle_id.x as _).hit(self);
 
                     if triangle_hit.is_closer_than(hit) {
                         hit = triangle_hit;
                     }
 
-                    triangle_idx += 1;
+                    // Check .y
+                    let triangle_hit =
+                        geometry.get(triangle_id.y as _).hit(self);
+
+                    if triangle_hit.is_closer_than(hit) {
+                        hit = triangle_hit;
+                    }
+
+                    // Check .z
+                    let triangle_hit =
+                        geometry.get(triangle_id.z as _).hit(self);
+
+                    if triangle_hit.is_closer_than(hit) {
+                        hit = triangle_hit;
+                    }
+
+                    // Check .w
+                    let triangle_hit =
+                        geometry.get(triangle_id.w as _).hit(self);
+
+                    if triangle_hit.is_closer_than(hit) {
+                        hit = triangle_hit;
+                    }
                 }
             } else {
-                nodes.push(ptr);
-                nodes.push(ptr + left_len);
+                // TODO prioritize left/right depending on the distance
+
+                let left_bb_min = geometry_index.read(ptr);
+                let left_bb_max = geometry_index.read(ptr + 1);
+
+                if self.hits_box(left_bb_min.xyz(), left_bb_max.xyz()) {
+                    visitor.push(ptr);
+                }
+
+                let right_bb_min = geometry_index.read(ptr + left_len);
+                let right_bb_max = geometry_index.read(ptr + left_len + 1);
+
+                if self.hits_box(right_bb_min.xyz(), right_bb_max.xyz()) {
+                    visitor.push(ptr + left_len);
+                }
             }
         }
 
@@ -128,16 +149,18 @@ impl Ray {
         self,
         geometry: &Geometry,
         geometry_index: &GeometryIndex,
+        geometry_index_visitor: &mut GeometryIndexVisitor,
         lights: &Lights,
         materials: &Materials,
         texture: &Texture,
     ) -> Vec3 {
-        let hit = self.trace(geometry, geometry_index);
+        let hit = self.trace(geometry, geometry_index, geometry_index_visitor);
 
         if hit.is_some() {
             materials.get(hit.material_id).shade(
                 geometry,
                 geometry_index,
+                geometry_index_visitor,
                 lights,
                 materials,
                 texture,
@@ -160,16 +183,22 @@ impl Ray {
         self,
         geometry: &Geometry,
         geometry_index: &GeometryIndex,
+        geometry_index_visitor: &mut GeometryIndexVisitor,
         lights: &Lights,
         materials: &Materials,
         texture: &Texture,
     ) -> Vec3 {
-        let hit = self.trace(geometry, geometry_index);
+        let hit = self.trace(geometry, geometry_index, geometry_index_visitor);
 
         if hit.is_some() {
-            materials
-                .get(hit.material_id)
-                .shade_basic(geometry, lights, texture, hit)
+            materials.get(hit.material_id).shade_basic(
+                geometry,
+                geometry_index,
+                geometry_index_visitor,
+                lights,
+                texture,
+                hit,
+            )
         } else {
             vec3(0.0, 0.0, 0.0)
         }

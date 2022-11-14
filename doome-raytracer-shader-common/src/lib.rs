@@ -31,6 +31,6 @@ pub use self::sampling::*;
 pub use self::triangle::*;
 use self::utils::*;
 
-pub const MAX_OBJECTS: u32 = 512;
+pub const MAX_OBJECTS: u32 = 900;
 pub const MAX_LIGHTS: u32 = 16;
 pub const MAX_MATERIALS: u32 = 16;

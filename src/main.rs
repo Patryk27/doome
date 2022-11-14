@@ -21,17 +21,17 @@ impl doome_engine::App for App {
             WIDTH,
             HEIGHT,
             Color {
-                r: 0x48,
-                g: 0xb2,
-                b: 0xe8,
+                r: 0x10,
+                g: 0x10,
+                b: 0x10,
                 a: 0xff,
             },
         );
 
-        canvas.text(
-            10,
-            HEIGHT - HUD_HEIGHT / 2 - 7,
-            format!("Hello, World -- it's frame #{}!", self.frame),
-        );
+        // canvas.text(
+        //     10,
+        //     HEIGHT - HUD_HEIGHT / 2 - 7,
+        //     format!("Hello, World -- it's frame #{}!", self.frame),
+        // );
     }
 }

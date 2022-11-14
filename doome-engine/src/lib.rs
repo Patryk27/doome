@@ -337,6 +337,31 @@ async fn run(mut app: impl App + 'static) {
                     });
                 }
 
+                if input.key_held(VirtualKeyCode::Q)
+                    || input.key_held(VirtualKeyCode::E)
+                {
+                    let sign = if input.key_held(VirtualKeyCode::Q) {
+                        -1.0
+                    } else {
+                        1.0
+                    };
+
+                    camera.update(|origin, look_at, _| {
+                        let dir = look_at.xz() - origin.xz();
+                        let dir_len = dir.length();
+                        let dir_angle = dir.angle_between(vec2(0.0, 1.0));
+                        let dir_angle = dir_angle + 0.025 * sign;
+
+                        let new_dir = vec2(dir_len, dir_len)
+                            * vec2(dir_angle.sin(), dir_angle.cos());
+
+                        let new_look_at = origin.xz() + new_dir;
+
+                        look_at.x = new_look_at.x;
+                        look_at.z = new_look_at.y;
+                    });
+                }
+
                 if input.key_held(VirtualKeyCode::R)
                     || input.key_held(VirtualKeyCode::F)
                 {
