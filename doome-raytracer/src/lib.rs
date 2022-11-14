@@ -1,5 +1,4 @@
 use std::num::NonZeroU32;
-use std::slice;
 
 use doome_raytracer_shader_common as sc;
 use uniforms::AllocatedUniform;
