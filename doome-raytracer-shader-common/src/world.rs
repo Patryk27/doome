@@ -2,6 +2,7 @@ use crate::*;
 
 pub struct World<'a> {
     pub geometry: &'a Geometry,
+    pub geometry_mapping: &'a GeometryMapping,
     pub geometry_index: &'a GeometryIndex,
     pub lights: &'a Lights,
     pub materials: &'a Materials,

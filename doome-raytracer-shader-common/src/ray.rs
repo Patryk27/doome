@@ -48,7 +48,8 @@ impl Ray {
             let is_leaf = v1.xyz() == v2.xyz();
 
             if is_leaf {
-                let hit = world.geometry.get(v1.w as _).hit(self);
+                let hit =
+                    world.geometry.get(TriangleId::new(v1.w as _)).hit(self);
 
                 if hit.t < distance {
                     return true;
@@ -79,10 +80,12 @@ impl Ray {
             let is_leaf = v1.xyz() == v2.xyz();
 
             if is_leaf {
-                let curr_hit = world.geometry.get(v1.w as _).hit(self);
+                let triangle_id = TriangleId::new(v1.w as _);
+                let curr_hit = world.geometry.get(triangle_id).hit(self);
 
                 if curr_hit.is_closer_than(hit) {
                     hit = curr_hit;
+                    hit.triangle_id = triangle_id;
                 }
 
                 ptr = v2.w as _;

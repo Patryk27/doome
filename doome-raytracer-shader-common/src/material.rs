@@ -39,7 +39,15 @@ impl Material {
 
     fn radiance(&self, world: &World, hit: Hit) -> Vec3 {
         let color = if self.color.w == 1.0 {
-            (world.atlas_sample(hit.uv) * self.color).truncate()
+            let triangle_mapping = world.geometry_mapping.get(hit.triangle_id);
+
+            let uv = triangle_mapping.uv0.xy()
+                + (triangle_mapping.uv1.xy() - triangle_mapping.uv0.xy())
+                    * hit.uv.x
+                + (triangle_mapping.uv2.xy() - triangle_mapping.uv0.xy())
+                    * hit.uv.y;
+
+            (world.atlas_sample(uv) * self.color).truncate()
         } else {
             self.color.truncate()
         };

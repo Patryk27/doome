@@ -8,30 +8,30 @@ pub struct Lights {
 }
 
 impl Lights {
-    pub fn push(&mut self, item: Light) {
-        self.items[self.len.value as usize] = item;
-        self.len += 1;
+    pub fn get(&self, idx: usize) -> Light {
+        self.items[idx]
     }
 
-    pub fn get(&self, idx: u32) -> Light {
-        self.items[idx as usize]
-    }
-
-    pub fn len(&self) -> u32 {
-        self.len.value
+    pub fn len(&self) -> usize {
+        self.len.value as _
     }
 }
 
 #[cfg(not(target_arch = "spirv"))]
 impl Lights {
-    pub fn get_mut(&mut self, idx: u32) -> &mut Light {
-        &mut self.items[idx as usize]
+    pub fn push(&mut self, item: Light) {
+        self.items[self.len.value as usize] = item;
+        self.len += 1;
+    }
+
+    pub fn get_mut(&mut self, idx: usize) -> &mut Light {
+        &mut self.items[idx]
     }
 }
 
 #[cfg(not(target_arch = "spirv"))]
 impl Default for Lights {
     fn default() -> Self {
-        Lights::zeroed()
+        Self::zeroed()
     }
 }

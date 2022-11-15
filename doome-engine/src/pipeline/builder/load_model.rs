@@ -6,6 +6,7 @@ use glam::{vec2, vec3, Vec2, Vec3};
 use tobj::LoadOptions;
 
 use super::{ModelHandle, PipelineBuilder};
+use crate::pipeline::Model;
 
 impl PipelineBuilder {
     pub fn load_model(
@@ -65,7 +66,7 @@ impl PipelineBuilder {
                 .or_insert((img, vec![new_handle]));
         }
 
-        self.models.push(triangles);
+        self.models.push(Model::new(triangles));
 
         Ok(new_handle)
     }
@@ -74,7 +75,7 @@ impl PipelineBuilder {
 fn load_mesh_triangles(
     mesh: &tobj::Mesh,
     material_id: rt::MaterialId,
-) -> Vec<rt::Triangle> {
+) -> Vec<(rt::Triangle, rt::TriangleMapping)> {
     let mut triangles = vec![];
 
     assert_eq!(mesh.texcoord_indices.len(), mesh.indices.len());
@@ -116,14 +117,14 @@ fn load_mesh_triangles(
             })
             .collect();
 
-        triangles.push(rt::Triangle::new(
-            vertices[0],
-            vertices[1],
-            vertices[2],
-            texcoords[0],
-            texcoords[1],
-            texcoords[2],
-            material_id,
+        triangles.push((
+            rt::Triangle::new(
+                vertices[0],
+                vertices[1],
+                vertices[2],
+                material_id,
+            ),
+            rt::TriangleMapping::new(texcoords[0], texcoords[1], texcoords[2]),
         ));
     }
 

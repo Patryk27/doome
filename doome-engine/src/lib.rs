@@ -1,5 +1,5 @@
 mod canvas;
-mod geometry_ext;
+mod geometry_builder;
 mod pipeline;
 mod scaling_texture_renderer;
 
@@ -19,7 +19,7 @@ use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
 pub use self::canvas::*;
-use self::geometry_ext::GeometryExt;
+use self::geometry_builder::*;
 use self::scaling_texture_renderer::*;
 use crate::pipeline::Pipeline;
 
@@ -216,7 +216,7 @@ async fn run(mut app: impl App + 'static) {
 
     // -----
 
-    let mut geometry = rt::Geometry::default();
+    let mut geometry = GeometryBuilder::default();
 
     geometry.push_floor(-3, -3, 3, 3, mat_matte);
     geometry.push_wall(-3, 3, -1, 3, 0, mat_matte);
@@ -236,16 +236,10 @@ async fn run(mut app: impl App + 'static) {
 
     geometry.push_ceiling(-10, -10, 10, 10, mat_matte);
 
-    let _monke =
-        pipeline.insert_to_geometry(monke_mesh, &mut geometry, monke_xform);
+    pipeline.insert_to_geometry(monke_mesh, &mut geometry, monke_xform);
+    pipeline.insert_to_geometry(reference_cube, &mut geometry, ref_cube_xform);
 
-    let _ref_cube = pipeline.insert_to_geometry(
-        reference_cube,
-        &mut geometry,
-        ref_cube_xform,
-    );
-
-    let _diamond = pipeline.insert_to_geometry(
+    pipeline.insert_to_geometry(
         diamond_mesh,
         &mut geometry,
         rt::math::translated(vec3(-3.0, 1.0, -1.0)),
@@ -253,6 +247,7 @@ async fn run(mut app: impl App + 'static) {
 
     // -----
 
+    let (geometry, geometry_mapping) = geometry.build();
     let geometry_index = rt::GeometryIndexer::index(&geometry);
 
     // -----
@@ -435,6 +430,7 @@ async fn run(mut app: impl App + 'static) {
                         raytracer.render(
                             &camera,
                             &geometry,
+                            &geometry_mapping,
                             &geometry_index,
                             &lights,
                             &materials,

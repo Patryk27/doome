@@ -2,19 +2,38 @@ use std::f32::consts::PI;
 use std::io::Cursor;
 
 use doome_raytracer as rt;
-use glam::{vec2, vec3};
+use glam::vec3;
 
-pub trait GeometryExt {
-    fn push(&mut self, tri: rt::Triangle) -> u32;
+#[derive(Default)]
+pub struct GeometryBuilder {
+    geometry: rt::Geometry,
+    geometry_mapping: rt::GeometryMapping,
+}
 
-    fn map_coords(&self, x: i32, z: i32) -> (f32, f32) {
+impl GeometryBuilder {
+    pub fn map_coords(&self, x: i32, z: i32) -> (f32, f32) {
         let x = (x as f32) * 2.0;
         let z = (z as f32) * 2.0;
 
         (x, z)
     }
 
-    fn push_floor(
+    pub fn push(&mut self, triangle: rt::Triangle) -> rt::TriangleId {
+        self.geometry.push(triangle)
+    }
+
+    pub fn push_ex(
+        &mut self,
+        triangle: rt::Triangle,
+        triangle_mapping: rt::TriangleMapping,
+    ) -> rt::TriangleId {
+        let triangle_id = self.geometry.push(triangle);
+        self.geometry_mapping.set(triangle_id, triangle_mapping);
+
+        triangle_id
+    }
+
+    pub fn push_floor(
         &mut self,
         x1: i32,
         z1: i32,
@@ -31,9 +50,6 @@ pub trait GeometryExt {
             vec3(x2, 0.0, z1),
             vec3(x1, 0.0, z1),
             vec3(x1, 0.0, z2),
-            vec2(0.0, 0.0),
-            vec2(0.0, 0.0),
-            vec2(0.0, 0.0),
             mat,
         ));
 
@@ -41,14 +57,11 @@ pub trait GeometryExt {
             vec3(x2, 0.0, z1),
             vec3(x1, 0.0, z2),
             vec3(x2, 0.0, z2),
-            vec2(0.0, 0.0),
-            vec2(0.0, 0.0),
-            vec2(0.0, 0.0),
             mat,
         ));
     }
 
-    fn push_ceiling(
+    pub fn push_ceiling(
         &mut self,
         x1: i32,
         z1: i32,
@@ -65,9 +78,6 @@ pub trait GeometryExt {
             vec3(x2, 4.0, z1),
             vec3(x1, 4.0, z2),
             vec3(x1, 4.0, z1),
-            vec2(0.0, 0.0),
-            vec2(0.0, 0.0),
-            vec2(0.0, 0.0),
             mat,
         ));
 
@@ -75,14 +85,11 @@ pub trait GeometryExt {
             vec3(x2, 4.0, z1),
             vec3(x2, 4.0, z2),
             vec3(x1, 4.0, z2),
-            vec2(0.0, 0.0),
-            vec2(0.0, 0.0),
-            vec2(0.0, 0.0),
             mat,
         ));
     }
 
-    fn push_wall(
+    pub fn push_wall(
         &mut self,
         x1: i32,
         z1: i32,
@@ -108,9 +115,6 @@ pub trait GeometryExt {
             vertex(1.0 * rot.cos(), 0.0, -1.0 * rot.sin()),
             vertex(-1.0 * rot.cos(), 0.0, 1.0 * rot.sin()),
             vertex(-1.0 * rot.cos(), 4.0, 1.0 * rot.sin()),
-            vec2(0.0, 0.0),
-            vec2(1.0, 0.0),
-            vec2(1.0, 1.0),
             mat,
         ));
 
@@ -118,15 +122,12 @@ pub trait GeometryExt {
             vertex(1.0 * rot.cos(), 0.0, -1.0 * rot.sin()),
             vertex(-1.0 * rot.cos(), 4.0, 1.0 * rot.sin()),
             vertex(1.0 * rot.cos(), 4.0, -1.0 * rot.sin()),
-            vec2(0.0, 0.0),
-            vec2(1.0, 1.0),
-            vec2(0.0, 1.0),
             mat,
         ));
     }
 
     // TODO temporary
-    fn push_icosphere(&mut self, x: i32, z: i32, mat: rt::MaterialId) {
+    pub fn push_icosphere(&mut self, x: i32, z: i32, mat: rt::MaterialId) {
         let (x, z) = self.map_coords(x, z);
         let mut reader = Cursor::new(include_bytes!("../../icosphere.obj"));
 
@@ -157,18 +158,13 @@ pub trait GeometryExt {
                     vertices[0],
                     vertices[1],
                     vertices[2],
-                    vec2(0.0, 1.0),
-                    vec2(1.0, 1.0),
-                    vec2(1.0, 0.0),
                     mat,
                 ));
             }
         }
     }
-}
 
-impl GeometryExt for rt::Geometry {
-    fn push(&mut self, tri: rt::Triangle) -> u32 {
-        rt::Geometry::push(self, tri)
+    pub fn build(self) -> (rt::Geometry, rt::GeometryMapping) {
+        (self.geometry, self.geometry_mapping)
     }
 }

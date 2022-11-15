@@ -3,14 +3,12 @@ use glam::Mat4;
 use include_dir::Dir;
 
 pub use self::builder::PipelineBuilder;
+use crate::geometry_builder::GeometryBuilder;
 
 mod builder;
 
-#[derive(Clone, Copy)]
-pub struct ModelHandle(usize);
-
 pub struct Pipeline {
-    models: Vec<Vec<rt::Triangle>>,
+    models: Vec<Model>,
     atlas: image::RgbaImage,
 }
 
@@ -26,31 +24,27 @@ impl Pipeline {
     pub fn insert_to_geometry(
         &self,
         model_handle: ModelHandle,
-        geometry: &mut rt::Geometry,
-        xform: Mat4,
-    ) -> u32 {
-        let model = &self.models[model_handle.0];
-        let offset = geometry.len();
-
-        for tri in model {
-            geometry.push(tri.apply(xform));
-        }
-
-        offset
-    }
-
-    pub fn update_geometry(
-        &self,
-        offset: u32,
-        model_handle: ModelHandle,
-        geometry: &mut rt::Geometry,
+        geometry: &mut GeometryBuilder,
         xform: Mat4,
     ) {
-        let triangles: Vec<_> = self.models[model_handle.0]
-            .iter()
-            .map(|tri| tri.apply(xform))
-            .collect();
+        let model = &self.models[model_handle.0];
 
-        geometry.write(offset, &triangles);
+        for (triangle, triangle_mapping) in &model.triangles {
+            geometry.push_ex(triangle.apply(xform), *triangle_mapping);
+        }
     }
 }
+
+#[derive(Clone)]
+pub struct Model {
+    triangles: Vec<(rt::Triangle, rt::TriangleMapping)>,
+}
+
+impl Model {
+    pub fn new(triangles: Vec<(rt::Triangle, rt::TriangleMapping)>) -> Self {
+        Self { triangles }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct ModelHandle(usize);

@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Bvh {
     root: BvhNode,
 }
@@ -23,7 +23,7 @@ impl Bvh {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Default)]
 pub struct BvhNode {
     bb: BoundingBox,
     triangles: Vec<(TriangleId, Triangle)>,

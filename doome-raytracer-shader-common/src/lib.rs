@@ -5,6 +5,7 @@
 mod camera;
 mod geometry;
 mod geometry_index;
+mod geometry_mapping;
 mod hit;
 mod light;
 mod lights;
@@ -13,10 +14,11 @@ mod materials;
 pub mod math;
 mod ray;
 mod triangle;
+mod triangle_mapping;
 mod utils;
 mod world;
 
-use core::fmt;
+use core::{fmt, mem};
 
 use bytemuck::{Pod, Zeroable};
 use glam::{vec2, vec3, vec4, Mat4, Vec2, Vec3, Vec4, Vec4Swizzles};
@@ -27,6 +29,7 @@ use spirv_std::{Image, Sampler};
 pub use self::camera::*;
 pub use self::geometry::*;
 pub use self::geometry_index::*;
+pub use self::geometry_mapping::*;
 pub use self::hit::*;
 pub use self::light::*;
 pub use self::lights::*;
@@ -34,9 +37,16 @@ pub use self::material::*;
 pub use self::materials::*;
 pub use self::ray::*;
 pub use self::triangle::*;
+pub use self::triangle_mapping::*;
 use self::utils::*;
 pub use self::world::*;
 
-pub const MAX_OBJECTS: u32 = 900;
-pub const MAX_LIGHTS: u32 = 16;
-pub const MAX_MATERIALS: u32 = 16;
+// WebGL 2's limit
+pub const MAX_BUFFER_BINDING_SIZE: usize = 65536;
+
+pub const MAX_TRIANGLES: usize = (MAX_BUFFER_BINDING_SIZE
+    - mem::size_of::<PadU32>())
+    / mem::size_of::<Triangle>();
+
+pub const MAX_LIGHTS: usize = 16;
+pub const MAX_MATERIALS: usize = 16;

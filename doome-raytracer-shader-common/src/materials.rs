@@ -36,6 +36,6 @@ impl Materials {
 #[cfg(not(target_arch = "spirv"))]
 impl Default for Materials {
     fn default() -> Self {
-        Materials::zeroed()
+        Self::zeroed()
     }
 }

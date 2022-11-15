@@ -23,15 +23,18 @@ pub fn fs_main(
     #[spirv(uniform, descriptor_set = 0, binding = 0)] camera: &Camera,
     #[spirv(uniform, descriptor_set = 1, binding = 0)] geometry: &Geometry,
     #[spirv(uniform, descriptor_set = 2, binding = 0)]
+    geometry_mapping: &GeometryMapping,
+    #[spirv(uniform, descriptor_set = 3, binding = 0)]
     geometry_index: &GeometryIndex,
-    #[spirv(uniform, descriptor_set = 3, binding = 0)] lights: &Lights,
-    #[spirv(uniform, descriptor_set = 4, binding = 0)] materials: &Materials,
-    #[spirv(descriptor_set = 5, binding = 0)] atlas_tex: &Image!(2D, type=f32, sampled),
-    #[spirv(descriptor_set = 5, binding = 1)] atlas_sampler: &Sampler,
+    #[spirv(uniform, descriptor_set = 4, binding = 0)] lights: &Lights,
+    #[spirv(uniform, descriptor_set = 5, binding = 0)] materials: &Materials,
+    #[spirv(descriptor_set = 6, binding = 0)] atlas_tex: &Image!(2D, type=f32, sampled),
+    #[spirv(descriptor_set = 6, binding = 1)] atlas_sampler: &Sampler,
     color: &mut Vec4,
 ) {
     let world = World {
         geometry,
+        geometry_mapping,
         geometry_index,
         lights,
         materials,

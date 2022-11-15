@@ -1,5 +1,5 @@
 use doome_raytracer::{ATLAS_HEIGHT, ATLAS_WIDTH};
-use glam::{vec2, Vec2};
+use glam::{vec2, Vec2, Vec4Swizzles};
 use maplit::btreemap;
 use rectangle_pack::{
     contains_smallest_box, volume_heuristic, GroupedRectsToPlace, RectToInsert,
@@ -59,33 +59,38 @@ impl PipelineBuilder {
                 vec2(texture.width() as f32, texture.height() as f32);
 
             let new_tex_size = vec2(ATLAS_WIDTH as f32, ATLAS_HEIGHT as f32);
-
             let offset_in_new_tex = vec2(x as f32, y as f32);
 
             for model_handle in affected_models {
                 let model = &mut self.models[model_handle.0];
 
-                for tri in model.iter_mut() {
-                    let uv0 = remap_uv(
-                        tri.uv0(),
+                for (_, tri_map) in &mut model.triangles {
+                    tri_map.uv0 = remap_uv(
+                        tri_map.uv0.xy(),
                         old_tex_size,
                         new_tex_size,
                         offset_in_new_tex,
-                    );
-                    let uv1 = remap_uv(
-                        tri.uv1(),
-                        old_tex_size,
-                        new_tex_size,
-                        offset_in_new_tex,
-                    );
-                    let uv2 = remap_uv(
-                        tri.uv2(),
-                        old_tex_size,
-                        new_tex_size,
-                        offset_in_new_tex,
-                    );
+                    )
+                    .extend(0.0)
+                    .extend(0.0);
 
-                    tri.set_uvs(uv0, uv1, uv2);
+                    tri_map.uv1 = remap_uv(
+                        tri_map.uv1.xy(),
+                        old_tex_size,
+                        new_tex_size,
+                        offset_in_new_tex,
+                    )
+                    .extend(0.0)
+                    .extend(0.0);
+
+                    tri_map.uv2 = remap_uv(
+                        tri_map.uv2.xy(),
+                        old_tex_size,
+                        new_tex_size,
+                        offset_in_new_tex,
+                    )
+                    .extend(0.0)
+                    .extend(0.0);
                 }
             }
         }
