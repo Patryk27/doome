@@ -45,9 +45,7 @@ impl Ray {
         loop {
             let v1 = world.geometry_index.read(ptr);
             let v2 = world.geometry_index.read(ptr + 1);
-
-            let is_leaf = v1.xyz() == vec3(0.0, 0.0, 0.0)
-                && v2.xyz() == vec3(0.0, 0.0, 0.0);
+            let is_leaf = v1.xyz() == v2.xyz();
 
             if is_leaf {
                 let hit = world.geometry.get(v1.w as _).hit(self);
@@ -57,10 +55,12 @@ impl Ray {
                 }
 
                 ptr = v2.w as _;
-            } else if self.hits_box(v1.xyz(), v2.xyz()) {
-                ptr = v1.w as _;
             } else {
-                ptr = v2.w as _;
+                if self.hits_box(v1.xyz(), v2.xyz()) {
+                    ptr = v1.w as _;
+                } else {
+                    ptr = v2.w as _;
+                }
             }
 
             if ptr == 0 {
@@ -76,9 +76,7 @@ impl Ray {
         loop {
             let v1 = world.geometry_index.read(ptr);
             let v2 = world.geometry_index.read(ptr + 1);
-
-            let is_leaf = v1.xyz() == vec3(0.0, 0.0, 0.0)
-                && v2.xyz() == vec3(0.0, 0.0, 0.0);
+            let is_leaf = v1.xyz() == v2.xyz();
 
             if is_leaf {
                 let curr_hit = world.geometry.get(v1.w as _).hit(self);

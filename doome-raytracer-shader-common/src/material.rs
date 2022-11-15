@@ -52,17 +52,14 @@ impl Material {
             let ray = Ray::new(hit.point, light.pos() - hit.point);
             let distance = light.pos().distance(hit.point);
 
-            if !ray.hits_anything_up_to(world, distance) {
-                let direction = (light.pos() - hit.point).normalize();
-                let diffuse_factor = direction.dot(hit.normal);
+            let diffuse_factor = if ray.hits_anything_up_to(world, distance) {
+                0.0
+            } else {
+                ray.direction().dot(hit.normal).max(0.0)
+            };
 
-                if diffuse_factor > 0.0 {
-                    radiance += light.color()
-                        * light.intensity()
-                        * color
-                        * diffuse_factor;
-                }
-            }
+            radiance +=
+                diffuse_factor * light.color() * light.intensity() * color;
 
             light_idx += 1;
         }
