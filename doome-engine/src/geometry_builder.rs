@@ -164,7 +164,7 @@ impl GeometryBuilder {
         }
     }
 
-    pub fn build(self) -> (rt::Geometry, rt::GeometryMapping) {
-        (self.geometry, self.geometry_mapping)
+    pub fn build(self) -> (Box<rt::Geometry>, Box<rt::GeometryMapping>) {
+        (Box::new(self.geometry), Box::new(self.geometry_mapping))
     }
 }
