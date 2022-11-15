@@ -1,4 +1,4 @@
-use doome_engine::{Canvas, HEIGHT, HUD_HEIGHT, WIDTH};
+use doome_engine::{Canvas, HEIGHT, WIDTH};
 use doome_surface::Color;
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::ops::{Index, IndexMut};
 
-use doome_raytracer_shader_common::{GeometryIndex, Triangle};
+use doome_raytracer::{GeometryIndex, Triangle};
 use glam::{vec4, Vec3, Vec4};
 
 type TriangleId = u16;

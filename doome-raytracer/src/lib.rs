@@ -1,28 +1,28 @@
+mod uniforms;
+
 use std::num::NonZeroU32;
 
-use doome_raytracer_shader_common as sc;
+pub use doome_raytracer_shader_common::*;
 use uniforms::AllocatedUniform;
-
-mod uniforms;
 
 pub const ATLAS_WIDTH: u32 = 256;
 pub const ATLAS_HEIGHT: u32 = 256;
 
-pub struct Raytracer {
+pub struct Engine {
     width: u32,
     height: u32,
     pipeline: wgpu::RenderPipeline,
     output_texture: wgpu::Texture,
-    camera: AllocatedUniform<sc::Camera>,
-    geometry: AllocatedUniform<sc::Geometry>,
-    geometry_index: AllocatedUniform<sc::GeometryIndex>,
-    lights: AllocatedUniform<sc::Lights>,
-    materials: AllocatedUniform<sc::Materials>,
+    camera: AllocatedUniform<Camera>,
+    geometry: AllocatedUniform<Geometry>,
+    geometry_index: AllocatedUniform<GeometryIndex>,
+    lights: AllocatedUniform<Lights>,
+    materials: AllocatedUniform<Materials>,
 
     tex_bind_group: wgpu::BindGroup,
 }
 
-impl Raytracer {
+impl Engine {
     pub fn new(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -33,21 +33,14 @@ impl Raytracer {
         let shader = wgpu::include_spirv!(env!("doome_raytracer_shader.spv"));
         let module = device.create_shader_module(shader);
 
-        let camera = uniforms::allocate::<sc::Camera>(device, 0, "camera");
+        let camera = uniforms::allocate::<Camera>(device, 0, "camera");
+        let geometry = uniforms::allocate::<Geometry>(device, 0, "geometry");
 
-        let geometry =
-            uniforms::allocate::<sc::Geometry>(device, 0, "geometry");
+        let geometry_index =
+            uniforms::allocate::<GeometryIndex>(device, 0, "geometry_index");
 
-        let geometry_index = uniforms::allocate::<sc::GeometryIndex>(
-            device,
-            0,
-            "geometry_index",
-        );
-
-        let lights = uniforms::allocate::<sc::Lights>(device, 0, "lights");
-
-        let materials =
-            uniforms::allocate::<sc::Materials>(device, 0, "materials");
+        let lights = uniforms::allocate::<Lights>(device, 0, "lights");
+        let materials = uniforms::allocate::<Materials>(device, 0, "materials");
 
         let tex_size = wgpu::Extent3d {
             width: ATLAS_WIDTH,
@@ -210,11 +203,11 @@ impl Raytracer {
 
     pub fn render(
         &self,
-        camera: &sc::Camera,
-        geometry: &sc::Geometry,
-        geometry_index: &sc::GeometryIndex,
-        lights: &sc::Lights,
-        materials: &sc::Materials,
+        camera: &Camera,
+        geometry: &Geometry,
+        geometry_index: &GeometryIndex,
+        lights: &Lights,
+        materials: &Materials,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
     ) {

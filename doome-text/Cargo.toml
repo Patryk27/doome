@@ -4,5 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# Workspace
 doome-surface = { path = "../doome-surface" }
+
+# Crates.io
 rusttype = "0.9"

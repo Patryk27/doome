@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# Internal
+# Workspace
 doome-raytracer = { path = "../doome-raytracer" }
-doome-raytracer-shader-common = { path = "../doome-raytracer-shader-common" }
 doome-surface = { path = "../doome-surface" }
 doome-text = { path = "../doome-text" }
 
+# Crates.io
 anyhow = "1"
 bytemuck = "1"
 glam = { version = "0.22", default-features = false }

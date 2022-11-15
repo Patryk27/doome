@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use anyhow::{anyhow, bail};
-use doome_raytracer_shader_common as sc;
+use doome_raytracer as rt;
 use glam::{vec2, vec3, Vec2, Vec3};
 use tobj::LoadOptions;
 
@@ -11,7 +11,7 @@ impl PipelineBuilder {
     pub fn load_model(
         &mut self,
         path: impl AsRef<Path>,
-        material_id: sc::MaterialId,
+        material_id: rt::MaterialId,
     ) -> anyhow::Result<ModelHandle> {
         let new_handle = ModelHandle(self.models.len());
 
@@ -73,8 +73,8 @@ impl PipelineBuilder {
 
 fn load_mesh_triangles(
     mesh: &tobj::Mesh,
-    material_id: sc::MaterialId,
-) -> Vec<sc::Triangle> {
+    material_id: rt::MaterialId,
+) -> Vec<rt::Triangle> {
     let mut triangles = vec![];
 
     assert_eq!(mesh.texcoord_indices.len(), mesh.indices.len());
@@ -116,7 +116,7 @@ fn load_mesh_triangles(
             })
             .collect();
 
-        triangles.push(sc::Triangle::new(
+        triangles.push(rt::Triangle::new(
             vertices[0],
             vertices[1],
             vertices[2],

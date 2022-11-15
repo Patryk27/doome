@@ -7,5 +7,8 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [dependencies]
-spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = ["glam"] }
+# Workspace
 doome-raytracer-shader-common = { path = "../doome-raytracer-shader-common" }
+
+# Crates.io
+spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = ["glam"] }

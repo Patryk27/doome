@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use doome_raytracer_shader_common as sc;
+use doome_raytracer as rt;
 use include_dir::Dir;
 
 use super::ModelHandle;
@@ -11,7 +11,7 @@ mod load_model;
 
 pub struct PipelineBuilder {
     dir: &'static Dir<'static>,
-    models: Vec<Vec<sc::Triangle>>,
+    models: Vec<Vec<rt::Triangle>>,
 
     /// Maps texture path to (texture data, models that use it)
     /// when building the pipeline we need to update the UVs on the models that use a given texture

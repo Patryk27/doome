@@ -7,8 +7,7 @@ mod scaling_texture_renderer;
 use std::f32::consts::PI;
 use std::rc::Rc;
 
-use doome_raytracer::Raytracer;
-use doome_raytracer_shader_common as sc;
+use doome_raytracer as rt;
 use doome_surface::Color;
 use doome_text::TextEngine;
 use glam::{vec2, vec3, Quat, Vec3Swizzles};
@@ -140,7 +139,7 @@ async fn run(mut app: impl App + 'static) {
 
     // -----
 
-    let mut camera = sc::Camera::new(
+    let mut camera = rt::Camera::new(
         vec3(0.0, 1.0, -3.0),
         vec3(0.0, 1.0, 2.0),
         vec3(0.0, -1.0, 0.0),
@@ -151,32 +150,32 @@ async fn run(mut app: impl App + 'static) {
 
     // -----
 
-    let mut materials = sc::Materials::default();
+    let mut materials = rt::Materials::default();
 
     let mat_monke = materials.push(
-        sc::Material::default()
+        rt::Material::default()
             .with_reflectivity(0.1, 0xffffff)
             .with_texture(true),
     );
 
     let mat_reference_cube = materials.push(
-        sc::Material::default()
+        rt::Material::default()
             .with_reflectivity(0.0, 0xffffff)
             .with_texture(true),
     );
 
     let mat_diamond = materials.push(
-        sc::Material::default()
+        rt::Material::default()
             .with_color(0xff0000)
             .with_reflectivity(0.3, 0xff0000)
             .with_texture(true),
     );
 
     let mat_matte =
-        materials.push(sc::Material::default().with_color(0x666666));
+        materials.push(rt::Material::default().with_color(0x666666));
 
     let mat_sphere = materials.push(
-        sc::Material::default()
+        rt::Material::default()
             .with_color(0xff0000)
             .with_reflectivity(0.65, 0xffffff),
     );
@@ -193,7 +192,7 @@ async fn run(mut app: impl App + 'static) {
 
     // -----
 
-    let raytracer = Raytracer::new(
+    let raytracer = rt::Engine::new(
         pixels.device(),
         pixels.queue(),
         WIDTH as _,
@@ -210,16 +209,16 @@ async fn run(mut app: impl App + 'static) {
 
     // -----
 
-    let mut monke_xform = sc::math::identity();
-    sc::math::translate(&mut monke_xform, vec3(0.0, 1.0, 0.0));
-    sc::math::rotate(&mut monke_xform, 45.0, vec3(0.0, 1.0, 0.0));
+    let mut monke_xform = rt::math::identity();
+    rt::math::translate(&mut monke_xform, vec3(0.0, 1.0, 0.0));
+    rt::math::rotate(&mut monke_xform, 45.0, vec3(0.0, 1.0, 0.0));
 
-    let mut ref_cube_xform = sc::math::identity();
-    sc::math::translate(&mut ref_cube_xform, vec3(2.0, 1.0, 0.0));
+    let mut ref_cube_xform = rt::math::identity();
+    rt::math::translate(&mut ref_cube_xform, vec3(2.0, 1.0, 0.0));
 
     // -----
 
-    let mut geometry = sc::Geometry::default();
+    let mut geometry = rt::Geometry::default();
 
     geometry.push_floor(-3, -3, 3, 3, mat_matte);
     geometry.push_wall(-3, 3, -1, 3, 0, mat_matte);
@@ -251,7 +250,7 @@ async fn run(mut app: impl App + 'static) {
     let _diamond = pipeline.insert_to_geometry(
         diamond_mesh,
         &mut geometry,
-        sc::math::translated(vec3(-3.0, 1.0, -1.0)),
+        rt::math::translated(vec3(-3.0, 1.0, -1.0)),
     );
 
     // -----
@@ -266,13 +265,13 @@ async fn run(mut app: impl App + 'static) {
 
     // -----
 
-    let mut lights = sc::Lights::default();
+    let mut lights = rt::Lights::default();
 
     lights.push(
-        sc::Light::new(vec3(-2.5 * 2.0, 3.0, -2.5 * 2.0)).with_intensity(0.7),
+        rt::Light::new(vec3(-2.5 * 2.0, 3.0, -2.5 * 2.0)).with_intensity(0.7),
     );
     lights.push(
-        sc::Light::new(vec3(2.5 * 2.0, 3.0, -2.5 * 2.0)).with_intensity(0.7),
+        rt::Light::new(vec3(2.5 * 2.0, 3.0, -2.5 * 2.0)).with_intensity(0.7),
     );
 
     // -----
@@ -307,7 +306,7 @@ async fn run(mut app: impl App + 'static) {
                     fps_timer = Instant::now();
                 }
 
-                // sc::math::rotate(&mut monke_xform, 0.1, vec3(0.0, 1.0, 0.0));
+                // rt::math::rotate(&mut monke_xform, 0.1, vec3(0.0, 1.0, 0.0));
 
                 // pipeline.update_geometry(
                 //     monke,

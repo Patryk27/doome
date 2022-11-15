@@ -1,4 +1,4 @@
-use doome_raytracer_shader_common as sc;
+use doome_raytracer as rt;
 use glam::Mat4;
 use include_dir::Dir;
 
@@ -10,7 +10,7 @@ mod builder;
 pub struct ModelHandle(usize);
 
 pub struct Pipeline {
-    models: Vec<Vec<sc::Triangle>>,
+    models: Vec<Vec<rt::Triangle>>,
     atlas: image::RgbaImage,
 }
 
@@ -26,7 +26,7 @@ impl Pipeline {
     pub fn insert_to_geometry(
         &self,
         model_handle: ModelHandle,
-        geometry: &mut sc::Geometry,
+        geometry: &mut rt::Geometry,
         xform: Mat4,
     ) -> u32 {
         let model = &self.models[model_handle.0];
@@ -43,7 +43,7 @@ impl Pipeline {
         &self,
         offset: u32,
         model_handle: ModelHandle,
-        geometry: &mut sc::Geometry,
+        geometry: &mut rt::Geometry,
         xform: Mat4,
     ) {
         let triangles: Vec<_> = self.models[model_handle.0]
