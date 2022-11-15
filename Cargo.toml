@@ -9,7 +9,7 @@ members = [
     "doome-raytracer-shader-common",
     "doome-run-wasm",
     "doome-surface",
-    "doome-text"
+    "doome-text",
 ]
 
 [package]
@@ -23,7 +23,9 @@ doome-raytracer = { path = "doome-raytracer" }
 doome-engine = { path = "doome-engine" }
 doome-surface = { path = "doome-surface" }
 doome-text = { path = "doome-text" }
-bevy = { version = "0.9", default-features = false, features = [ "bevy_winit" ] }
+
+bevy = { version = "0.9", default-features = false, features = ["bevy_winit"] }
+
 glam = "0.22"
 include_dir = "0.7"
 

@@ -9,10 +9,7 @@ pub struct Canvas<'frame> {
 }
 
 impl<'f> Canvas<'f> {
-    pub(super) fn new(
-        text_engine: &'f TextEngine,
-        frame: &'f mut [u8],
-    ) -> Self {
+    pub fn new(text_engine: &'f TextEngine, frame: &'f mut [u8]) -> Self {
         Self { text_engine, frame }
     }
 

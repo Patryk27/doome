@@ -1,14 +1,19 @@
 use std::f32::consts::PI;
 
 use bevy::app::AppExit;
+use bevy::diagnostic::{
+    Diagnostics, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin,
+};
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
 use doome_bevy::doome::{DoomePlugin, DoomeRenderInit, DoomeRendererContext};
-use doome_bevy::pixels_plugin::PixelsPlugin;
+use doome_bevy::pixels_plugin::{PixelsPlugin, PixelsState};
+use doome_bevy::text::Text;
 use doome_engine::pipeline::PipelineBuilder;
-use doome_engine::{GeometryBuilder, RAYTRACER_HEIGHT, WIDTH};
+use doome_engine::{Canvas, GeometryBuilder, HEIGHT, RAYTRACER_HEIGHT, WIDTH};
 use doome_raytracer as rt;
+use doome_surface::Color;
 use glam::{vec2, vec3, Vec3Swizzles};
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
@@ -132,6 +137,7 @@ fn main() {
 
     // -----
 
+    // TODO: Add FPS limiting
     App::new()
         .insert_resource(DoomeRenderInit { pipeline })
         .insert_resource(DoomeRendererContext {
@@ -142,11 +148,15 @@ fn main() {
             lights,
             materials,
         })
+        .insert_resource(Text::default())
         .add_plugins(DefaultPlugins)
         .add_plugin(PixelsPlugin)
         .add_plugin(DoomePlugin)
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        .add_plugin(LogDiagnosticsPlugin::default())
         .add_system(update_camera)
         .add_system(quit_on_exit)
+        .add_system(render_ui)
         .add_startup_system(hide_cursor)
         .run();
 }
@@ -163,8 +173,42 @@ fn quit_on_exit(keys: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
     }
 }
 
+fn render_ui(
+    mut pixels: ResMut<PixelsState>,
+    text: Res<Text>,
+    diagnostics: Res<Diagnostics>,
+) {
+    let frame = pixels.pixels.get_frame_mut();
+
+    let mut canvas = Canvas::new(&text.text_engine, frame);
+
+    // TODO: For some reason this renders a square? And not even a full one
+    canvas.rect(
+        0,
+        0,
+        WIDTH,
+        HEIGHT,
+        Color {
+            r: 0x10,
+            g: 0x10,
+            b: 0x10,
+            a: 0xff,
+        },
+    );
+
+    let fps_diagnostic =
+        diagnostics.get(FrameTimeDiagnosticsPlugin::FPS).unwrap();
+
+    if let Some(fps) = fps_diagnostic.smoothed() {
+        canvas.text(
+            10,
+            HEIGHT - 14,
+            format!("FPS: {fps:>.6}{}", fps_diagnostic.suffix),
+        );
+    }
+}
+
 fn update_camera(
-    // TODO: There's time.delta_seconds() available. We should multiply all movement values by that to get framerate independent behavior
     time: Res<Time>,
     keys: Res<Input<KeyCode>>,
     mut mouse_motion: EventReader<MouseMotion>,

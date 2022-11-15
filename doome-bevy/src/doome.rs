@@ -69,6 +69,10 @@ fn render(
     pixels
         .pixels
         .render_with(|encoder, view, context| {
+            // TODO: Would be cool if we could render the pixels ui last and blend it onto raytracer output
+            //       I tried this, but didn't get far, there are a number of issues - but primarily for some reason even setting `clear_color` on `PixelsBuilder`
+            //       to transparent, the pixels still overwrites the values from the raytracer
+
             // Draw UI
             context.scaling_renderer.render(encoder, view);
 
@@ -83,6 +87,7 @@ fn render(
                 &context.queue,
                 encoder,
             );
+
             scaler.render(
                 encoder,
                 view,
