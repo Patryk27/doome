@@ -1,4 +1,5 @@
 #![allow(clippy::len_without_is_empty)]
+#![allow(clippy::manual_range_contains)]
 #![no_std]
 
 mod camera;
@@ -15,8 +16,10 @@ mod sampling;
 mod triangle;
 mod utils;
 
+use core::fmt;
+
 use bytemuck::{Pod, Zeroable};
-use glam::{vec2, vec3, vec4, Vec2, Vec3, Vec4, Vec4Swizzles};
+use glam::{vec2, vec3, vec4, Mat4, Vec2, Vec3, Vec4, Vec4Swizzles};
 #[cfg(target_arch = "spirv")]
 use spirv_std::num_traits::real::Real;
 use spirv_std::{Image, Sampler};

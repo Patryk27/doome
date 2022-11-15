@@ -16,49 +16,8 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(
-        origin: Vec3,
-        look_at: Vec3,
-        up: Vec3,
-        distance: f32,
-        viewport_size: Vec2,
-        viewport_fov: f32,
-    ) -> Self {
-        let (onb_u, onb_v, onb_w) =
-            OrthonormalBasis::build(origin, look_at, up);
-
-        Self {
-            origin: origin.extend(distance),
-            look_at: look_at.extend(0.0),
-            up: up.extend(0.0),
-            viewport_size: viewport_size.extend(viewport_fov).extend(0.0),
-            onb_u,
-            onb_v,
-            onb_w,
-        }
-    }
-
     pub fn origin(&self) -> Vec3 {
         self.origin.xyz()
-    }
-
-    #[cfg(not(target_arch = "spirv"))]
-    pub fn update(&mut self, f: impl FnOnce(&mut Vec3, &mut Vec3, &mut Vec3)) {
-        let mut origin = self.origin.xyz();
-        let mut look_at = self.look_at.xyz();
-        let mut up = self.up.xyz();
-
-        f(&mut origin, &mut look_at, &mut up);
-
-        let (onb_u, onb_v, onb_w) =
-            OrthonormalBasis::build(origin, look_at, up);
-
-        self.origin = origin.extend(self.origin.w);
-        self.look_at = look_at.extend(0.0);
-        self.up = up.extend(0.0);
-        self.onb_u = onb_u;
-        self.onb_v = onb_v;
-        self.onb_w = onb_w;
     }
 
     pub fn ray(&self, pos: Vec2) -> Ray {
@@ -83,6 +42,49 @@ impl Camera {
         };
 
         Ray::new(origin, direction)
+    }
+}
+
+#[cfg(not(target_arch = "spirv"))]
+impl Camera {
+    pub fn new(
+        origin: Vec3,
+        look_at: Vec3,
+        up: Vec3,
+        distance: f32,
+        viewport_size: Vec2,
+        viewport_fov: f32,
+    ) -> Self {
+        let (onb_u, onb_v, onb_w) =
+            OrthonormalBasis::build(origin, look_at, up);
+
+        Self {
+            origin: origin.extend(distance),
+            look_at: look_at.extend(0.0),
+            up: up.extend(0.0),
+            viewport_size: viewport_size.extend(viewport_fov).extend(0.0),
+            onb_u,
+            onb_v,
+            onb_w,
+        }
+    }
+
+    pub fn update(&mut self, f: impl FnOnce(&mut Vec3, &mut Vec3, &mut Vec3)) {
+        let mut origin = self.origin.xyz();
+        let mut look_at = self.look_at.xyz();
+        let mut up = self.up.xyz();
+
+        f(&mut origin, &mut look_at, &mut up);
+
+        let (onb_u, onb_v, onb_w) =
+            OrthonormalBasis::build(origin, look_at, up);
+
+        self.origin = origin.extend(self.origin.w);
+        self.look_at = look_at.extend(0.0);
+        self.up = up.extend(0.0);
+        self.onb_u = onb_u;
+        self.onb_v = onb_v;
+        self.onb_w = onb_w;
     }
 }
 

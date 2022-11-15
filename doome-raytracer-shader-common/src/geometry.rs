@@ -8,15 +8,6 @@ pub struct Geometry {
 }
 
 impl Geometry {
-    pub fn push(&mut self, item: Triangle) -> u32 {
-        let offset = self.len;
-
-        self.items[self.len.value as usize] = item;
-        self.len += 1;
-
-        offset.value
-    }
-
     pub fn len(&self) -> u32 {
         self.len.value
     }
@@ -28,9 +19,17 @@ impl Geometry {
 
 #[cfg(not(target_arch = "spirv"))]
 impl Geometry {
+    pub fn push(&mut self, item: Triangle) -> u32 {
+        let offset = self.len;
+
+        self.items[self.len.value as usize] = item;
+        self.len += 1;
+
+        offset.value
+    }
+
     pub fn write(&mut self, offset: u32, triangles: &[Triangle]) {
         let start = offset as usize;
-
         let end = start + triangles.len();
 
         self.items[start..end].copy_from_slice(triangles);

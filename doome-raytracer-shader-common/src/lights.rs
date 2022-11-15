@@ -17,13 +17,15 @@ impl Lights {
         self.items[idx as usize]
     }
 
-    #[cfg(not(target_arch = "spirv"))]
-    pub fn get_mut(&mut self, idx: u32) -> &mut Light {
-        &mut self.items[idx as usize]
-    }
-
     pub fn len(&self) -> u32 {
         self.len.value
+    }
+}
+
+#[cfg(not(target_arch = "spirv"))]
+impl Lights {
+    pub fn get_mut(&mut self, idx: u32) -> &mut Light {
+        &mut self.items[idx as usize]
     }
 }
 
