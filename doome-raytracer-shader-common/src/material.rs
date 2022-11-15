@@ -10,18 +10,8 @@ pub struct Material {
 }
 
 impl Material {
-    pub fn shade(
-        &self,
-        geometry: &Geometry,
-        geometry_index: &GeometryIndex,
-        lights: &Lights,
-        materials: &Materials,
-        texture: &Texture,
-        hit: Hit,
-    ) -> Vec3 {
-        let mut color =
-            self.radiance(geometry, geometry_index, lights, texture, hit);
-
+    pub fn shade(&self, world: &World, hit: Hit) -> Vec3 {
+        let mut color = self.radiance(world, hit);
         let reflectivity = self.reflectivity.w;
 
         if reflectivity > 0.0 {
@@ -33,13 +23,8 @@ impl Material {
                 hit.normal * hit.normal.dot(camera_dir) * 2.0 - camera_dir
             };
 
-            let ray_color = Ray::new(hit.point, reflection_dir).shade_basic(
-                geometry,
-                geometry_index,
-                lights,
-                materials,
-                texture,
-            );
+            let ray_color =
+                Ray::new(hit.point, reflection_dir).shade_basic(world);
 
             color += ray_color * reflection_color * reflectivity;
         }
@@ -48,27 +33,13 @@ impl Material {
     }
 
     /// See: [`Ray::shade_basic()`].
-    pub fn shade_basic(
-        &self,
-        geometry: &Geometry,
-        geometry_index: &GeometryIndex,
-        lights: &Lights,
-        texture: &Texture,
-        hit: Hit,
-    ) -> Vec3 {
-        self.radiance(geometry, geometry_index, lights, texture, hit)
+    pub fn shade_basic(&self, world: &World, hit: Hit) -> Vec3 {
+        self.radiance(world, hit)
     }
 
-    fn radiance(
-        &self,
-        geometry: &Geometry,
-        geometry_index: &GeometryIndex,
-        lights: &Lights,
-        texture: &Texture,
-        hit: Hit,
-    ) -> Vec3 {
+    fn radiance(&self, world: &World, hit: Hit) -> Vec3 {
         let color = if self.color.w == 1.0 {
-            (texture.sample(hit.uv) * self.color).truncate()
+            (world.atlas_sample(hit.uv) * self.color).truncate()
         } else {
             self.color.truncate()
         };
@@ -76,12 +47,12 @@ impl Material {
         let mut radiance = vec3(0.0, 0.0, 0.0);
         let mut light_idx = 0;
 
-        while light_idx < lights.len() {
-            let light = lights.get(light_idx);
+        while light_idx < world.lights.len() {
+            let light = world.lights.get(light_idx);
             let ray = Ray::new(hit.point, light.pos() - hit.point);
             let distance = light.pos().distance(hit.point);
 
-            if !ray.hits_anything_up_to(geometry, geometry_index, distance) {
+            if !ray.hits_anything_up_to(world, distance) {
                 let direction = (light.pos() - hit.point).normalize();
                 let diffuse_factor = direction.dot(hit.normal);
 

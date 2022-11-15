@@ -26,14 +26,18 @@ pub fn fs_main(
     geometry_index: &GeometryIndex,
     #[spirv(uniform, descriptor_set = 3, binding = 0)] lights: &Lights,
     #[spirv(uniform, descriptor_set = 4, binding = 0)] materials: &Materials,
-    #[spirv(descriptor_set = 5, binding = 0)] texture: &Image!(2D, type=f32, sampled),
-    #[spirv(descriptor_set = 5, binding = 1)] sampler: &Sampler,
+    #[spirv(descriptor_set = 5, binding = 0)] atlas_tex: &Image!(2D, type=f32, sampled),
+    #[spirv(descriptor_set = 5, binding = 1)] atlas_sampler: &Sampler,
     color: &mut Vec4,
 ) {
-    let texture = Texture { texture, sampler };
+    let world = World {
+        geometry,
+        geometry_index,
+        lights,
+        materials,
+        atlas_tex,
+        atlas_sampler,
+    };
 
-    *color = camera
-        .ray(pos.xy())
-        .shade(geometry, geometry_index, lights, materials, &texture)
-        .extend(1.0);
+    *color = camera.ray(pos.xy()).shade(&world).extend(1.0);
 }

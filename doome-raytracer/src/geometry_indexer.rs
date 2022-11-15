@@ -8,6 +8,7 @@ use std::fmt;
 use std::ops::{Index, IndexMut};
 
 use glam::{vec4, Vec3};
+use instant::{Duration, Instant};
 
 use self::axis::*;
 use self::bounding_box::*;
@@ -26,12 +27,27 @@ impl GeometryIndexer {
     pub fn index(geometry: &Geometry) -> GeometryIndex {
         log::info!("Indexing geometry; triangles = {}", geometry.len());
 
-        let bvh = Bvh::build(geometry);
-        let lbvh = LinearBvh::build(bvh);
-        let (index, index_len) = serializer::serialize(lbvh);
+        let (bvh, tt_bvh) = Self::measure(|| Bvh::build(geometry));
 
-        log::info!("Geometry indexed; index size = {}", index_len);
+        let (lbvh, tt_lbvh) = Self::measure(|| LinearBvh::build(bvh));
+
+        let ((index, index_len), tt_serialize) =
+            Self::measure(|| serializer::serialize(lbvh));
+
+        log::info!(
+            "Geometry indexed; tt-bvh = {:?}, tt-lbvh = {:?}, tt-serialize = {:?}, index-size = {}",
+            tt_bvh,
+            tt_lbvh,
+            tt_serialize,
+            index_len,
+        );
 
         index
+    }
+
+    fn measure<T>(f: impl FnOnce() -> T) -> (T, Duration) {
+        let tt = Instant::now();
+        let val = f();
+        (val, tt.elapsed())
     }
 }

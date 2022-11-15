@@ -563,6 +563,7 @@ dependencies = [
  "bytemuck",
  "doome-raytracer-shader-common",
  "glam",
+ "instant",
  "log",
  "spirv-builder",
  "spirv-std",

@@ -39,23 +39,18 @@ impl Ray {
         latest_entry <= earliest_exit && earliest_exit > 0.0
     }
 
-    pub fn hits_anything_up_to(
-        self,
-        geometry: &Geometry,
-        geometry_index: &GeometryIndex,
-        distance: f32,
-    ) -> bool {
+    pub fn hits_anything_up_to(self, world: &World, distance: f32) -> bool {
         let mut ptr = 0;
 
         loop {
-            let v1 = geometry_index.read(ptr);
-            let v2 = geometry_index.read(ptr + 1);
+            let v1 = world.geometry_index.read(ptr);
+            let v2 = world.geometry_index.read(ptr + 1);
 
             let is_leaf = v1.xyz() == vec3(0.0, 0.0, 0.0)
                 && v2.xyz() == vec3(0.0, 0.0, 0.0);
 
             if is_leaf {
-                let hit = geometry.get(v1.w as _).hit(self);
+                let hit = world.geometry.get(v1.w as _).hit(self);
 
                 if hit.t < distance {
                     return true;
@@ -74,23 +69,19 @@ impl Ray {
         }
     }
 
-    pub fn trace(
-        self,
-        geometry: &Geometry,
-        geometry_index: &GeometryIndex,
-    ) -> Hit {
+    pub fn trace(self, world: &World) -> Hit {
         let mut hit = Hit::none();
         let mut ptr = 0;
 
         loop {
-            let v1 = geometry_index.read(ptr);
-            let v2 = geometry_index.read(ptr + 1);
+            let v1 = world.geometry_index.read(ptr);
+            let v2 = world.geometry_index.read(ptr + 1);
 
             let is_leaf = v1.xyz() == vec3(0.0, 0.0, 0.0)
                 && v2.xyz() == vec3(0.0, 0.0, 0.0);
 
             if is_leaf {
-                let curr_hit = geometry.get(v1.w as _).hit(self);
+                let curr_hit = world.geometry.get(v1.w as _).hit(self);
 
                 if curr_hit.is_closer_than(hit) {
                     hit = curr_hit;
@@ -111,25 +102,11 @@ impl Ray {
         hit
     }
 
-    pub fn shade(
-        self,
-        geometry: &Geometry,
-        geometry_index: &GeometryIndex,
-        lights: &Lights,
-        materials: &Materials,
-        texture: &Texture,
-    ) -> Vec3 {
-        let hit = self.trace(geometry, geometry_index);
+    pub fn shade(self, world: &World) -> Vec3 {
+        let hit = self.trace(world);
 
         if hit.is_some() {
-            materials.get(hit.material_id).shade(
-                geometry,
-                geometry_index,
-                lights,
-                materials,
-                texture,
-                hit,
-            )
+            world.materials.get(hit.material_id).shade(world, hit)
         } else {
             vec3(0.0, 0.0, 0.0)
         }
@@ -143,24 +120,11 @@ impl Ray {
     /// not worth it.
     ///
     /// ¹ e.g. https://www.cs.uaf.edu/2012/spring/cs481/section/0/lecture/02_07_recursion_reflection.html
-    pub fn shade_basic(
-        self,
-        geometry: &Geometry,
-        geometry_index: &GeometryIndex,
-        lights: &Lights,
-        materials: &Materials,
-        texture: &Texture,
-    ) -> Vec3 {
-        let hit = self.trace(geometry, geometry_index);
+    pub fn shade_basic(self, world: &World) -> Vec3 {
+        let hit = self.trace(world);
 
         if hit.is_some() {
-            materials.get(hit.material_id).shade_basic(
-                geometry,
-                geometry_index,
-                lights,
-                texture,
-                hit,
-            )
+            world.materials.get(hit.material_id).shade_basic(world, hit)
         } else {
             vec3(0.0, 0.0, 0.0)
         }
