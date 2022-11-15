@@ -1,6 +1,5 @@
 mod canvas;
 mod geometry_ext;
-mod geometry_indexer;
 mod pipeline;
 mod scaling_texture_renderer;
 
@@ -21,7 +20,6 @@ use winit_input_helper::WinitInputHelper;
 
 pub use self::canvas::*;
 use self::geometry_ext::GeometryExt;
-use self::geometry_indexer::*;
 use self::scaling_texture_renderer::*;
 use crate::pipeline::Pipeline;
 
@@ -255,13 +253,7 @@ async fn run(mut app: impl App + 'static) {
 
     // -----
 
-    let mut geometry_indexer = GeometryIndexer::default();
-
-    for (triangle_id, triangle) in geometry.iter() {
-        geometry_indexer.add(triangle, triangle_id);
-    }
-
-    let geometry_index = geometry_indexer.build();
+    let geometry_index = rt::GeometryIndexer::index(&geometry);
 
     // -----
 
@@ -280,15 +272,13 @@ async fn run(mut app: impl App + 'static) {
     let mut time_of_last_update = Instant::now();
     let mut fps_counter = 0;
     let mut fps_timer = Instant::now();
+    let mut draw_tt_sum = 0.0;
 
     let window_middle =
         PhysicalPosition::new(surface_size.width / 2, surface_size.height / 2);
 
     let mut track_mouse = true;
     let mut mouse_diff = (0.0, 0.0);
-
-    log::info!("Statistics:");
-    log::info!("- triangles: {}", geometry.len());
 
     event_loop.run(move |event, _, control_flow| {
         if let Event::RedrawRequested(_) = event {
@@ -300,10 +290,17 @@ async fn run(mut app: impl App + 'static) {
 
             if can_redraw {
                 if fps_timer.elapsed().as_secs_f32() >= 1.0 {
-                    log::error!("fps = {}", fps_counter);
+                    let avg_draw_tt = draw_tt_sum / (fps_counter.max(1) as f32);
+
+                    log::debug!(
+                        "fps = {}; avg-draw-tt = {} ms",
+                        fps_counter,
+                        1000.0 * avg_draw_tt,
+                    );
 
                     fps_counter = 0;
                     fps_timer = Instant::now();
+                    draw_tt_sum = 0.0;
                 }
 
                 // rt::math::rotate(&mut monke_xform, 0.1, vec3(0.0, 1.0, 0.0));
@@ -425,6 +422,8 @@ async fn run(mut app: impl App + 'static) {
                     });
                 }
 
+                let draw_tt = Instant::now();
+
                 app.draw(Canvas::new(&text_engine, pixels.get_frame_mut()));
 
                 pixels
@@ -449,6 +448,7 @@ async fn run(mut app: impl App + 'static) {
                     .unwrap();
 
                 fps_counter += 1;
+                draw_tt_sum += draw_tt.elapsed().as_secs_f32();
             }
         }
 

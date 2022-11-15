@@ -43,11 +43,12 @@ impl Geometry {
         &mut self.items[idx as usize]
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (u16, Triangle)> + '_ {
+    pub fn iter(&self) -> impl Iterator<Item = (TriangleId, Triangle)> + '_ {
         self.items[0..(self.len() as usize)]
             .iter()
+            .copied()
             .enumerate()
-            .map(|(triangle_id, triangle)| (triangle_id as _, *triangle))
+            .map(|(id, triangle)| (TriangleId::new(id), triangle))
     }
 }
 

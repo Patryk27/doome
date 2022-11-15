@@ -1,9 +1,14 @@
+#![feature(type_alias_impl_trait)]
+
+mod geometry_indexer;
 mod uniforms;
 
 use std::num::NonZeroU32;
 
 pub use doome_raytracer_shader_common::*;
-use uniforms::AllocatedUniform;
+
+pub use self::geometry_indexer::*;
+use self::uniforms::AllocatedUniform;
 
 pub const ATLAS_WIDTH: u32 = 256;
 pub const ATLAS_HEIGHT: u32 = 256;

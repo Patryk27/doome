@@ -562,7 +562,7 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "doome-raytracer-shader-common",
- "image",
+ "glam",
  "log",
  "spirv-builder",
  "spirv-std",

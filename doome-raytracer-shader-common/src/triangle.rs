@@ -158,3 +158,24 @@ impl fmt::Debug for Triangle {
             .finish()
     }
 }
+
+#[derive(Copy, Clone, Debug)]
+pub struct TriangleId(usize);
+
+#[cfg(not(target_arch = "spirv"))]
+impl TriangleId {
+    pub(crate) fn new(id: usize) -> Self {
+        Self(id)
+    }
+
+    pub fn get(self) -> usize {
+        self.0
+    }
+}
+
+#[cfg(not(target_arch = "spirv"))]
+impl fmt::Display for TriangleId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
