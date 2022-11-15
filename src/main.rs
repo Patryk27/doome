@@ -1,6 +1,9 @@
 use std::f32::consts::PI;
 
+use bevy::app::AppExit;
+use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
+use bevy::window::CursorGrabMode;
 use doome_bevy::doome::{DoomePlugin, DoomeRenderInit, DoomeRendererContext};
 use doome_bevy::pixels_plugin::PixelsPlugin;
 use doome_engine::pipeline::PipelineBuilder;
@@ -11,45 +14,6 @@ use glam::{vec2, vec3, Vec3Swizzles};
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
 const ASSETS: include_dir::Dir = include_dir::include_dir!("assets");
-
-// struct App {
-//     frame: usize,
-// }
-
-// fn main() {
-//     doome_engine::main(App { frame: 0 });
-// }
-
-// impl doome_engine::App for App {
-//     fn update(&mut self) {
-//         self.frame += 1;
-//     }
-
-//     fn draw(&self, mut canvas: Canvas<'_>) {
-//         canvas.rect(
-//             0,
-//             0,
-//             WIDTH,
-//             HEIGHT,
-//             Color {
-//                 r: 0x10,
-//                 g: 0x10,
-//                 b: 0x10,
-//                 a: 0xff,
-//             },
-//         );
-
-//         // canvas.text(
-//         //     10,
-//         //     HEIGHT - HUD_HEIGHT / 2 - 7,
-//         //     format!("Hello, World -- it's frame #{}!", self.frame),
-//         // );
-//     }
-
-//     fn dir(&self) -> &'static include_dir::Dir<'static> {
-//         &ASSETS
-//     }
-// }
 
 fn main() {
     let camera = rt::Camera::new(
@@ -182,43 +146,65 @@ fn main() {
         .add_plugin(PixelsPlugin)
         .add_plugin(DoomePlugin)
         .add_system(update_camera)
+        .add_system(quit_on_exit)
+        .add_startup_system(hide_cursor)
         .run();
+}
+
+fn hide_cursor(mut windows: ResMut<Windows>) {
+    let window = windows.get_primary_mut().unwrap();
+    window.set_cursor_grab_mode(CursorGrabMode::Confined);
+    window.set_cursor_visibility(false);
+}
+
+fn quit_on_exit(keys: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
+    if keys.just_pressed(KeyCode::Escape) {
+        exit.send(AppExit);
+    }
 }
 
 fn update_camera(
     // TODO: There's time.delta_seconds() available. We should multiply all movement values by that to get framerate independent behavior
-    // time: Res<Time>,
+    time: Res<Time>,
     keys: Res<Input<KeyCode>>,
+    mut mouse_motion: EventReader<MouseMotion>,
     mut context: ResMut<DoomeRendererContext>,
 ) {
     let camera = &mut context.camera;
 
-    // camera.update(|origin, look_at, up| {
-    //     let dir = *look_at - *origin;
+    let delta = time.delta_seconds();
 
-    //     const MOUSE_ROTATION_SENSITIVITY: f32 = 0.001;
+    const MOUSE_ROTATION_SENSITIVITY: f32 = 0.5;
+    const PLANAR_MOVEMENT_SPEED: f32 = 10.0;
+    const CELESTIAL_MOVEMENT_SPEED: f32 = 4.0;
+    const ROTATION_SPEED: f32 = 2.0;
 
-    //     let rot = Quat::from_axis_angle(
-    //         up.normalize(),
-    //         // For some reason the up direction here is negative, hence the minus sign
-    //         -MOUSE_ROTATION_SENSITIVITY * mouse_delta.0,
-    //     );
+    for ev in mouse_motion.iter() {
+        camera.update(|origin, look_at, up| {
+            let dir = *look_at - *origin;
 
-    //     let new_dir = rot * dir;
-    //     let new_look_at = *origin + new_dir;
+            let rot = Quat::from_axis_angle(
+                up.normalize(),
+                // For some reason the up direction here is negative, hence the minus sign
+                -MOUSE_ROTATION_SENSITIVITY * ev.delta.x * delta,
+            );
 
-    //     look_at.x = new_look_at.x;
-    //     look_at.z = new_look_at.z;
-    // });
+            let new_dir = rot * dir;
+            let new_look_at = *origin + new_dir;
+
+            look_at.x = new_look_at.x;
+            look_at.z = new_look_at.z;
+        });
+    }
 
     if keys.pressed(KeyCode::W) || keys.pressed(KeyCode::S) {
         let sign = if keys.pressed(KeyCode::W) { 1.0 } else { -1.0 };
 
         camera.update(|origin, look_at, _| {
-            let dist = *look_at - *origin;
+            let dist = (*look_at - *origin).normalize();
 
-            *origin += sign * dist * 0.025;
-            *look_at += sign * dist * 0.025;
+            *origin += sign * dist * PLANAR_MOVEMENT_SPEED * delta;
+            *look_at += sign * dist * PLANAR_MOVEMENT_SPEED * delta;
         });
     }
 
@@ -230,17 +216,20 @@ fn update_camera(
             let dir_angle = dir.angle_between(vec2(0.0, 1.0));
             let dir_angle_perpendicular = dir_angle + PI / 2.0 + PI;
 
-            let delta = vec2(
+            let movement = vec2(
                 dir_angle_perpendicular.sin(),
                 dir_angle_perpendicular.cos(),
-            ) * 0.1
-                * sign;
+            )
+            .normalize()
+                * PLANAR_MOVEMENT_SPEED
+                * sign
+                * delta;
 
-            origin.x += delta.x;
-            origin.z += delta.y;
+            origin.x += movement.x;
+            origin.z += movement.y;
 
-            look_at.x += delta.x;
-            look_at.z += delta.y;
+            look_at.x += movement.x;
+            look_at.z += movement.y;
         });
     }
 
@@ -251,7 +240,7 @@ fn update_camera(
             let dir = look_at.xz() - origin.xz();
             let dir_len = dir.length();
             let dir_angle = dir.angle_between(vec2(0.0, 1.0));
-            let dir_angle = dir_angle + 0.025 * sign;
+            let dir_angle = dir_angle + ROTATION_SPEED * sign * delta;
 
             let new_dir =
                 vec2(dir_len, dir_len) * vec2(dir_angle.sin(), dir_angle.cos());
@@ -267,8 +256,8 @@ fn update_camera(
         let sign = if keys.pressed(KeyCode::R) { 1.0 } else { -1.0 };
 
         camera.update(|origin, look_at, _| {
-            origin.y += sign * 0.2;
-            look_at.y += sign * 0.2;
+            origin.y += sign * CELESTIAL_MOVEMENT_SPEED * delta;
+            look_at.y += sign * CELESTIAL_MOVEMENT_SPEED * delta;
         });
     }
 }
