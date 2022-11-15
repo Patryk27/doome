@@ -1,6 +1,6 @@
 mod canvas;
 mod geometry_builder;
-mod pipeline;
+pub mod pipeline;
 mod scaling_texture_renderer;
 
 use std::f32::consts::PI;
@@ -19,8 +19,8 @@ use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
 pub use self::canvas::*;
-use self::geometry_builder::*;
-use self::scaling_texture_renderer::*;
+pub use self::geometry_builder::*;
+pub use self::scaling_texture_renderer::*;
 use crate::pipeline::Pipeline;
 
 pub const WIDTH: u16 = 320;
@@ -178,7 +178,7 @@ async fn run(mut app: impl App + 'static) {
             .with_reflectivity(0.65, 0xffffff),
     );
 
-    let mut pipeline = Pipeline::builder(app.dir());
+    let mut pipeline = Pipeline::builder(app.dir().clone());
 
     let monke_mesh = pipeline.load_model("monke.obj", mat_monke).unwrap();
     let reference_cube = pipeline
@@ -437,7 +437,12 @@ async fn run(mut app: impl App + 'static) {
                             &context.queue,
                             encoder,
                         );
-                        raytracer_scaler.render(encoder, view, surface_size);
+                        raytracer_scaler.render(
+                            encoder,
+                            view,
+                            surface_size.width,
+                            surface_size.height,
+                        );
 
                         Ok(())
                     })

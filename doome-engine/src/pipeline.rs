@@ -13,7 +13,7 @@ pub struct Pipeline {
 }
 
 impl Pipeline {
-    pub fn builder(dir: &'static Dir) -> PipelineBuilder {
+    pub fn builder(dir: Dir<'static>) -> PipelineBuilder {
         PipelineBuilder::new(dir)
     }
 

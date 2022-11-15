@@ -9,7 +9,7 @@ mod build;
 mod load_model;
 
 pub struct PipelineBuilder {
-    dir: &'static Dir<'static>,
+    dir: Dir<'static>,
     models: Vec<Model>,
 
     /// Maps texture path to (texture data, models that use it)
@@ -19,7 +19,7 @@ pub struct PipelineBuilder {
 }
 
 impl PipelineBuilder {
-    pub fn new(dir: &'static Dir) -> Self {
+    pub fn new(dir: Dir<'static>) -> Self {
         Self {
             dir,
             models: Vec::new(),

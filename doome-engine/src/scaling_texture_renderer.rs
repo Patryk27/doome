@@ -1,5 +1,4 @@
 use wgpu::util::DeviceExt;
-use winit::dpi::PhysicalSize;
 
 /// Takes a texture, resizes it and renders on another texture; we use it to
 /// upscale the raytracer's output.
@@ -162,7 +161,8 @@ impl ScalingTextureRenderer {
         &self,
         encoder: &mut wgpu::CommandEncoder,
         output_texture: &wgpu::TextureView,
-        output_size: PhysicalSize<u32>,
+        output_width: u32,
+        output_height: u32,
     ) {
         let mut rpass =
             encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -184,8 +184,8 @@ impl ScalingTextureRenderer {
         rpass.set_scissor_rect(
             0,
             0,
-            ((output_size.width as f32) * self.scale[0]) as _,
-            ((output_size.height as f32) * self.scale[1]) as _,
+            ((output_width as f32) * self.scale[0]) as _,
+            ((output_height as f32) * self.scale[1]) as _,
         );
         rpass.draw(0..3, 0..1);
     }
