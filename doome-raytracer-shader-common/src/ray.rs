@@ -22,7 +22,7 @@ impl Ray {
         self.direction
     }
 
-    pub fn hits_box(&self, bb_min: Vec3, bb_max: Vec3) -> bool {
+    pub fn hits_box_at(&self, bb_min: Vec3, bb_max: Vec3) -> f32 {
         let hit_min = (bb_min - self.origin) / self.direction;
         let hit_max = (bb_max - self.origin) / self.direction;
 
@@ -36,7 +36,11 @@ impl Ray {
         let latest_entry = x_entry.max(y_entry).max(z_entry);
         let earliest_exit = x_exit.min(y_exit).min(z_exit);
 
-        latest_entry <= earliest_exit && earliest_exit > 0.0
+        if latest_entry <= earliest_exit && earliest_exit > 0.0 {
+            latest_entry
+        } else {
+            f32::MAX
+        }
     }
 
     pub fn hits_anything_up_to(self, world: &World, distance: f32) -> bool {
@@ -57,7 +61,9 @@ impl Ray {
 
                 ptr = v2.w as _;
             } else {
-                if self.hits_box(v1.xyz(), v2.xyz()) {
+                let at = self.hits_box_at(v1.xyz(), v2.xyz());
+
+                if at < distance {
                     ptr = v1.w as _;
                 } else {
                     ptr = v2.w as _;
@@ -89,10 +95,14 @@ impl Ray {
                 }
 
                 ptr = v2.w as _;
-            } else if self.hits_box(v1.xyz(), v2.xyz()) {
-                ptr = v1.w as _;
             } else {
-                ptr = v2.w as _;
+                let at = self.hits_box_at(v1.xyz(), v2.xyz());
+
+                if at < hit.t {
+                    ptr = v1.w as _;
+                } else {
+                    ptr = v2.w as _;
+                }
             }
 
             if ptr == 0 {
