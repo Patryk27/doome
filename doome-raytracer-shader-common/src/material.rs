@@ -12,6 +12,9 @@ pub struct Material {
 impl Material {
     pub fn shade(&self, world: &World, hit: Hit) -> Vec3 {
         let mut color = self.radiance(world, hit);
+
+        // ------------ //
+        // Reflectivity //
         let reflectivity = self.reflectivity.w;
 
         if reflectivity > 0.0 {
@@ -29,6 +32,21 @@ impl Material {
             color += ray_color * reflection_color * reflectivity;
         }
 
+        // ------------ //
+        // Transparency //
+        let triangle = world.geometry.get(hit.triangle_id);
+
+        if triangle.alpha() < 1.0 {
+            let ray_color = Ray::new(
+                hit.point + 0.1 * hit.ray.direction(),
+                hit.ray.direction(),
+            )
+            .shade_basic(world);
+
+            color =
+                color * triangle.alpha() + ray_color * (1.0 - triangle.alpha());
+        }
+
         color
     }
 
@@ -38,7 +56,7 @@ impl Material {
     }
 
     fn radiance(&self, world: &World, hit: Hit) -> Vec3 {
-        let color = if self.color.w == 1.0 {
+        let color = if self.has_texture() {
             let triangle_mapping = world.geometry_mapping.get(hit.triangle_id);
 
             let uv = triangle_mapping.uv0.xy()
@@ -74,26 +92,16 @@ impl Material {
 
         radiance
     }
+
+    fn has_texture(&self) -> bool {
+        self.color.w == 1.0
+    }
 }
 
 #[cfg(not(target_arch = "spirv"))]
 impl Material {
     pub fn with_color(mut self, color: u32) -> Self {
         self.color = rgb_to_srgb(color).extend(self.color.w);
-        self
-    }
-
-    pub fn with_color_rgb(mut self, r: u8, g: u8, b: u8) -> Self {
-        self.color =
-            rgb_to_srgb(u32::from_be_bytes([0, r, g, b])).extend(self.color.w);
-        self
-    }
-
-    pub fn with_color_rgb_norm(mut self, r: f32, g: f32, b: f32) -> Self {
-        let (r, g, b) = (r * 255.0, g * 255.0, b * 255.0);
-        self.color =
-            rgb_to_srgb(u32::from_be_bytes([0, r as u8, g as u8, b as u8]))
-                .extend(self.color.w);
         self
     }
 

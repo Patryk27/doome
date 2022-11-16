@@ -26,11 +26,15 @@ impl Pipeline {
         model_handle: ModelHandle,
         geometry: &mut GeometryBuilder,
         xform: Mat4,
+        alpha: f32,
     ) {
         let model = &self.models[model_handle.0];
 
         for (triangle, triangle_mapping) in &model.triangles {
-            geometry.push_ex(triangle.apply(xform), *triangle_mapping);
+            geometry.push_ex(
+                triangle.with_transform(xform).with_alpha(alpha),
+                *triangle_mapping,
+            );
         }
     }
 }

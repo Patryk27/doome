@@ -27,7 +27,7 @@ pub fn rotate(xform: &mut Mat4, angle: f32, axis: Vec3) -> &mut Mat4 {
 }
 
 /// Applies the transformation matrix to the point.
-pub fn apply_transformation(v: Vec3, xform: Mat4) -> Vec3 {
+pub fn transform(v: Vec3, xform: Mat4) -> Vec3 {
     let v = xform * v.extend(1.0);
     Vec3::new(v.x, v.y, v.z)
 }

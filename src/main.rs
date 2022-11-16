@@ -119,17 +119,23 @@ fn main() {
 
     // -----
 
-    pipeline.insert_to_geometry(monke_mesh, &mut static_geometry, monke_xform);
+    pipeline.insert_to_geometry(
+        monke_mesh,
+        &mut static_geometry,
+        monke_xform,
+        1.0,
+    );
     pipeline.insert_to_geometry(
         reference_cube,
         &mut static_geometry,
         ref_cube_xform,
+        0.5,
     );
-
     pipeline.insert_to_geometry(
         diamond_mesh,
         &mut static_geometry,
         rt::math::translated(vec3(-3.0, 1.0, -1.0)),
+        1.0,
     );
 
     // -----

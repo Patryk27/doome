@@ -6,7 +6,7 @@ pub struct Triangle {
     // X, Y, Z - vertex 0; W - material id
     v0: Vec4,
 
-    // X, Y, Z - vertex 1; W - unused
+    // X, Y, Z - vertex 1; W - alpha channel
     v1: Vec4,
 
     // X, Y, Z - vertex 2; W - unused
@@ -17,7 +17,7 @@ impl Triangle {
     pub fn new(v0: Vec3, v1: Vec3, v2: Vec3, material_id: MaterialId) -> Self {
         Self {
             v0: v0.extend(material_id.get() as f32),
-            v1: v1.extend(0.0),
+            v1: v1.extend(1.0),
             v2: v2.extend(0.0),
         }
     }
@@ -32,6 +32,10 @@ impl Triangle {
 
     pub fn v2(&self) -> Vec3 {
         self.v2.xyz()
+    }
+
+    pub fn alpha(&self) -> f32 {
+        self.v1.w
     }
 
     pub fn hit(&self, ray: Ray) -> Hit {
@@ -91,16 +95,15 @@ impl Triangle {
 
 #[cfg(not(target_arch = "spirv"))]
 impl Triangle {
-    pub fn apply(mut self, xform: Mat4) -> Self {
-        self.v0 =
-            math::apply_transformation(self.v0.xyz(), xform).extend(self.v0.w);
+    pub fn with_alpha(mut self, a: f32) -> Self {
+        self.v1.w = a;
+        self
+    }
 
-        self.v1 =
-            math::apply_transformation(self.v1.xyz(), xform).extend(self.v1.w);
-
-        self.v2 =
-            math::apply_transformation(self.v2.xyz(), xform).extend(self.v2.w);
-
+    pub fn with_transform(mut self, xform: Mat4) -> Self {
+        self.v0 = math::transform(self.v0.xyz(), xform).extend(self.v0.w);
+        self.v1 = math::transform(self.v1.xyz(), xform).extend(self.v1.w);
+        self.v2 = math::transform(self.v2.xyz(), xform).extend(self.v2.w);
         self
     }
 
