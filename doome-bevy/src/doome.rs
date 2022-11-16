@@ -31,7 +31,7 @@ pub struct DoomeRendererContext {
 impl Plugin for DoomePlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         let pixels_state = app.world.resource::<PixelsState>();
-        let pixels = &pixels_state.pixels;
+        let pixels = pixels_state.inner();
 
         let renderer_init = app.world.resource::<DoomeRenderInit>();
 
@@ -58,44 +58,40 @@ impl Plugin for DoomePlugin {
 
 fn render(
     doome_state: Res<DoomeRenderer>,
-    pixels: Res<PixelsState>,
+    mut pixels: ResMut<PixelsState>,
     doome_renderer_context: Res<DoomeRendererContext>,
     window: Res<Windows>,
 ) {
     let raytracer = &doome_state.raytracer;
     let scaler = &doome_state.scaler;
-    let window = window.get_primary().expect("Missing primary window");
+    let window = window.get_primary().unwrap();
+    let window_size = (window.physical_width(), window.physical_height());
 
-    pixels
-        .pixels
-        .render_with(|encoder, view, context| {
-            // TODO: Would be cool if we could render the pixels ui last and blend it onto raytracer output
-            //       I tried this, but didn't get far, there are a number of issues - but primarily for some reason even setting `clear_color` on `PixelsBuilder`
-            //       to transparent, the pixels still overwrites the values from the raytracer
+    pixels.render(window_size, |encoder, view, context| {
+        // TODO: Would be cool if we could render the pixels ui last and blend it onto raytracer output
+        //       I tried this, but didn't get far, there are a number of issues - but primarily for some reason even setting `clear_color` on `PixelsBuilder`
+        //       to transparent, the pixels still overwrites the values from the raytracer
 
-            // Draw UI
-            context.scaling_renderer.render(encoder, view);
+        // Draw UI
+        context.scaling_renderer.render(encoder, view);
 
-            // Draw raytracer
-            raytracer.render(
-                &doome_renderer_context.camera,
-                &doome_renderer_context.static_geometry,
-                &doome_renderer_context.static_geometry_mapping,
-                &doome_renderer_context.static_geometry_index,
-                &doome_renderer_context.lights,
-                &doome_renderer_context.materials,
-                &context.queue,
-                encoder,
-            );
+        // Draw raytracer
+        raytracer.render(
+            &doome_renderer_context.camera,
+            &doome_renderer_context.static_geometry,
+            &doome_renderer_context.static_geometry_mapping,
+            &doome_renderer_context.static_geometry_index,
+            &doome_renderer_context.lights,
+            &doome_renderer_context.materials,
+            &context.queue,
+            encoder,
+        );
 
-            scaler.render(
-                encoder,
-                view,
-                window.physical_width(),
-                window.physical_height(),
-            );
-
-            Ok(())
-        })
-        .unwrap();
+        scaler.render(
+            encoder,
+            view,
+            window.physical_width(),
+            window.physical_height(),
+        );
+    });
 }

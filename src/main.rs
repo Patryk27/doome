@@ -6,7 +6,7 @@ use bevy::diagnostic::{
 };
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
-use bevy::window::{CursorGrabMode, WindowResized};
+use bevy::window::CursorGrabMode;
 use doome_bevy::doome::{DoomePlugin, DoomeRenderInit, DoomeRendererContext};
 use doome_bevy::pixels_plugin::{PixelsPlugin, PixelsState};
 use doome_bevy::text::Text;
@@ -157,24 +157,13 @@ fn main() {
         .add_system(update_camera)
         .add_system(quit_on_exit)
         .add_system(render_ui)
-        .add_system(on_window_resize)
         .add_startup_system(hide_cursor)
         .run();
 }
 
-fn on_window_resize(
-    mut resized: EventReader<WindowResized>,
-    mut pixels: ResMut<PixelsState>,
-) {
-    for e in resized.iter() {
-        pixels
-            .pixels
-            .resize_surface(e.width as u32, e.height as u32);
-    }
-}
-
 fn hide_cursor(mut windows: ResMut<Windows>) {
     let window = windows.get_primary_mut().unwrap();
+
     window.set_cursor_grab_mode(CursorGrabMode::Confined);
     window.set_cursor_visibility(false);
 }
@@ -190,8 +179,7 @@ fn render_ui(
     text: Res<Text>,
     diagnostics: Res<Diagnostics>,
 ) {
-    let frame = pixels.pixels.get_frame_mut();
-
+    let frame = pixels.inner_mut().get_frame_mut();
     let mut canvas = Canvas::new(&text.text_engine, frame);
 
     // TODO: For some reason this renders a square? And not even a full one

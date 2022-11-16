@@ -1,13 +1,9 @@
 use bevy::prelude::{Plugin, Resource};
 use doome_engine::{HEIGHT, WIDTH};
-use pixels::{Pixels, SurfaceTexture};
+use pixels::wgpu::{CommandEncoder, TextureView};
+use pixels::{Pixels, PixelsContext, SurfaceTexture};
 
 pub struct PixelsPlugin;
-
-#[derive(Resource)]
-pub struct PixelsState {
-    pub pixels: Pixels,
-}
 
 impl Plugin for PixelsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
@@ -28,6 +24,45 @@ impl Plugin for PixelsPlugin {
         let pixels =
             Pixels::new(WIDTH as _, HEIGHT as _, surface_texture).unwrap();
 
-        app.insert_resource(PixelsState { pixels });
+        app.insert_resource(PixelsState {
+            window_size: (window_size.width, window_size.height),
+            pixels,
+        });
+    }
+}
+
+#[derive(Resource)]
+pub struct PixelsState {
+    window_size: (u32, u32),
+    pixels: Pixels,
+}
+
+impl PixelsState {
+    pub fn render(
+        &mut self,
+        window_size: (u32, u32),
+        f: impl FnOnce(&mut CommandEncoder, &TextureView, &PixelsContext),
+    ) {
+        if window_size != self.window_size {
+            log::info!("Resizing: {:?} -> {:?}", self.window_size, window_size);
+
+            self.pixels.resize_surface(window_size.0, window_size.1);
+            self.window_size = window_size;
+        }
+
+        self.pixels
+            .render_with(|encoder, view, context| {
+                f(encoder, view, context);
+                Ok(())
+            })
+            .unwrap();
+    }
+
+    pub fn inner(&self) -> &Pixels {
+        &self.pixels
+    }
+
+    pub fn inner_mut(&mut self) -> &mut Pixels {
+        &mut self.pixels
     }
 }
