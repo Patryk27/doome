@@ -10,14 +10,14 @@ use bevy::window::CursorGrabMode;
 use doome_bevy::doome::{DoomePlugin, DoomeRenderInit, DoomeRendererContext};
 use doome_bevy::pixels_plugin::{PixelsPlugin, PixelsState};
 use doome_bevy::text::Text;
-use doome_engine::pipeline::PipelineBuilder;
-use doome_engine::{
+use engine::pipeline::PipelineBuilder;
+use engine::{
     Canvas, DynamicGeometryBuilder, StaticGeometryBuilder, HEIGHT, HUD_HEIGHT,
     RAYTRACER_HEIGHT, WIDTH,
 };
-use doome_raytracer as rt;
-use doome_surface::Color;
 use glam::{vec2, vec3, Vec3Swizzles};
+use raytracer as rt;
+use surface::Color;
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
@@ -57,12 +57,6 @@ fn main() {
 
     let mat_matte =
         materials.push(rt::Material::default().with_color(0x666666));
-
-    let mat_sphere = materials.push(
-        rt::Material::default()
-            .with_color(0xff0000)
-            .with_reflectivity(0.65, 0xffffff),
-    );
 
     let mat_static = materials.push(
         rt::Material::default()
@@ -106,10 +100,6 @@ fn main() {
     static_geo.push_wall(-1, 5, 1, 5, 0, mat_matte);
     static_geo.push_wall(1, 3, 1, 5, 1, mat_matte);
     static_geo.push_wall(-1, 3, -1, 5, 3, mat_matte);
-
-    static_geo.push_icosphere(0, 2, mat_sphere);
-    static_geo.push_icosphere(-2, 1, mat_sphere);
-    static_geo.push_icosphere(2, 1, mat_sphere);
 
     static_geo.push_ceiling(-10, -10, 10, 10, mat_matte);
 

@@ -1,0 +1,15 @@
+[package]
+name = "doome-bevy"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+text = { path = "../text" }
+engine = { path = "../engine" }
+raytracer = { path = "../raytracer" }
+
+bevy = { version = "0.9", default-features = false, features = ["bevy_winit"] }
+glam = { version = "0.22", default-features = false }
+include_dir = "0.7"
+log = "0.4"
+pixels = "0.10"

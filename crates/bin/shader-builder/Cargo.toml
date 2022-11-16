@@ -1,0 +1,13 @@
+[package]
+name = "shader-builder"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "4.0", features = ["derive", "env"] }
+spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "dcf37b75a7f9e7a94f52c8a3a5d93af795e34cd0" }
+dotenv = "0.15"
+log = "0.4"
+pretty_env_logger = "0.4"
+fs_extra = "1.2"

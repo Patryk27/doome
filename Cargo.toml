@@ -1,15 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
-    "doome-bevy",
-    "doome-engine",
-    "doome-raytracer",
-    "doome-raytracer-shader",
-    "doome-raytracer-shader-builder",
-    "doome-raytracer-shader-common",
-    "doome-run-wasm",
-    "doome-surface",
-    "doome-text",
+    "crates/lib/*",
+    "crates/bin/*",
+    "crates/shaders/*",
 ]
 
 [package]
@@ -18,11 +12,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-doome-bevy = { path = "doome-bevy" }
-doome-raytracer = { path = "doome-raytracer" }
-doome-engine = { path = "doome-engine" }
-doome-surface = { path = "doome-surface" }
-doome-text = { path = "doome-text" }
+doome-bevy = { path = "crates/lib/doome-bevy" }
+raytracer = { path = "crates/lib/raytracer" }
+engine = { path = "crates/lib/engine" }
+surface = { path = "crates/lib/surface" }
+text = { path = "crates/lib/text" }
 
 bevy = { version = "0.9", default-features = false, features = ["bevy_winit"] }
 

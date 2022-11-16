@@ -47,7 +47,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e9dd62f37dea550caf48c77591dc50bd1a378ce08855be1a0c42a97b7550fb"
 dependencies = [
  "android_log-sys",
- "env_logger",
+ "env_logger 0.9.3",
  "log",
  "once_cell",
 ]
@@ -763,6 +763,43 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd16c4719339c4530435d38e511904438d07cce7950afa3718a84ac36c10e89e"
 
 [[package]]
+name = "clap"
+version = "4.0.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2148adefda54e14492fb9bddcc600b4344c5d1a3123bd666dcb939c6f0e0e57e"
+dependencies = [
+ "atty",
+ "bitflags",
+ "clap_derive",
+ "clap_lex",
+ "once_cell",
+ "strsim",
+ "termcolor",
+]
+
+[[package]]
+name = "clap_derive"
+version = "4.0.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0177313f9f02afc995627906bbd8967e2be069f5261954222dac78290c2b9014"
+dependencies = [
+ "heck 0.4.0",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "clap_lex"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d4198f73e42b4936b35b5bb248d81d2b595ecb170da0bac7655c54eedfa8da8"
+dependencies = [
+ "os_str_bytes",
+]
+
+[[package]]
 name = "cmake"
 version = "0.1.49"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1081,12 +1118,12 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "doome-bevy",
- "doome-engine",
- "doome-raytracer",
- "doome-surface",
- "doome-text",
+ "engine",
  "glam",
  "include_dir",
+ "raytracer",
+ "surface",
+ "text",
 ]
 
 [[package]]
@@ -1094,82 +1131,20 @@ name = "doome-bevy"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "doome-engine",
- "doome-raytracer",
- "doome-text",
+ "engine",
  "glam",
  "include_dir",
  "log",
  "pixels",
-]
-
-[[package]]
-name = "doome-engine"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bytemuck",
- "console_error_panic_hook",
- "console_log",
- "doome-raytracer",
- "doome-surface",
- "doome-text",
- "dotenv",
- "env_logger",
- "glam",
- "image",
- "include_dir",
- "instant",
- "log",
- "maplit",
- "pixels",
- "pollster",
- "rectangle-pack",
- "test-case",
- "tobj",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
- "wgpu 0.13.1",
- "winit",
- "winit_input_helper",
-]
-
-[[package]]
-name = "doome-raytracer"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "doome-raytracer-shader-common",
- "glam",
- "instant",
- "log",
- "spirv-builder",
- "spirv-std",
- "wgpu 0.13.1",
+ "raytracer",
+ "text",
 ]
 
 [[package]]
 name = "doome-raytracer-shader"
 version = "0.1.0"
 dependencies = [
- "doome-raytracer-shader-common",
- "spirv-std",
-]
-
-[[package]]
-name = "doome-raytracer-shader-builder"
-version = "0.1.0"
-dependencies = [
- "spirv-builder",
-]
-
-[[package]]
-name = "doome-raytracer-shader-common"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "glam",
+ "shader-common",
  "spirv-std",
 ]
 
@@ -1178,18 +1153,6 @@ name = "doome-run-wasm"
 version = "0.1.0"
 dependencies = [
  "cargo-run-wasm",
-]
-
-[[package]]
-name = "doome-surface"
-version = "0.1.0"
-
-[[package]]
-name = "doome-text"
-version = "0.1.0"
-dependencies = [
- "doome-surface",
- "rusttype",
 ]
 
 [[package]]
@@ -1257,13 +1220,58 @@ dependencies = [
 ]
 
 [[package]]
+name = "engine"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytemuck",
+ "console_error_panic_hook",
+ "console_log",
+ "dotenv",
+ "env_logger 0.9.3",
+ "glam",
+ "image",
+ "include_dir",
+ "instant",
+ "log",
+ "maplit",
+ "pixels",
+ "pollster",
+ "raytracer",
+ "rectangle-pack",
+ "surface",
+ "test-case",
+ "text",
+ "tobj",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "wgpu 0.13.1",
+ "winit",
+ "winit_input_helper",
+]
+
+[[package]]
+name = "env_logger"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44533bbbb3bb3c1fa17d9f2e4e38bbbaf8396ba82193c4cb1b6445d711445d36"
+dependencies = [
+ "atty",
+ "humantime 1.3.0",
+ "log",
+ "regex",
+ "termcolor",
+]
+
+[[package]]
 name = "env_logger"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a12e6657c4c97ebab115a42dcee77225f7f482cdd841cf7088c657a42e9e00e7"
 dependencies = [
  "atty",
- "humantime",
+ "humantime 2.1.0",
  "log",
  "regex",
  "termcolor",
@@ -1416,6 +1424,12 @@ dependencies = [
  "libc",
  "pkg-config",
 ]
+
+[[package]]
+name = "fs_extra"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2022715d62ab30faffd124d40b76f4134a550a87792276512b18d63272333394"
 
 [[package]]
 name = "futures-core"
@@ -1582,6 +1596,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "heck"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2540771e65fc8cb83cd6e8a237f70c319bd5c29f78ed1084ba5d50eeac86f7f9"
+
+[[package]]
 name = "hermit-abi"
 version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1611,6 +1631,15 @@ name = "hexf-parse"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
+
+[[package]]
+name = "humantime"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df004cfca50ef23c36850aaaa59ad52cc70d0e90243c3c7737a4dd32dc7a3c4f"
+dependencies = [
+ "quick-error",
+]
 
 [[package]]
 name = "humantime"
@@ -2134,6 +2163,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
 
 [[package]]
+name = "os_str_bytes"
+version = "6.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b5bf27447411e9ee3ff51186bf7a08e16c341efdde93f4d823e8844429bed7e"
+
+[[package]]
 name = "overload"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2226,6 +2261,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e0a7ae3ac2f1173085d398531c705756c94a4c56843785df85a60c1a0afac116"
 
 [[package]]
+name = "pixel_shader"
+version = "0.1.0"
+dependencies = [
+ "glam",
+ "shader-common",
+ "spirv-std",
+]
+
+[[package]]
 name = "pixels"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2270,6 +2314,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb458bb7f6e250e6eb79d5026badc10a3ebb8f9a15d1fff0f13d17c71f4d6dee"
 dependencies = [
  "unicode-xid",
+]
+
+[[package]]
+name = "pretty_env_logger"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "926d36b9553851b8b0005f1275891b392ee4d2d833852c417ed025477350fb9d"
+dependencies = [
+ "env_logger 0.7.1",
+ "log",
 ]
 
 [[package]]
@@ -2321,6 +2375,12 @@ name = "profiling"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74605f360ce573babfe43964cbe520294dcb081afbf8c108fc6e23036b4da2df"
+
+[[package]]
+name = "quick-error"
+version = "1.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
@@ -2389,6 +2449,20 @@ dependencies = [
  "crossbeam-deque",
  "crossbeam-utils",
  "num_cpus",
+]
+
+[[package]]
+name = "raytracer"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "glam",
+ "instant",
+ "log",
+ "shader-common",
+ "spirv-builder",
+ "spirv-std",
+ "wgpu 0.13.1",
 ]
 
 [[package]]
@@ -2554,6 +2628,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "scaler_shader"
+version = "0.1.0"
+dependencies = [
+ "glam",
+ "spirv-std",
+]
+
+[[package]]
 name = "scoped-tls"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2633,6 +2715,28 @@ dependencies = [
  "expat-sys",
  "freetype-sys",
  "pkg-config",
+]
+
+[[package]]
+name = "shader-builder"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "dotenv",
+ "fs_extra",
+ "log",
+ "pretty_env_logger",
+ "spirv-builder",
+]
+
+[[package]]
+name = "shader-common"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "glam",
+ "spirv-std",
 ]
 
 [[package]]
@@ -2783,6 +2887,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
+name = "surface"
+version = "0.1.0"
+
+[[package]]
 name = "syn"
 version = "1.0.103"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2836,6 +2944,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "text"
+version = "0.1.0"
+dependencies = [
+ "rusttype",
+ "surface",
 ]
 
 [[package]]
@@ -3096,7 +3212,7 @@ version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0a6e5bd22c71e77d60140b0bd5be56155a37e5bd14e24f5f87298040d0cc40d7"
 dependencies = [
- "heck",
+ "heck 0.3.3",
  "proc-macro2",
  "quote",
  "syn",

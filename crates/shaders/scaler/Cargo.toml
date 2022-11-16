@@ -1,0 +1,13 @@
+[package]
+name = "scaler_shader"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["dylib"]
+
+[dependencies]
+spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = [
+    "glam",
+] }
+glam = { version = "0.22", default-features = false }
