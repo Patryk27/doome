@@ -18,6 +18,7 @@ pub struct Engine {
     height: u32,
     pipeline: wgpu::RenderPipeline,
     output_texture: wgpu::Texture,
+    output_texture_view: wgpu::TextureView,
     camera: AllocatedUniform<Camera>,
     geometry: AllocatedUniform<Geometry>,
     geometry_mapping: AllocatedUniform<GeometryMapping>,
@@ -192,11 +193,15 @@ impl Engine {
                 | wgpu::TextureUsages::TEXTURE_BINDING,
         });
 
+        let output_texture_view =
+            output_texture.create_view(&Default::default());
+
         Self {
             width,
             height,
             pipeline,
             output_texture,
+            output_texture_view,
             camera,
             geometry,
             geometry_mapping,
@@ -209,14 +214,14 @@ impl Engine {
 
     pub fn render(
         &self,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
         camera: &Camera,
         geometry: &Geometry,
         geometry_mapping: &GeometryMapping,
         geometry_index: &GeometryIndex,
         lights: &Lights,
         materials: &Materials,
-        queue: &wgpu::Queue,
-        encoder: &mut wgpu::CommandEncoder,
     ) {
         self.camera.write(queue, camera);
         self.geometry.write(queue, geometry);
@@ -225,13 +230,11 @@ impl Engine {
         self.lights.write(queue, lights);
         self.materials.write(queue, materials);
 
-        let view = self.output_texture.create_view(&Default::default());
-
         let mut rpass =
             encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("raytracer_render_pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
+                    view: &self.output_texture_view,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
@@ -255,7 +258,7 @@ impl Engine {
         rpass.draw(0..3, 0..1);
     }
 
-    pub fn output_texture_view(&self) -> wgpu::TextureView {
-        self.output_texture.create_view(&Default::default())
+    pub fn output_texture(&self) -> &wgpu::Texture {
+        &self.output_texture
     }
 }

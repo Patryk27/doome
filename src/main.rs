@@ -11,7 +11,9 @@ use doome_bevy::doome::{DoomePlugin, DoomeRenderInit, DoomeRendererContext};
 use doome_bevy::pixels_plugin::{PixelsPlugin, PixelsState};
 use doome_bevy::text::Text;
 use doome_engine::pipeline::PipelineBuilder;
-use doome_engine::{Canvas, GeometryBuilder, HEIGHT, RAYTRACER_HEIGHT, WIDTH};
+use doome_engine::{
+    Canvas, GeometryBuilder, HEIGHT, HUD_HEIGHT, RAYTRACER_HEIGHT, WIDTH,
+};
 use doome_raytracer as rt;
 use doome_surface::Color;
 use glam::{vec2, vec3, Vec3Swizzles};
@@ -182,10 +184,9 @@ fn render_ui(
     let frame = pixels.inner_mut().get_frame_mut();
     let mut canvas = Canvas::new(&text.text_engine, frame);
 
-    // TODO: For some reason this renders a square? And not even a full one
     canvas.rect(
         0,
-        0,
+        HEIGHT - HUD_HEIGHT,
         WIDTH,
         HEIGHT,
         Color {
@@ -202,7 +203,7 @@ fn render_ui(
     if let Some(fps) = fps_diagnostic.smoothed() {
         canvas.text(
             10,
-            HEIGHT - 14,
+            HEIGHT - 30,
             format!("FPS: {fps:>.6}{}", fps_diagnostic.suffix),
         );
     }
@@ -215,7 +216,6 @@ fn update_camera(
     mut context: ResMut<DoomeRendererContext>,
 ) {
     let camera = &mut context.camera;
-
     let delta = time.delta_seconds();
 
     const MOUSE_ROTATION_SENSITIVITY: f32 = 0.5;

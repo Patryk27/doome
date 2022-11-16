@@ -28,7 +28,6 @@ impl GeometryIndexer {
         log::info!("Indexing geometry; triangles = {}", geometry.len());
 
         let (bvh, tt_bvh) = Self::measure(|| Bvh::build(geometry));
-
         let (lbvh, tt_lbvh) = Self::measure(|| LinearBvh::build(bvh));
 
         let ((index, index_len), tt_serialize) =

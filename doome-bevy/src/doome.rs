@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use doome_engine::pipeline::Pipeline;
-use doome_engine::{ScalingTextureRenderer, HEIGHT, RAYTRACER_HEIGHT, WIDTH};
+use doome_engine::{RAYTRACER_HEIGHT, WIDTH};
 use doome_raytracer as rt;
+use pixels::wgpu;
 
 use crate::pixels_plugin::PixelsState;
 
@@ -10,7 +11,6 @@ pub struct DoomePlugin;
 #[derive(Resource)]
 pub struct DoomeRenderer {
     raytracer: rt::Engine,
-    scaler: ScalingTextureRenderer,
 }
 
 #[derive(Resource)]
@@ -32,7 +32,6 @@ impl Plugin for DoomePlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         let pixels_state = app.world.resource::<PixelsState>();
         let pixels = pixels_state.inner();
-
         let renderer_init = app.world.resource::<DoomeRenderInit>();
 
         let raytracer = rt::Engine::new(
@@ -43,55 +42,53 @@ impl Plugin for DoomePlugin {
             renderer_init.pipeline.atlas().as_raw(),
         );
 
-        let scaler = ScalingTextureRenderer::new(
-            pixels.device(),
-            &raytracer.output_texture_view(),
-            pixels.render_texture_format(),
-            [1.0, (RAYTRACER_HEIGHT as f32) / (HEIGHT as f32)],
-        );
-
-        app.insert_resource(DoomeRenderer { raytracer, scaler });
-
+        app.insert_resource(DoomeRenderer { raytracer });
         app.add_system(render);
     }
 }
 
 fn render(
-    doome_state: Res<DoomeRenderer>,
+    doome_state: ResMut<DoomeRenderer>,
     mut pixels: ResMut<PixelsState>,
-    doome_renderer_context: Res<DoomeRendererContext>,
+    doome_ctxt: Res<DoomeRendererContext>,
     window: Res<Windows>,
 ) {
     let raytracer = &doome_state.raytracer;
-    let scaler = &doome_state.scaler;
     let window = window.get_primary().unwrap();
     let window_size = (window.physical_width(), window.physical_height());
 
-    pixels.render(window_size, |encoder, view, context| {
-        // TODO: Would be cool if we could render the pixels ui last and blend it onto raytracer output
-        //       I tried this, but didn't get far, there are a number of issues - but primarily for some reason even setting `clear_color` on `PixelsBuilder`
-        //       to transparent, the pixels still overwrites the values from the raytracer
-
-        // Draw UI
-        context.scaling_renderer.render(encoder, view);
-
-        // Draw raytracer
+    pixels.render(window_size, |encoder, view, pixels_ctxt| {
         raytracer.render(
-            &doome_renderer_context.camera,
-            &doome_renderer_context.static_geometry,
-            &doome_renderer_context.static_geometry_mapping,
-            &doome_renderer_context.static_geometry_index,
-            &doome_renderer_context.lights,
-            &doome_renderer_context.materials,
-            &context.queue,
+            &pixels_ctxt.queue,
             encoder,
+            &doome_ctxt.camera,
+            &doome_ctxt.static_geometry,
+            &doome_ctxt.static_geometry_mapping,
+            &doome_ctxt.static_geometry_index,
+            &doome_ctxt.lights,
+            &doome_ctxt.materials,
         );
 
-        scaler.render(
-            encoder,
-            view,
-            window.physical_width(),
-            window.physical_height(),
+        encoder.copy_texture_to_texture(
+            wgpu::ImageCopyTexture {
+                texture: raytracer.output_texture(),
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            wgpu::ImageCopyTexture {
+                texture: &pixels_ctxt.texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            wgpu::Extent3d {
+                width: WIDTH as _,
+                height: RAYTRACER_HEIGHT as _,
+                depth_or_array_layers: 1,
+            },
         );
+
+        pixels_ctxt.scaling_renderer.render(encoder, view);
     });
 }
