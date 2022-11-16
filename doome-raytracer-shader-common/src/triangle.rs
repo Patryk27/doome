@@ -84,7 +84,7 @@ impl Triangle {
             ray,
             point: ray.origin() + ray.direction() * (t - 0.01),
             normal: v0v1.cross(v0v2).normalize(),
-            triangle_id: TriangleId::new(0),
+            triangle_id: TriangleId::new_static(0).into_any(),
             material_id: self.material_id(),
         }
     }
@@ -131,21 +131,61 @@ impl Triangle {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct TriangleId(usize);
+pub struct TriangleId<T>(T, usize);
 
-impl TriangleId {
-    pub fn new(id: usize) -> Self {
-        Self(id)
+impl<T> TriangleId<T> {
+    pub fn new(provenance: T, id: usize) -> Self {
+        Self(provenance, id)
     }
 
-    pub fn get(self) -> usize {
-        self.0
+    pub fn get(self) -> (T, usize) {
+        (self.0, self.1)
+    }
+}
+
+impl TriangleId<StaticTriangle> {
+    pub fn new_static(id: usize) -> Self {
+        Self(StaticTriangle, id)
+    }
+
+    pub fn id(self) -> usize {
+        self.1
+    }
+
+    pub fn into_any(self) -> TriangleId<AnyTriangle> {
+        TriangleId::new(AnyTriangle::Static, self.1)
+    }
+}
+
+impl TriangleId<DynamicTriangle> {
+    pub fn new_dynamic(id: usize) -> Self {
+        Self(DynamicTriangle, id)
+    }
+
+    pub fn id(self) -> usize {
+        self.1
+    }
+
+    pub fn into_any(self) -> TriangleId<AnyTriangle> {
+        TriangleId::new(AnyTriangle::Dynamic, self.1)
     }
 }
 
 #[cfg(not(target_arch = "spirv"))]
-impl fmt::Display for TriangleId {
+impl fmt::Display for TriangleId<StaticTriangle> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.1)
     }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct StaticTriangle;
+
+#[derive(Copy, Clone, Debug)]
+pub struct DynamicTriangle;
+
+#[derive(Copy, Clone, Debug)]
+pub enum AnyTriangle {
+    Static = 0,
+    Dynamic = 1,
 }

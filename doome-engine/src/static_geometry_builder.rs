@@ -5,12 +5,12 @@ use doome_raytracer as rt;
 use glam::vec3;
 
 #[derive(Default)]
-pub struct GeometryBuilder {
-    geometry: rt::Geometry,
-    geometry_mapping: rt::GeometryMapping,
+pub struct StaticGeometryBuilder {
+    geometry: rt::StaticGeometry,
+    geometry_mapping: rt::StaticGeometryMapping,
 }
 
-impl GeometryBuilder {
+impl StaticGeometryBuilder {
     pub fn map_coords(&self, x: i32, z: i32) -> (f32, f32) {
         let x = (x as f32) * 2.0;
         let z = (z as f32) * 2.0;
@@ -18,7 +18,10 @@ impl GeometryBuilder {
         (x, z)
     }
 
-    pub fn push(&mut self, triangle: rt::Triangle) -> rt::TriangleId {
+    pub fn push(
+        &mut self,
+        triangle: rt::Triangle,
+    ) -> rt::TriangleId<rt::StaticTriangle> {
         self.geometry.push(triangle)
     }
 
@@ -26,7 +29,7 @@ impl GeometryBuilder {
         &mut self,
         triangle: rt::Triangle,
         triangle_mapping: rt::TriangleMapping,
-    ) -> rt::TriangleId {
+    ) -> rt::TriangleId<rt::StaticTriangle> {
         let triangle_id = self.geometry.push(triangle);
         self.geometry_mapping.set(triangle_id, triangle_mapping);
 
@@ -164,7 +167,9 @@ impl GeometryBuilder {
         }
     }
 
-    pub fn build(self) -> (Box<rt::Geometry>, Box<rt::GeometryMapping>) {
+    pub fn build(
+        self,
+    ) -> (Box<rt::StaticGeometry>, Box<rt::StaticGeometryMapping>) {
         (Box::new(self.geometry), Box::new(self.geometry_mapping))
     }
 }

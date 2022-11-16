@@ -14,7 +14,9 @@ use self::axis::*;
 use self::bounding_box::*;
 use self::bvh::*;
 use self::lbvh::*;
-use crate::{Geometry, GeometryIndex, Triangle, TriangleId};
+use crate::{StaticGeometry, StaticGeometryIndex, StaticTriangle, Triangle};
+
+type TriangleId = crate::TriangleId<StaticTriangle>;
 
 /// An BVH + LBVH geometry indexer.
 ///
@@ -24,7 +26,7 @@ use crate::{Geometry, GeometryIndex, Triangle, TriangleId};
 pub struct GeometryIndexer;
 
 impl GeometryIndexer {
-    pub fn index(geometry: &Geometry) -> GeometryIndex {
+    pub fn index(geometry: &StaticGeometry) -> Box<StaticGeometryIndex> {
         log::info!("Indexing geometry; triangles = {}", geometry.len());
 
         let (bvh, tt_bvh) = Self::measure(|| Bvh::build(geometry));
@@ -41,7 +43,7 @@ impl GeometryIndexer {
             index_len,
         );
 
-        index
+        Box::new(index)
     }
 
     fn measure<T>(f: impl FnOnce() -> T) -> (T, Duration) {

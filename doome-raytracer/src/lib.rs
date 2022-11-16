@@ -20,11 +20,12 @@ pub struct Engine {
     output_texture: wgpu::Texture,
     output_texture_view: wgpu::TextureView,
     camera: AllocatedUniform<Camera>,
-    geometry: AllocatedUniform<Geometry>,
-    geometry_mapping: AllocatedUniform<GeometryMapping>,
-    geometry_index: AllocatedUniform<GeometryIndex>,
-    lights: AllocatedUniform<Lights>,
-    materials: AllocatedUniform<Materials>,
+    static_geo: AllocatedUniform<StaticGeometry>,
+    static_geo_mapping: AllocatedUniform<StaticGeometryMapping>,
+    static_geo_index: AllocatedUniform<StaticGeometryIndex>,
+    dynamic_geo: AllocatedUniform<DynamicGeometry>,
+    dynamic_geo_mapping: AllocatedUniform<DynamicGeometryMapping>,
+    lights_and_materials: AllocatedUniform<LightsAndMaterials>,
 
     tex_bind_group: wgpu::BindGroup,
 }
@@ -40,12 +41,16 @@ impl Engine {
         let shader = wgpu::include_spirv!(env!("doome_raytracer_shader.spv"));
         let module = device.create_shader_module(shader);
 
-        let camera = uniforms::allocate(device, 0, "camera");
-        let geometry = uniforms::allocate(device, 0, "geometry");
-        let geometry_mapping = uniforms::allocate(device, 0, "geometry");
-        let geometry_index = uniforms::allocate(device, 0, "geometry_index");
-        let lights = uniforms::allocate(device, 0, "lights");
-        let materials = uniforms::allocate(device, 0, "materials");
+        let camera = uniforms::allocate(device, "camera");
+        let static_geo = uniforms::allocate(device, "static_geo");
+        let static_geo_mapping =
+            uniforms::allocate(device, "static_geo_mapping");
+        let static_geo_index = uniforms::allocate(device, "static_geo_index");
+        let dynamic_geo = uniforms::allocate(device, "dynamic_geo");
+        let dynamic_geo_mapping =
+            uniforms::allocate(device, "dynamic_geo_mapping");
+        let lights_and_materials =
+            uniforms::allocate(device, "lights_and_materials");
 
         let tex_size = wgpu::Extent3d {
             width: ATLAS_WIDTH,
@@ -143,11 +148,12 @@ impl Engine {
                 label: Some("raytracer_pipeline_layout"),
                 bind_group_layouts: &[
                     &camera.bind_group_layout,
-                    &geometry.bind_group_layout,
-                    &geometry_mapping.bind_group_layout,
-                    &geometry_index.bind_group_layout,
-                    &lights.bind_group_layout,
-                    &materials.bind_group_layout,
+                    &static_geo.bind_group_layout,
+                    &static_geo_mapping.bind_group_layout,
+                    &static_geo_index.bind_group_layout,
+                    &dynamic_geo.bind_group_layout,
+                    &dynamic_geo_mapping.bind_group_layout,
+                    &lights_and_materials.bind_group_layout,
                     &tex_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
@@ -203,11 +209,12 @@ impl Engine {
             output_texture,
             output_texture_view,
             camera,
-            geometry,
-            geometry_mapping,
-            geometry_index,
-            lights,
-            materials,
+            static_geo,
+            static_geo_mapping,
+            static_geo_index,
+            dynamic_geo,
+            dynamic_geo_mapping,
+            lights_and_materials,
             tex_bind_group,
         }
     }
@@ -217,18 +224,28 @@ impl Engine {
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
         camera: &Camera,
-        geometry: &Geometry,
-        geometry_mapping: &GeometryMapping,
-        geometry_index: &GeometryIndex,
+        static_geo: &StaticGeometry,
+        static_geo_mapping: &StaticGeometryMapping,
+        static_geo_index: &StaticGeometryIndex,
+        dynamic_geo: &DynamicGeometry,
+        dynamic_geo_mapping: &DynamicGeometryMapping,
         lights: &Lights,
         materials: &Materials,
     ) {
         self.camera.write(queue, camera);
-        self.geometry.write(queue, geometry);
-        self.geometry_mapping.write(queue, geometry_mapping);
-        self.geometry_index.write(queue, geometry_index);
-        self.lights.write(queue, lights);
-        self.materials.write(queue, materials);
+        self.static_geo.write(queue, static_geo);
+        self.static_geo_mapping.write(queue, static_geo_mapping);
+        self.static_geo_index.write(queue, static_geo_index);
+        self.dynamic_geo.write(queue, dynamic_geo);
+        self.dynamic_geo_mapping.write(queue, dynamic_geo_mapping);
+        // TODO pretty hacky
+        self.lights_and_materials.write(
+            queue,
+            &LightsAndMaterials {
+                lights: *lights,
+                materials: *materials,
+            },
+        );
 
         let mut rpass =
             encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -248,12 +265,13 @@ impl Engine {
         rpass.set_pipeline(&self.pipeline);
 
         rpass.set_bind_group(0, &self.camera.bind_group, &[]);
-        rpass.set_bind_group(1, &self.geometry.bind_group, &[]);
-        rpass.set_bind_group(2, &self.geometry_mapping.bind_group, &[]);
-        rpass.set_bind_group(3, &self.geometry_index.bind_group, &[]);
-        rpass.set_bind_group(4, &self.lights.bind_group, &[]);
-        rpass.set_bind_group(5, &self.materials.bind_group, &[]);
-        rpass.set_bind_group(6, &self.tex_bind_group, &[]);
+        rpass.set_bind_group(1, &self.static_geo.bind_group, &[]);
+        rpass.set_bind_group(2, &self.static_geo_mapping.bind_group, &[]);
+        rpass.set_bind_group(3, &self.static_geo_index.bind_group, &[]);
+        rpass.set_bind_group(4, &self.dynamic_geo.bind_group, &[]);
+        rpass.set_bind_group(5, &self.dynamic_geo_mapping.bind_group, &[]);
+        rpass.set_bind_group(6, &self.lights_and_materials.bind_group, &[]);
+        rpass.set_bind_group(7, &self.tex_bind_group, &[]);
 
         rpass.draw(0..3, 0..1);
     }

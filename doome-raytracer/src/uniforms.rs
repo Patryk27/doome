@@ -23,11 +23,7 @@ where
     }
 }
 
-pub fn allocate<T>(
-    device: &wgpu::Device,
-    binding: u32,
-    name: &str,
-) -> AllocatedUniform<T> {
+pub fn allocate<T>(device: &wgpu::Device, name: &str) -> AllocatedUniform<T> {
     assert!(
         mem::size_of::<T>() % 16 == 0,
         "`{}` is not padded to 16 bytes - actual size is {}",
@@ -57,7 +53,7 @@ pub fn allocate<T>(
         device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some(&format!("{name}_bind_group_layout")),
             entries: &[wgpu::BindGroupLayoutEntry {
-                binding,
+                binding: 0,
                 visibility: wgpu::ShaderStages::FRAGMENT,
                 ty: wgpu::BindingType::Buffer {
                     ty: wgpu::BufferBindingType::Uniform,
@@ -72,7 +68,7 @@ pub fn allocate<T>(
         label: Some(&format!("{name}_bind_group")),
         layout: &bind_group_layout,
         entries: &[wgpu::BindGroupEntry {
-            binding,
+            binding: 0,
             resource: buffer.as_entire_binding(),
         }],
     });

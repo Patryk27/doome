@@ -21,9 +21,11 @@ pub struct DoomeRenderInit {
 #[derive(Resource)]
 pub struct DoomeRendererContext {
     pub camera: rt::Camera,
-    pub static_geometry: Box<rt::Geometry>,
-    pub static_geometry_mapping: Box<rt::GeometryMapping>,
-    pub static_geometry_index: rt::GeometryIndex,
+    pub static_geo: Box<rt::StaticGeometry>,
+    pub static_geo_mapping: Box<rt::StaticGeometryMapping>,
+    pub static_geo_index: Box<rt::StaticGeometryIndex>,
+    pub dynamic_geo: Box<rt::DynamicGeometry>,
+    pub dynamic_geo_mapping: Box<rt::DynamicGeometryMapping>,
     pub lights: rt::Lights,
     pub materials: rt::Materials,
 }
@@ -62,9 +64,11 @@ fn render(
             &pixels_ctxt.queue,
             encoder,
             &doome_ctxt.camera,
-            &doome_ctxt.static_geometry,
-            &doome_ctxt.static_geometry_mapping,
-            &doome_ctxt.static_geometry_index,
+            &doome_ctxt.static_geo,
+            &doome_ctxt.static_geo_mapping,
+            &doome_ctxt.static_geo_index,
+            &doome_ctxt.dynamic_geo,
+            &doome_ctxt.dynamic_geo_mapping,
             &doome_ctxt.lights,
             &doome_ctxt.materials,
         );

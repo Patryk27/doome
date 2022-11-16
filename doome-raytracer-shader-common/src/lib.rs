@@ -3,9 +3,8 @@
 #![no_std]
 
 mod camera;
-mod geometry;
-mod geometry_index;
-mod geometry_mapping;
+mod dynamic_geometry;
+mod dynamic_geometry_mapping;
 mod hit;
 mod light;
 mod lights;
@@ -13,6 +12,9 @@ mod material;
 mod materials;
 pub mod math;
 mod ray;
+mod static_geometry;
+mod static_geometry_index;
+mod static_geometry_mapping;
 mod triangle;
 mod triangle_mapping;
 mod utils;
@@ -27,26 +29,37 @@ use spirv_std::num_traits::real::Real;
 use spirv_std::{Image, Sampler};
 
 pub use self::camera::*;
-pub use self::geometry::*;
-pub use self::geometry_index::*;
-pub use self::geometry_mapping::*;
+pub use self::dynamic_geometry::*;
+pub use self::dynamic_geometry_mapping::*;
 pub use self::hit::*;
 pub use self::light::*;
 pub use self::lights::*;
 pub use self::material::*;
 pub use self::materials::*;
 pub use self::ray::*;
+pub use self::static_geometry::*;
+pub use self::static_geometry_index::*;
+pub use self::static_geometry_mapping::*;
 pub use self::triangle::*;
 pub use self::triangle_mapping::*;
 use self::utils::*;
 pub use self::world::*;
 
+#[repr(C)]
+#[derive(Copy, Clone, Pod, Zeroable)]
+pub struct LightsAndMaterials {
+    pub lights: Lights,
+    pub materials: Materials,
+}
+
 // WebGL 2's limit
 pub const MAX_BUFFER_BINDING_SIZE: usize = 65536;
 
-pub const MAX_TRIANGLES: usize = (MAX_BUFFER_BINDING_SIZE
+pub const MAX_STATIC_TRIANGLES: usize = (MAX_BUFFER_BINDING_SIZE
     - mem::size_of::<PadU32>())
     / mem::size_of::<Triangle>();
+
+pub const MAX_DYNAMIC_TRIANGLES: usize = 64;
 
 pub const MAX_LIGHTS: usize = 16;
 pub const MAX_MATERIALS: usize = 16;

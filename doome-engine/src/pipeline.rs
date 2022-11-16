@@ -3,7 +3,7 @@ use glam::Mat4;
 use include_dir::Dir;
 
 pub use self::builder::PipelineBuilder;
-use crate::geometry_builder::GeometryBuilder;
+use crate::static_geometry_builder::StaticGeometryBuilder;
 
 mod builder;
 
@@ -24,7 +24,7 @@ impl Pipeline {
     pub fn insert_to_geometry(
         &self,
         model_handle: ModelHandle,
-        geometry: &mut GeometryBuilder,
+        geometry: &mut StaticGeometryBuilder,
         xform: Mat4,
         alpha: f32,
         uv_transparency: bool,

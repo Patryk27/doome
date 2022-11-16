@@ -7,7 +7,7 @@ pub struct Hit {
     pub ray: Ray,
     pub point: Vec3,
     pub normal: Vec3,
-    pub triangle_id: TriangleId,
+    pub triangle_id: TriangleId<AnyTriangle>,
     pub material_id: MaterialId,
 }
 
@@ -21,7 +21,7 @@ impl Hit {
             ray: Default::default(),
             point: Default::default(),
             normal: Default::default(),
-            triangle_id: TriangleId::new(0),
+            triangle_id: TriangleId::new(AnyTriangle::Static, 0),
             material_id: MaterialId::new(0),
         }
     }

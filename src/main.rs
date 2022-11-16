@@ -12,7 +12,8 @@ use doome_bevy::pixels_plugin::{PixelsPlugin, PixelsState};
 use doome_bevy::text::Text;
 use doome_engine::pipeline::PipelineBuilder;
 use doome_engine::{
-    Canvas, GeometryBuilder, HEIGHT, HUD_HEIGHT, RAYTRACER_HEIGHT, WIDTH,
+    Canvas, DynamicGeometryBuilder, StaticGeometryBuilder, HEIGHT, HUD_HEIGHT,
+    RAYTRACER_HEIGHT, WIDTH,
 };
 use doome_raytracer as rt;
 use doome_surface::Color;
@@ -63,14 +64,20 @@ fn main() {
             .with_reflectivity(0.65, 0xffffff),
     );
 
+    let mat_static = materials.push(
+        rt::Material::default()
+            .with_color(0x000000)
+            .with_reflectivity(1.00, 0xffffff),
+    );
+
     // -----
 
     let mut monke_xform = rt::math::identity();
-    rt::math::translate(&mut monke_xform, vec3(0.0, 1.0, 0.0));
+    rt::math::translate(&mut monke_xform, vec3(1.0, 1.0, 0.0));
     rt::math::rotate(&mut monke_xform, 45.0, vec3(0.0, 1.0, 0.0));
 
     let mut ref_cube_xform = rt::math::identity();
-    rt::math::translate(&mut ref_cube_xform, vec3(2.0, 1.0, 0.0));
+    rt::math::translate(&mut ref_cube_xform, vec3(4.0, 1.0, 0.0));
 
     // -----
 
@@ -86,25 +93,63 @@ fn main() {
 
     // -----
 
-    let mut static_geometry = GeometryBuilder::default();
+    let mut static_geo = StaticGeometryBuilder::default();
 
-    static_geometry.push_floor(-3, -3, 3, 3, mat_matte);
-    static_geometry.push_wall(-3, 3, -1, 3, 0, mat_matte);
-    static_geometry.push_wall(1, 3, 3, 3, 0, mat_matte);
-    static_geometry.push_wall(3, 3, 3, -3, 1, mat_matte);
-    static_geometry.push_wall(-3, -3, 3, -3, 2, mat_matte);
-    static_geometry.push_wall(-3, -3, -3, 3, 3, mat_matte);
+    static_geo.push_floor(-3, -3, 3, 3, mat_matte);
+    static_geo.push_wall(-3, 3, -1, 3, 0, mat_matte);
+    static_geo.push_wall(1, 3, 3, 3, 0, mat_matte);
+    static_geo.push_wall(3, 3, 3, -3, 1, mat_matte);
+    static_geo.push_wall(-3, -3, 3, -3, 2, mat_matte);
+    static_geo.push_wall(-3, -3, -3, 3, 3, mat_matte);
 
-    static_geometry.push_floor(-1, 3, 1, 5, mat_matte);
-    static_geometry.push_wall(-1, 5, 1, 5, 0, mat_matte);
-    static_geometry.push_wall(1, 3, 1, 5, 1, mat_matte);
-    static_geometry.push_wall(-1, 3, -1, 5, 3, mat_matte);
+    static_geo.push_floor(-1, 3, 1, 5, mat_matte);
+    static_geo.push_wall(-1, 5, 1, 5, 0, mat_matte);
+    static_geo.push_wall(1, 3, 1, 5, 1, mat_matte);
+    static_geo.push_wall(-1, 3, -1, 5, 3, mat_matte);
 
-    static_geometry.push_icosphere(0, 2, mat_sphere);
-    static_geometry.push_icosphere(-2, 1, mat_sphere);
-    static_geometry.push_icosphere(2, 1, mat_sphere);
+    static_geo.push_icosphere(0, 2, mat_sphere);
+    static_geo.push_icosphere(-2, 1, mat_sphere);
+    static_geo.push_icosphere(2, 1, mat_sphere);
 
-    static_geometry.push_ceiling(-10, -10, 10, 10, mat_matte);
+    static_geo.push_ceiling(-10, -10, 10, 10, mat_matte);
+
+    pipeline.insert_to_geometry(
+        monke_mesh,
+        &mut static_geo,
+        monke_xform,
+        1.0,
+        true,
+    );
+    pipeline.insert_to_geometry(
+        reference_cube,
+        &mut static_geo,
+        ref_cube_xform,
+        1.0,
+        false,
+    );
+    pipeline.insert_to_geometry(
+        diamond_mesh,
+        &mut static_geo,
+        rt::math::translated(vec3(-3.0, 1.0, -1.0)),
+        1.0,
+        false,
+    );
+
+    let (static_geo, static_geo_mapping) = static_geo.build();
+    let static_geo_index = rt::GeometryIndexer::index(&static_geo);
+
+    // -----
+
+    let mut dynamic_geo = DynamicGeometryBuilder::default();
+
+    dynamic_geo.push(rt::Triangle::new(
+        vec3(0.0, 0.0, 0.0),
+        vec3(-3.0, 0.0, 0.0),
+        vec3(-3.0, 3.0, 0.0),
+        mat_static,
+    ));
+
+    let (dynamic_geo, dynamic_geo_mapping) = dynamic_geo.build();
 
     // -----
 
@@ -119,43 +164,16 @@ fn main() {
 
     // -----
 
-    pipeline.insert_to_geometry(
-        monke_mesh,
-        &mut static_geometry,
-        monke_xform,
-        1.0,
-        true,
-    );
-    pipeline.insert_to_geometry(
-        reference_cube,
-        &mut static_geometry,
-        ref_cube_xform,
-        1.0,
-        false,
-    );
-    pipeline.insert_to_geometry(
-        diamond_mesh,
-        &mut static_geometry,
-        rt::math::translated(vec3(-3.0, 1.0, -1.0)),
-        1.0,
-        false,
-    );
-
-    // -----
-
-    let (static_geometry, static_geometry_mapping) = static_geometry.build();
-    let static_geometry_index = rt::GeometryIndexer::index(&static_geometry);
-
-    // -----
-
     // TODO: Add FPS limiting
     App::new()
         .insert_resource(DoomeRenderInit { pipeline })
         .insert_resource(DoomeRendererContext {
             camera,
-            static_geometry,
-            static_geometry_mapping,
-            static_geometry_index,
+            static_geo,
+            static_geo_mapping,
+            static_geo_index,
+            dynamic_geo,
+            dynamic_geo_mapping,
             lights,
             materials,
         })
@@ -168,6 +186,7 @@ fn main() {
         .add_system(update_camera)
         .add_system(quit_on_exit)
         .add_system(render_ui)
+        .add_system(rotate_triangle)
         .add_startup_system(hide_cursor)
         .run();
 }
@@ -183,6 +202,29 @@ fn quit_on_exit(keys: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
     if keys.just_pressed(KeyCode::Escape) {
         exit.send(AppExit);
     }
+}
+
+fn rotate_triangle(
+    time: Res<Time>,
+    mut renderer: ResMut<DoomeRendererContext>,
+) {
+    let mut xform = rt::math::identity();
+
+    rt::math::rotate(
+        &mut xform,
+        time.elapsed_seconds().sin(),
+        vec3(1.0, 0.0, 0.0),
+    );
+
+    let triangle = renderer.dynamic_geo.get_mut(rt::TriangleId::new_dynamic(0));
+
+    *triangle = rt::Triangle::new(
+        vec3(0.0, 0.0, 0.0),
+        vec3(-3.0, 0.0, 0.0),
+        vec3(-3.0, 3.0, 0.0),
+        triangle.material_id(),
+    )
+    .with_transform(xform);
 }
 
 fn render_ui(

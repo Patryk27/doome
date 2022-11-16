@@ -6,7 +6,7 @@ pub struct Bvh {
 }
 
 impl Bvh {
-    pub fn build(geometry: &Geometry) -> Self {
+    pub fn build(geometry: &StaticGeometry) -> Self {
         let mut root = BvhNode::default();
 
         for (triangle_id, triangle) in geometry.iter() {

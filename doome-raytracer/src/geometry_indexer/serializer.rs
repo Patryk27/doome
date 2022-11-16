@@ -1,6 +1,6 @@
 use super::*;
 
-pub fn serialize(lbvh: LinearBvh) -> (GeometryIndex, usize) {
+pub fn serialize(lbvh: LinearBvh) -> (StaticGeometryIndex, usize) {
     let mut out = Vec::new();
 
     for node in lbvh {
@@ -11,7 +11,7 @@ pub fn serialize(lbvh: LinearBvh) -> (GeometryIndex, usize) {
             LinearBvhNode::Leaf { triangle, goto_id } => {
                 let goto_ptr = goto_id.map(|id| id * 2).unwrap_or_default();
 
-                v1 = vec4(0.0, 0.0, 0.0, triangle.get() as _);
+                v1 = vec4(0.0, 0.0, 0.0, triangle.id() as _);
                 v2 = vec4(0.0, 0.0, 0.0, goto_ptr as _);
             }
 
@@ -50,5 +50,5 @@ pub fn serialize(lbvh: LinearBvh) -> (GeometryIndex, usize) {
         );
     });
 
-    (GeometryIndex::new(out), out_len)
+    (StaticGeometryIndex::new(out), out_len)
 }

@@ -44,21 +44,47 @@ impl Ray {
     }
 
     pub fn hits_anything_up_to(self, world: &World, distance: f32) -> bool {
+        // Check dynamic geometry
+        let mut triangle_idx = 0;
+
+        while triangle_idx < world.dynamic_geo.len() {
+            let triangle_id = TriangleId::new_dynamic(triangle_idx);
+            let triangle = world.dynamic_geo.get(triangle_id);
+            let hit = triangle.hit(self);
+
+            if hit.t < distance {
+                let got_hit = if triangle.has_uv_transparency() {
+                    world.atlas_sample(triangle_id.into_any(), hit.uv).w == 1.0
+                } else {
+                    true
+                };
+
+                if got_hit {
+                    return true;
+                }
+            }
+
+            triangle_idx += 1;
+        }
+
+        // Check static geometry
+
         let mut ptr = 0;
 
         loop {
-            let v1 = world.geometry_index.read(ptr);
-            let v2 = world.geometry_index.read(ptr + 1);
+            let v1 = world.static_geo_index.read(ptr);
+            let v2 = world.static_geo_index.read(ptr + 1);
             let is_leaf = v1.xyz() == v2.xyz();
 
             if is_leaf {
-                let triangle_id = TriangleId::new(v1.w as _);
-                let triangle = world.geometry.get(triangle_id);
+                let triangle_id = TriangleId::new_static(v1.w as _);
+                let triangle = world.static_geo.get(triangle_id);
                 let hit = triangle.hit(self);
 
                 if hit.t < distance {
                     let got_hit = if triangle.has_uv_transparency() {
-                        world.atlas_sample(triangle_id, hit.uv).w == 1.0
+                        world.atlas_sample(triangle_id.into_any(), hit.uv).w
+                            == 1.0
                     } else {
                         true
                     };
@@ -87,28 +113,55 @@ impl Ray {
 
     pub fn trace(self, world: &World) -> Hit {
         let mut hit = Hit::none();
+
+        // Check dynamic geometry
+        let mut triangle_idx = 0;
+
+        while triangle_idx < world.dynamic_geo.len() {
+            let triangle_id = TriangleId::new_dynamic(triangle_idx);
+            let triangle = world.dynamic_geo.get(triangle_id);
+            let curr_hit = triangle.hit(self);
+
+            if curr_hit.is_closer_than(hit) {
+                let got_hit = if triangle.has_uv_transparency() {
+                    world.atlas_sample(triangle_id.into_any(), hit.uv).w == 1.0
+                } else {
+                    true
+                };
+
+                if got_hit {
+                    hit = curr_hit;
+                    hit.triangle_id = triangle_id.into_any();
+                }
+            }
+
+            triangle_idx += 1;
+        }
+
+        // Check static geometry
         let mut ptr = 0;
 
         loop {
-            let v1 = world.geometry_index.read(ptr);
-            let v2 = world.geometry_index.read(ptr + 1);
+            let v1 = world.static_geo_index.read(ptr);
+            let v2 = world.static_geo_index.read(ptr + 1);
             let is_leaf = v1.xyz() == v2.xyz();
 
             if is_leaf {
-                let triangle_id = TriangleId::new(v1.w as _);
-                let triangle = world.geometry.get(triangle_id);
+                let triangle_id = TriangleId::new_static(v1.w as _);
+                let triangle = world.static_geo.get(triangle_id);
                 let curr_hit = triangle.hit(self);
 
                 if curr_hit.is_closer_than(hit) {
                     let got_hit = if triangle.has_uv_transparency() {
-                        world.atlas_sample(triangle_id, hit.uv).w == 1.0
+                        world.atlas_sample(triangle_id.into_any(), hit.uv).w
+                            == 1.0
                     } else {
                         true
                     };
 
                     if got_hit {
                         hit = curr_hit;
-                        hit.triangle_id = triangle_id;
+                        hit.triangle_id = triangle_id.into_any();
                     }
                 }
 

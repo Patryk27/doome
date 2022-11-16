@@ -34,7 +34,7 @@ impl Material {
 
         // ------------ //
         // Transparency //
-        let triangle = world.geometry.get(hit.triangle_id);
+        let triangle = world.geometry(hit.triangle_id);
 
         if triangle.alpha() < 1.0 {
             let ray_color = Ray::new(
