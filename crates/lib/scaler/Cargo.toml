@@ -1,0 +1,11 @@
+[package]
+name = "scaler"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+shader-common = { path = "../shader-common" }
+wgpu-ext = { path = "../wgpu-ext" }
+
+# Crates.io
+wgpu = "0.14"

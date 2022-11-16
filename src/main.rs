@@ -7,13 +7,14 @@ use bevy::diagnostic::{
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
-use doome_bevy::doome::{DoomePlugin, DoomeRenderInit, DoomeRendererContext};
-use doome_bevy::pixels_plugin::{PixelsPlugin, PixelsState};
+use doome_bevy::doome::{
+    DoomePlugin, DoomeRenderInit, DoomeRenderer, DoomeRendererContext,
+};
+use doome_bevy::renderer::RendererPlugin;
 use doome_bevy::text::Text;
 use engine::pipeline::PipelineBuilder;
 use engine::{
-    Canvas, DynamicGeometryBuilder, StaticGeometryBuilder, HEIGHT, HUD_HEIGHT,
-    RAYTRACER_HEIGHT, WIDTH,
+    Canvas, DynamicGeometryBuilder, StaticGeometryBuilder, HEIGHT, WIDTH,
 };
 use glam::{vec2, vec3, Vec3Swizzles};
 use raytracer as rt;
@@ -22,6 +23,9 @@ use surface::Color;
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
 const ASSETS: include_dir::Dir = include_dir::include_dir!("assets");
+
+const RAYTRACER_HEIGHT: u16 = 200;
+const HUD_HEIGHT: u16 = 50;
 
 fn main() {
     let camera = rt::Camera::new(
@@ -169,7 +173,7 @@ fn main() {
         })
         .insert_resource(Text::default())
         .add_plugins(DefaultPlugins)
-        .add_plugin(PixelsPlugin)
+        .add_plugin(RendererPlugin)
         .add_plugin(DoomePlugin)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(LogDiagnosticsPlugin::default())
@@ -218,11 +222,11 @@ fn rotate_triangle(
 }
 
 fn render_ui(
-    mut pixels: ResMut<PixelsState>,
+    mut doome_renderer: ResMut<DoomeRenderer>,
     text: Res<Text>,
     diagnostics: Res<Diagnostics>,
 ) {
-    let frame = pixels.inner_mut().get_frame_mut();
+    let frame = &mut doome_renderer.pixels.image_data;
     let mut canvas = Canvas::new(&text.text_engine, frame);
 
     canvas.rect(
@@ -234,7 +238,7 @@ fn render_ui(
             r: 0x10,
             g: 0x10,
             b: 0x10,
-            a: 0xff,
+            a: 0x66,
         },
     );
 

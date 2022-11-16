@@ -9,6 +9,7 @@ spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "dcf3
 [dependencies]
 # Workspace
 shader-common = { path = "../shader-common" }
+wgpu-ext = { path = "../wgpu-ext" }
 
 # Crates.io
 bytemuck = "1.0"
@@ -16,4 +17,4 @@ glam = { version = "0.22", default-features = false, features = ["bytemuck"] }
 instant = "0.1"
 log = "0.4"
 spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = ["glam"] }
-wgpu = { version = "0.13", features = ["spirv"] }
+wgpu = { version = "0.14", features = ["spirv"] }

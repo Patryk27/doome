@@ -53,7 +53,7 @@ impl<'f> surface::Surface<'f> for Surface<'f> {
         self.frame[idx] = color.r;
         self.frame[idx + 1] = color.g;
         self.frame[idx + 2] = color.b;
-        self.frame[idx + 3] = 255;
+        self.frame[idx + 3] = color.a; // TODO: This doesn't seem right :/
     }
 }
 

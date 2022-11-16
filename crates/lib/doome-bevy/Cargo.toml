@@ -7,9 +7,13 @@ edition = "2021"
 text = { path = "../text" }
 engine = { path = "../engine" }
 raytracer = { path = "../raytracer" }
+pixels = { path = "../pixels" }
+scaler = { path = "../scaler" }
+wgpu-ext = { path = "../wgpu-ext" }
 
 bevy = { version = "0.9", default-features = false, features = ["bevy_winit"] }
 glam = { version = "0.22", default-features = false }
 include_dir = "0.7"
 log = "0.4"
-pixels = "0.10"
+futures-lite = "1.12"
+wgpu = "0.14"

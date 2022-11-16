@@ -1,24 +1,21 @@
 #![feature(type_alias_impl_trait)]
 
 mod geometry_indexer;
-mod uniforms;
 
 use std::num::NonZeroU32;
 
 pub use shader_common::*;
+use wgpu_ext::uniforms::{self, AllocatedUniform};
 
 pub use self::geometry_indexer::*;
-use self::uniforms::AllocatedUniform;
 
 pub const ATLAS_WIDTH: u32 = 256;
 pub const ATLAS_HEIGHT: u32 = 256;
 
-pub struct Engine {
+pub struct Raytracer {
     width: u32,
     height: u32,
     pipeline: wgpu::RenderPipeline,
-    output_texture: wgpu::Texture,
-    output_texture_view: wgpu::TextureView,
     camera: AllocatedUniform<Camera>,
     static_geo: AllocatedUniform<StaticGeometry>,
     static_geo_mapping: AllocatedUniform<StaticGeometryMapping>,
@@ -30,7 +27,7 @@ pub struct Engine {
     tex_bind_group: wgpu::BindGroup,
 }
 
-impl Engine {
+impl Raytracer {
     pub fn new(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -183,31 +180,10 @@ impl Engine {
                 multiview: None,
             });
 
-        let output_texture = device.create_texture(&wgpu::TextureDescriptor {
-            size: wgpu::Extent3d {
-                width,
-                height,
-                depth_or_array_layers: 1,
-            },
-            label: Some("raytracer_output"),
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8UnormSrgb,
-            usage: wgpu::TextureUsages::COPY_SRC
-                | wgpu::TextureUsages::RENDER_ATTACHMENT
-                | wgpu::TextureUsages::TEXTURE_BINDING,
-        });
-
-        let output_texture_view =
-            output_texture.create_view(&Default::default());
-
         Self {
             width,
             height,
             pipeline,
-            output_texture,
-            output_texture_view,
             camera,
             static_geo,
             static_geo_mapping,
@@ -231,6 +207,7 @@ impl Engine {
         dynamic_geo_mapping: &DynamicGeometryMapping,
         lights: &Lights,
         materials: &Materials,
+        output_texture: &wgpu::TextureView,
     ) {
         self.camera.write(queue, camera);
         self.static_geo.write(queue, static_geo);
@@ -251,7 +228,7 @@ impl Engine {
             encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("raytracer_render_pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &self.output_texture_view,
+                    view: output_texture,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
@@ -274,9 +251,5 @@ impl Engine {
         rpass.set_bind_group(7, &self.tex_bind_group, &[]);
 
         rpass.draw(0..3, 0..1);
-    }
-
-    pub fn output_texture(&self) -> &wgpu::Texture {
-        &self.output_texture
     }
 }

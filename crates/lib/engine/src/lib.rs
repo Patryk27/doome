@@ -11,6 +11,4 @@ pub use self::dynamic_geometry_builder::*;
 pub use self::static_geometry_builder::*;
 
 pub const WIDTH: u16 = 320;
-pub const RAYTRACER_HEIGHT: u16 = 200;
-pub const HUD_HEIGHT: u16 = 50;
-pub const HEIGHT: u16 = RAYTRACER_HEIGHT + HUD_HEIGHT;
+pub const HEIGHT: u16 = 250;

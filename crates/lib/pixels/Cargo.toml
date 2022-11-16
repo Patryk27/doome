@@ -1,0 +1,10 @@
+[package]
+name = "pixels"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+shader-common = { path = "../shader-common" }
+wgpu-ext = { path = "../wgpu-ext" }
+
+wgpu = { version = "0.14", features = ["spirv"] }

@@ -19,6 +19,7 @@ mod static_geometry_mapping;
 mod triangle;
 mod triangle_mapping;
 mod utils;
+pub mod vertex_shader;
 mod world;
 
 use core::{fmt, mem};

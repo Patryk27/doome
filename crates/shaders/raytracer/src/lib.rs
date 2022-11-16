@@ -1,7 +1,8 @@
 #![no_std]
 
+use shader_common::vertex_shader::full_screen_triangle;
 use shader_common::*;
-use spirv_std::glam::{vec2, Vec2, Vec4, Vec4Swizzles};
+use spirv_std::glam::{Vec4, Vec4Swizzles};
 #[cfg(target_arch = "spirv")]
 use spirv_std::num_traits::real::Real;
 use spirv_std::{spirv, Image, Sampler};
@@ -9,12 +10,9 @@ use spirv_std::{spirv, Image, Sampler};
 #[spirv(vertex)]
 pub fn vs_main(
     #[spirv(vertex_index)] vert_idx: i32,
-    #[spirv(position)] pos: &mut Vec4,
+    #[spirv(position)] output: &mut Vec4,
 ) {
-    let uv = vec2(((vert_idx << 1) & 2) as f32, (vert_idx & 2) as f32);
-    let uv = 2.0 * uv - Vec2::ONE;
-
-    *pos = uv.extend(0.0).extend(1.0);
+    *output = full_screen_triangle(vert_idx);
 }
 
 #[spirv(fragment)]

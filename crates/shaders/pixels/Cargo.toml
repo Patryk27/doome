@@ -1,5 +1,5 @@
 [package]
-name = "pixel_shader"
+name = "pixel-shader"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,8 +7,8 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [dependencies]
+# Workspace
 shader-common = { path = "../../lib/shader-common" }
-spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = [
-    "glam",
-] }
-glam = { version = "0.22", default-features = false }
+
+# Crates.io
+spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = ["glam"] }
