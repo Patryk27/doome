@@ -52,11 +52,20 @@ impl Ray {
             let is_leaf = v1.xyz() == v2.xyz();
 
             if is_leaf {
-                let hit =
-                    world.geometry.get(TriangleId::new(v1.w as _)).hit(self);
+                let triangle_id = TriangleId::new(v1.w as _);
+                let triangle = world.geometry.get(triangle_id);
+                let hit = triangle.hit(self);
 
                 if hit.t < distance {
-                    return true;
+                    let got_hit = if triangle.has_uv_transparency() {
+                        world.atlas_sample(triangle_id, hit.uv).w == 1.0
+                    } else {
+                        true
+                    };
+
+                    if got_hit {
+                        return true;
+                    }
                 }
 
                 ptr = v2.w as _;
@@ -87,11 +96,20 @@ impl Ray {
 
             if is_leaf {
                 let triangle_id = TriangleId::new(v1.w as _);
-                let curr_hit = world.geometry.get(triangle_id).hit(self);
+                let triangle = world.geometry.get(triangle_id);
+                let curr_hit = triangle.hit(self);
 
                 if curr_hit.is_closer_than(hit) {
-                    hit = curr_hit;
-                    hit.triangle_id = triangle_id;
+                    let got_hit = if triangle.has_uv_transparency() {
+                        world.atlas_sample(triangle_id, hit.uv).w == 1.0
+                    } else {
+                        true
+                    };
+
+                    if got_hit {
+                        hit = curr_hit;
+                        hit.triangle_id = triangle_id;
+                    }
                 }
 
                 ptr = v2.w as _;

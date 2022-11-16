@@ -57,15 +57,8 @@ impl Material {
 
     fn radiance(&self, world: &World, hit: Hit) -> Vec3 {
         let color = if self.has_texture() {
-            let triangle_mapping = world.geometry_mapping.get(hit.triangle_id);
-
-            let uv = triangle_mapping.uv0.xy()
-                + (triangle_mapping.uv1.xy() - triangle_mapping.uv0.xy())
-                    * hit.uv.x
-                + (triangle_mapping.uv2.xy() - triangle_mapping.uv0.xy())
-                    * hit.uv.y;
-
-            (world.atlas_sample(uv) * self.color).truncate()
+            (world.atlas_sample(hit.triangle_id, hit.uv) * self.color)
+                .truncate()
         } else {
             self.color.truncate()
         };
@@ -93,7 +86,7 @@ impl Material {
         radiance
     }
 
-    fn has_texture(&self) -> bool {
+    pub fn has_texture(&self) -> bool {
         self.color.w == 1.0
     }
 }
@@ -105,8 +98,12 @@ impl Material {
         self
     }
 
-    pub fn with_texture(mut self, with_texture: bool) -> Self {
-        self.color.w = if with_texture { 1.0 } else { 0.0 };
+    pub fn with_texture(self) -> Self {
+        self.with_texture_of(true)
+    }
+
+    pub fn with_texture_of(mut self, val: bool) -> Self {
+        self.color.w = if val { 1.0 } else { 0.0 };
         self
     }
 

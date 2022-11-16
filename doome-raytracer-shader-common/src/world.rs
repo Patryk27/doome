@@ -11,7 +11,14 @@ pub struct World<'a> {
 }
 
 impl<'a> World<'a> {
-    pub fn atlas_sample(&self, uv: Vec2) -> Vec4 {
-        self.atlas_tex.sample_by_lod(*self.atlas_sampler, uv, 0.0)
+    pub fn atlas_sample(&self, triangle_id: TriangleId, hit_uv: Vec2) -> Vec4 {
+        let mapping = self.geometry_mapping.get(triangle_id);
+
+        let tex_uv = mapping.uv0.xy()
+            + (mapping.uv1.xy() - mapping.uv0.xy()) * hit_uv.x
+            + (mapping.uv2.xy() - mapping.uv0.xy()) * hit_uv.y;
+
+        self.atlas_tex
+            .sample_by_lod(*self.atlas_sampler, tex_uv, 0.0)
     }
 }

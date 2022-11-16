@@ -3,13 +3,14 @@ use crate::*;
 #[repr(C)]
 #[derive(Copy, Clone, Default, Pod, Zeroable)]
 pub struct Triangle {
-    // X, Y, Z - vertex 0; W - material id
+    // X, Y, Z - vertex 0; W - material id (as u16)
     v0: Vec4,
 
-    // X, Y, Z - vertex 1; W - alpha channel
+    // X, Y, Z - vertex 1; W - alpha channel (as f32, 0.0..=1.0)
     v1: Vec4,
 
-    // X, Y, Z - vertex 2; W - unused
+    // X, Y, Z - vertex 2; W - whether UV transparency is enabled or not
+    //                         (as bool, 0.0/1.0)
     v2: Vec4,
 }
 
@@ -88,8 +89,12 @@ impl Triangle {
         }
     }
 
-    fn material_id(&self) -> MaterialId {
+    pub fn material_id(&self) -> MaterialId {
         MaterialId::new(self.v0.w as _)
+    }
+
+    pub fn has_uv_transparency(&self) -> bool {
+        self.v2.w == 1.0
     }
 }
 
@@ -97,6 +102,15 @@ impl Triangle {
 impl Triangle {
     pub fn with_alpha(mut self, a: f32) -> Self {
         self.v1.w = a;
+        self
+    }
+
+    pub fn with_uv_transparency(self) -> Self {
+        self.with_uv_transparency_of(true)
+    }
+
+    pub fn with_uv_transparency_of(mut self, val: bool) -> Self {
+        self.v2.w = if val { 1.0 } else { 0.0 };
         self
     }
 

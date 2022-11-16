@@ -38,20 +38,20 @@ fn main() {
     let mat_monke = materials.push(
         rt::Material::default()
             .with_reflectivity(0.1, 0xffffff)
-            .with_texture(true),
+            .with_texture(),
     );
 
     let mat_reference_cube = materials.push(
         rt::Material::default()
             .with_reflectivity(0.0, 0xffffff)
-            .with_texture(true),
+            .with_texture(),
     );
 
     let mat_diamond = materials.push(
         rt::Material::default()
             .with_color(0xff0000)
             .with_reflectivity(0.3, 0xff0000)
-            .with_texture(true),
+            .with_texture(),
     );
 
     let mat_matte =
@@ -124,18 +124,21 @@ fn main() {
         &mut static_geometry,
         monke_xform,
         1.0,
+        true,
     );
     pipeline.insert_to_geometry(
         reference_cube,
         &mut static_geometry,
         ref_cube_xform,
-        0.5,
+        1.0,
+        false,
     );
     pipeline.insert_to_geometry(
         diamond_mesh,
         &mut static_geometry,
         rt::math::translated(vec3(-3.0, 1.0, -1.0)),
         1.0,
+        false,
     );
 
     // -----
