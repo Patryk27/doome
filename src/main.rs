@@ -6,7 +6,7 @@ use bevy::diagnostic::{
 };
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
-use bevy::window::CursorGrabMode;
+use bevy::window::{CursorGrabMode, WindowResized};
 use doome_bevy::doome::{DoomePlugin, DoomeRenderInit, DoomeRendererContext};
 use doome_bevy::pixels_plugin::{PixelsPlugin, PixelsState};
 use doome_bevy::text::Text;
@@ -157,8 +157,20 @@ fn main() {
         .add_system(update_camera)
         .add_system(quit_on_exit)
         .add_system(render_ui)
+        .add_system(on_window_resize)
         .add_startup_system(hide_cursor)
         .run();
+}
+
+fn on_window_resize(
+    mut resized: EventReader<WindowResized>,
+    mut pixels: ResMut<PixelsState>,
+) {
+    for e in resized.iter() {
+        pixels
+            .pixels
+            .resize_surface(e.width as u32, e.height as u32);
+    }
 }
 
 fn hide_cursor(mut windows: ResMut<Windows>) {
