@@ -129,23 +129,9 @@ fn process_movement(
     let (mut player_pos, mut player_rot) = player.single_mut();
     let delta = time.delta_seconds();
 
-    // TODO
-    //
-    // for ev in mouse_motion.iter() {
-    //     let dir = camera.look_at - camera.origin;
-
-    //     let rot = Quat::from_axis_angle(
-    //         camera.up.normalize(),
-    //         // For some reason the up direction here is negative, hence the minus sign
-    //         -MOUSE_ROTATION_SENSITIVITY * ev.delta.x * delta,
-    //     );
-
-    //     let new_dir = rot * dir;
-    //     let new_look_at = camera.origin + new_dir;
-
-    //     camera.look_at.x = new_look_at.x;
-    //     camera.look_at.z = new_look_at.z;
-    // }
+    for ev in mouse_motion.iter() {
+        player_rot.angle += MOUSE_ROTATION_SENSITIVITY * ev.delta.x * delta;
+    }
 
     if keys.pressed(KeyCode::W) || keys.pressed(KeyCode::S) {
         let sign = if keys.pressed(KeyCode::W) { 1.0 } else { -1.0 };
@@ -157,14 +143,14 @@ fn process_movement(
             player_rot.angle.cos() * CELESTIAL_MOVEMENT_SPEED * delta * sign;
     }
 
-    if keys.pressed(KeyCode::A) || keys.pressed(KeyCode::D) {
-        let sign = if keys.pressed(KeyCode::A) { -1.0 } else { 1.0 };
+    if keys.pressed(KeyCode::Q) || keys.pressed(KeyCode::E) {
+        let sign = if keys.pressed(KeyCode::Q) { -1.0 } else { 1.0 };
 
         player_rot.angle += ROTATION_SPEED * sign * delta;
     }
 
-    if keys.pressed(KeyCode::Q) || keys.pressed(KeyCode::E) {
-        let sign = if keys.pressed(KeyCode::Q) { -1.0 } else { 1.0 };
+    if keys.pressed(KeyCode::A) || keys.pressed(KeyCode::D) {
+        let sign = if keys.pressed(KeyCode::A) { -1.0 } else { 1.0 };
         let angle = player_rot.angle + PI / 2.0;
 
         player_pos.x += angle.sin() * CELESTIAL_MOVEMENT_SPEED * delta * sign;
