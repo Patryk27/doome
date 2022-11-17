@@ -11,6 +11,7 @@ pub struct RendererState {
     pub adapter: wgpu::Adapter,
     pub surface: wgpu::Surface,
     pub output_texture_format: wgpu::TextureFormat,
+    pub window_scale_factor: f32,
 }
 
 impl Plugin for RendererPlugin {
@@ -56,11 +57,13 @@ impl Plugin for RendererPlugin {
 
         let output_texture_format = surface.get_supported_formats(&adapter)[0];
 
+        let window_scale_factor = window.scale_factor() as f32;
+
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: output_texture_format,
-            width: window.width() as u32,
-            height: window.height() as u32,
+            width: (window.width() * window_scale_factor) as u32,
+            height: (window.height() * window_scale_factor) as u32,
             present_mode: wgpu::PresentMode::Fifo,
             alpha_mode: wgpu::CompositeAlphaMode::Auto,
         };
@@ -74,6 +77,7 @@ impl Plugin for RendererPlugin {
             queue,
             adapter_info,
             adapter,
+            window_scale_factor,
         });
     }
 }

@@ -111,10 +111,12 @@ fn on_resize(
     state: ResMut<DoomeRenderer>,
 ) {
     for window_resized in window_resized.iter() {
-        let width = window_resized.width;
-        let height = window_resized.height;
+        let scale_factor = renderer.window_scale_factor;
 
-        log::info!("Window resized to ({width}, {height})");
+        let width = window_resized.width * scale_factor;
+        let height = window_resized.height * scale_factor;
+
+        log::info!("Window resized to ({width}, {height}) with scale factor {scale_factor}");
 
         let RendererState {
             surface,
