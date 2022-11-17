@@ -27,10 +27,10 @@ impl Camera {
             let viewport_ratio = self.viewport_size.y / self.viewport_size.x;
             let viewport_fov = self.viewport_size.z;
 
-            let pos = pos / self.viewport_size.xy();
-            let pos = 2.0 * pos - 1.0;
-            let pos = vec2(pos.x / viewport_ratio, pos.y);
-            let pos = pos * (viewport_fov / 2.0).tan();
+            let pos = pos / self.viewport_size.xy();         // map to 0..1
+            let pos = 2.0 * pos - 1.0;                       // map to -1..1
+            let pos = vec2(pos.x / viewport_ratio, pos.y);   // adjust for aspect ratio
+            let pos = pos * (viewport_fov / 2.0).tan();      //
 
             OrthonormalBasis::trace(
                 self.onb_u,

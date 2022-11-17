@@ -12,6 +12,7 @@ use bevy::window::CursorGrabMode;
 use doome_bevy::assets::Assets;
 use doome_bevy::components::*;
 use doome_bevy::doome::{DoomePlugin, DoomeRenderer};
+use doome_bevy::physics::{Body, PhysicsPlugin};
 use doome_bevy::renderer::RendererPlugin;
 use doome_bevy::text::Text;
 use doome_engine::{Canvas, HEIGHT, HUD_HEIGHT, WIDTH};
@@ -31,6 +32,7 @@ fn main() {
     App::new()
         .insert_resource(assets)
         .insert_resource(Text::default())
+        // Bevy plugins
         .add_plugin(bevy::log::LogPlugin::default())
         .add_plugin(bevy::core::CorePlugin::default())
         .add_plugin(bevy::time::TimePlugin::default())
@@ -47,11 +49,14 @@ fn main() {
             },
             ..bevy::window::WindowPlugin::default()
         })
-        .add_plugin(bevy::winit::WinitPlugin::default())
-        .add_plugin(RendererPlugin)
-        .add_plugin(DoomePlugin)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(bevy::winit::WinitPlugin::default())
+        // Internal plugins
+        .add_plugin(RendererPlugin)
+        .add_plugin(DoomePlugin)
+        .add_plugin(PhysicsPlugin::default())
+        // Misc systems
         .add_system(quit_on_exit)
         .add_system(process_movement)
         .add_system(process_camera)
@@ -111,28 +116,26 @@ fn process_movement(
     time: Res<Time>,
     keys: Res<Input<KeyCode>>,
     mut mouse_motion: EventReader<MouseMotion>,
-    mut player: Query<(&mut Position, &mut Rotation), With<Player>>,
+    mut player: Query<(&mut Body, &mut Rotation), With<Player>>,
 ) {
     const MOUSE_ROTATION_SENSITIVITY: f32 = 0.5;
     const PLANAR_MOVEMENT_SPEED: f32 = 10.0;
-    const CELESTIAL_MOVEMENT_SPEED: f32 = 8.0;
     const ROTATION_SPEED: f32 = 2.0;
 
-    let (mut player_pos, mut player_rot) = player.single_mut();
+    let (mut body, mut player_rot) = player.single_mut();
     let delta = time.delta_seconds();
 
     for ev in mouse_motion.iter() {
         player_rot.angle += MOUSE_ROTATION_SENSITIVITY * ev.delta.x * delta;
     }
 
+    body.velocity = Vec3::ZERO;
+
     if keys.pressed(KeyCode::W) || keys.pressed(KeyCode::S) {
         let sign = if keys.pressed(KeyCode::W) { 1.0 } else { -1.0 };
+        let angle = player_rot.angle;
 
-        player_pos.x +=
-            player_rot.angle.sin() * CELESTIAL_MOVEMENT_SPEED * delta * sign;
-
-        player_pos.z +=
-            player_rot.angle.cos() * CELESTIAL_MOVEMENT_SPEED * delta * sign;
+        body.velocity += vec3(sign * angle.sin(), 0.0, sign * angle.cos());
     }
 
     if keys.pressed(KeyCode::Comma) || keys.pressed(KeyCode::Period) {
@@ -149,9 +152,10 @@ fn process_movement(
         let sign = if keys.pressed(KeyCode::A) { -1.0 } else { 1.0 };
         let angle = player_rot.angle + PI / 2.0;
 
-        player_pos.x += angle.sin() * CELESTIAL_MOVEMENT_SPEED * delta * sign;
-        player_pos.z += angle.cos() * CELESTIAL_MOVEMENT_SPEED * delta * sign;
+        body.velocity += vec3(sign * angle.sin(), 0.0, sign * angle.cos());
     }
+
+    body.velocity = body.velocity.normalize_or_zero() * PLANAR_MOVEMENT_SPEED;
 }
 
 fn process_camera(

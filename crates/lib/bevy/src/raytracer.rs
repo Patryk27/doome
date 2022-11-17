@@ -205,6 +205,7 @@ fn render(
 
     pixels.render(queue, &mut encoder, shader_constants, intermediate_texture);
     scaler.render(queue, &mut encoder, shader_constants, &texture_view);
+
     renderer_state.queue.submit(vec![encoder.finish()]);
     current_texture.present();
 }

@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use doome_bevy::components::*;
 use doome_bevy::events::SyncStaticGeometry;
+use doome_bevy::physics::{Body, BodyType, BoundingBox, Collider};
+use glam::vec3;
 
 use super::utils::*;
 
@@ -13,6 +15,17 @@ pub fn init(mut commands: Commands, mut tx: EventWriter<SyncStaticGeometry>) {
             z: 0.0,
         },
         Rotation { angle: 0.0 },
+        Body {
+            position: vec3(0.0, 0.0, 0.0),
+            velocity: vec3(0.0, 0.0, 0.0),
+            body_type: BodyType::Kinematic,
+        },
+        Collider {
+            bounding_box: BoundingBox {
+                a: vec3(-0.5, -0.5, -0.5),
+                b: vec3(0.5, 0.5, 0.5),
+            },
+        },
     ));
 
     commands.floor(-3, -3, 3, 3);
