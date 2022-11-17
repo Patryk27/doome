@@ -1,7 +1,7 @@
 use crate::*;
 
 #[repr(C)]
-#[derive(Copy, Clone, Default, Pod, Zeroable)]
+#[derive(Copy, Clone, Pod, Zeroable)]
 pub struct Camera {
     origin: Vec4,
     look_at: Vec4,

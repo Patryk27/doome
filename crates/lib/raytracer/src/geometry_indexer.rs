@@ -26,8 +26,14 @@ type TriangleId = crate::TriangleId<StaticTriangle>;
 pub struct GeometryIndexer;
 
 impl GeometryIndexer {
-    pub fn index(geometry: &StaticGeometry) -> Box<StaticGeometryIndex> {
+    pub fn index(
+        geometry: &StaticGeometry,
+    ) -> Option<Box<StaticGeometryIndex>> {
         log::info!("Indexing geometry; triangles = {}", geometry.len());
+
+        if geometry.len() == 0 {
+            return None;
+        }
 
         let (bvh, tt_bvh) = Self::measure(|| Bvh::build(geometry));
         let (lbvh, tt_lbvh) = Self::measure(|| LinearBvh::build(bvh));
@@ -43,7 +49,7 @@ impl GeometryIndexer {
             index_len,
         );
 
-        Box::new(index)
+        Some(Box::new(index))
     }
 
     fn measure<T>(f: impl FnOnce() -> T) -> (T, Duration) {

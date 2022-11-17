@@ -4,7 +4,7 @@ pub struct World<'a> {
     pub static_geo: &'a StaticGeometry,
     pub static_geo_index: &'a StaticGeometryIndex,
     pub dynamic_geo: &'a DynamicGeometry,
-    pub geo_mapping: &'a TriangleMappings,
+    pub mappings: &'a TriangleMappings,
     pub lights: &'a Lights,
     pub materials: &'a Materials,
     pub atlas_tex: &'a Image!(2D, type=f32, sampled),
@@ -28,7 +28,7 @@ impl<'a> World<'a> {
         triangle_id: TriangleId<AnyTriangle>,
         hit_uv: Vec2,
     ) -> Vec4 {
-        let mapping = self.geo_mapping.get(triangle_id);
+        let mapping = self.mappings.get(triangle_id);
 
         let tex_uv = mapping.uv0
             + (mapping.uv1 - mapping.uv0) * hit_uv.x

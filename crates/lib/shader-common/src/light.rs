@@ -23,21 +23,11 @@ impl Light {
 
 #[cfg(not(target_arch = "spirv"))]
 impl Light {
-    pub fn new(pos: Vec3) -> Self {
+    pub fn new(pos: Vec3, color: Vec3, intensity: f32) -> Self {
         Self {
             pos: pos.extend(0.0),
-            color: vec4(1.0, 1.0, 1.0, 1.0),
+            color: color.extend(intensity),
         }
-    }
-
-    pub fn with_color(mut self, color: u32) -> Self {
-        self.color = rgb_to_srgb(color).extend(1.0);
-        self
-    }
-
-    pub fn with_intensity(mut self, intensity: f32) -> Self {
-        self.color.w = intensity;
-        self
     }
 
     pub fn pos_mut(&mut self) -> &mut Vec4 {

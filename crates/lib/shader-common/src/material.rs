@@ -132,7 +132,8 @@ impl Default for Material {
 pub struct MaterialId(u32);
 
 impl MaterialId {
-    pub(crate) fn new(id: u32) -> Self {
+    // TODO make private
+    pub fn new(id: u32) -> Self {
         Self(id)
     }
 

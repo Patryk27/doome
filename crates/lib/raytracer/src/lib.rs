@@ -189,7 +189,7 @@ impl Raytracer {
         static_geo: &StaticGeometry,
         static_geo_index: &StaticGeometryIndex,
         dynamic_geo: &DynamicGeometry,
-        geo_mapping: &TriangleMappings,
+        mappings: &TriangleMappings,
         camera: &Camera,
         lights: &Lights,
         materials: &Materials,
@@ -198,7 +198,7 @@ impl Raytracer {
         self.ds0.write0(queue, static_geo);
         self.ds1.write0(queue, static_geo_index);
         self.ds1.write1(queue, dynamic_geo);
-        self.ds1.write2(queue, geo_mapping);
+        self.ds1.write2(queue, mappings);
         self.ds2.write0(queue, camera);
         self.ds2.write1(queue, lights);
         self.ds2.write2(queue, materials);

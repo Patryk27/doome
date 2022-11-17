@@ -1076,6 +1076,7 @@ dependencies = [
  "bevy",
  "doome-bevy",
  "doome-engine",
+ "doome-physics",
  "doome-raytracer",
  "doome-surface",
  "doome-text",
@@ -1095,6 +1096,7 @@ dependencies = [
  "doome-text",
  "doome-wgpu-ext",
  "futures-lite",
+ "glam",
  "include_dir",
  "log",
  "wgpu",
@@ -1106,6 +1108,7 @@ name = "doome-engine"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bevy",
  "doome-raytracer",
  "doome-surface",
  "doome-text",
@@ -1117,8 +1120,11 @@ dependencies = [
  "rectangle-pack",
  "test-case",
  "tobj",
- "wgpu",
 ]
+
+[[package]]
+name = "doome-physics"
+version = "0.1.0"
 
 [[package]]
 name = "doome-pixels"

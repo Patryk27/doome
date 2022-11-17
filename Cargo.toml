@@ -15,6 +15,7 @@ edition = "2021"
 # Workspace
 doome-bevy = { path = "crates/lib/bevy" }
 doome-engine = { path = "crates/lib/engine" }
+doome-physics = { path = "crates/lib/physics" }
 doome-raytracer = { path = "crates/lib/raytracer" }
 doome-surface = { path = "crates/lib/surface" }
 doome-text = { path = "crates/lib/text" }

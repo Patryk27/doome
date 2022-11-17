@@ -1,4 +1,4 @@
-use doome_surface::Surface as _;
+use doome_surface::{Color, Surface as _};
 use doome_text::TextEngine;
 
 use crate::*;

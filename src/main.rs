@@ -1,3 +1,5 @@
+mod levels;
+
 use std::f32::consts::PI;
 
 use bevy::app::AppExit;
@@ -7,15 +9,12 @@ use bevy::diagnostic::{
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
-use doome_bevy::doome::{
-    DoomePlugin, DoomeRenderInit, DoomeRenderer, DoomeRendererContext,
-};
+use doome_bevy::components::*;
+use doome_bevy::doome::{DoomePlugin, DoomeRenderInit, DoomeRenderer};
 use doome_bevy::renderer::RendererPlugin;
 use doome_bevy::text::Text;
 use doome_engine::pipeline::PipelineBuilder;
-use doome_engine::{
-    Canvas, DynamicGeometryBuilder, StaticGeometryBuilder, HEIGHT, WIDTH,
-};
+use doome_engine::{Canvas, HEIGHT, HUD_HEIGHT, WIDTH};
 use doome_raytracer as rt;
 use doome_surface::Color;
 use glam::{vec2, vec3, Vec3Swizzles};
@@ -24,155 +23,20 @@ use glam::{vec2, vec3, Vec3Swizzles};
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
 const ASSETS: include_dir::Dir = include_dir::include_dir!("assets");
 
-const RAYTRACER_HEIGHT: u16 = 200;
-const HUD_HEIGHT: u16 = 50;
-
 const WINDOW_SCALE: f32 = 4.0;
 
 fn main() {
-    let camera = rt::Camera::new(
-        vec3(0.0, 1.0, -3.0),
-        vec3(0.0, 1.0, 2.0),
-        vec3(0.0, -1.0, 0.0),
-        1.0,
-        vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
-        PI / 2.0,
-    );
+    let pipeline = {
+        let pipeline = PipelineBuilder::new(ASSETS);
 
-    // -----
-    let mut materials = rt::Materials::default();
+        // TODO
 
-    let mat_monke = materials.push(
-        rt::Material::default()
-            .with_reflectivity(0.1, 0xffffff)
-            .with_texture(),
-    );
+        pipeline.build()
+    };
 
-    let mat_reference_cube = materials.push(
-        rt::Material::default()
-            .with_reflectivity(0.0, 0xffffff)
-            .with_texture(),
-    );
+    let mut app = App::new();
 
-    let mat_diamond = materials.push(
-        rt::Material::default()
-            .with_color(0xff0000)
-            .with_reflectivity(0.3, 0xff0000)
-            .with_texture(),
-    );
-
-    let mat_matte =
-        materials.push(rt::Material::default().with_color(0x666666));
-
-    let mat_static = materials.push(
-        rt::Material::default()
-            .with_color(0x000000)
-            .with_reflectivity(1.00, 0xffffff),
-    );
-
-    // -----
-
-    let mut monke_xform = rt::math::identity();
-    rt::math::translate(&mut monke_xform, vec3(1.0, 1.0, 0.0));
-    rt::math::rotate(&mut monke_xform, 45.0, vec3(0.0, 1.0, 0.0));
-
-    let mut ref_cube_xform = rt::math::identity();
-    rt::math::translate(&mut ref_cube_xform, vec3(4.0, 1.0, 0.0));
-
-    // -----
-
-    let mut pipeline = PipelineBuilder::new(ASSETS);
-
-    let monke_mesh = pipeline.load_model("monke.obj", mat_monke).unwrap();
-    let reference_cube = pipeline
-        .load_model("referenceCube.obj", mat_reference_cube)
-        .unwrap();
-    let diamond_mesh = pipeline.load_model("diamond.obj", mat_diamond).unwrap();
-
-    let pipeline = pipeline.build();
-
-    // -----
-
-    let mut mappings = Box::new(rt::TriangleMappings::default());
-    let mut static_geo = StaticGeometryBuilder::new(&mut mappings);
-
-    static_geo.push_floor(-3, -3, 3, 3, mat_matte);
-    static_geo.push_wall(-3, 3, -1, 3, 0, mat_matte);
-    static_geo.push_wall(1, 3, 3, 3, 0, mat_matte);
-    static_geo.push_wall(3, 3, 3, -3, 1, mat_matte);
-    static_geo.push_wall(-3, -3, 3, -3, 2, mat_matte);
-    static_geo.push_wall(-3, -3, -3, 3, 3, mat_matte);
-
-    static_geo.push_floor(-1, 3, 1, 5, mat_matte);
-    static_geo.push_wall(-1, 5, 1, 5, 0, mat_matte);
-    static_geo.push_wall(1, 3, 1, 5, 1, mat_matte);
-    static_geo.push_wall(-1, 3, -1, 5, 3, mat_matte);
-
-    static_geo.push_ceiling(-10, -10, 10, 10, mat_matte);
-
-    pipeline.insert_to_geometry(
-        monke_mesh,
-        &mut static_geo,
-        monke_xform,
-        1.0,
-        true,
-    );
-    pipeline.insert_to_geometry(
-        reference_cube,
-        &mut static_geo,
-        ref_cube_xform,
-        1.0,
-        false,
-    );
-    pipeline.insert_to_geometry(
-        diamond_mesh,
-        &mut static_geo,
-        rt::math::translated(vec3(-3.0, 1.0, -1.0)),
-        1.0,
-        false,
-    );
-
-    let static_geo = static_geo.build();
-    let static_geo_index = rt::GeometryIndexer::index(&static_geo);
-
-    // -----
-
-    let mut dynamic_geo = DynamicGeometryBuilder::new(&mut mappings);
-
-    dynamic_geo.push(rt::Triangle::new(
-        vec3(0.0, 0.0, 0.0),
-        vec3(-3.0, 0.0, 0.0),
-        vec3(-3.0, 3.0, 0.0),
-        mat_static,
-    ));
-
-    let dynamic_geo = dynamic_geo.build();
-
-    // -----
-
-    let mut lights = rt::Lights::default();
-
-    lights.push(
-        rt::Light::new(vec3(-2.5 * 2.0, 3.0, -2.5 * 2.0)).with_intensity(0.7),
-    );
-    lights.push(
-        rt::Light::new(vec3(2.5 * 2.0, 3.0, -2.5 * 2.0)).with_intensity(0.7),
-    );
-
-    // -----
-
-    // TODO: Add FPS limiting
-    App::new()
-        .insert_resource(DoomeRenderInit { pipeline })
-        .insert_resource(DoomeRendererContext {
-            static_geo,
-            static_geo_index,
-            dynamic_geo,
-            geo_mapping: mappings,
-            camera,
-            lights,
-            materials,
-        })
+    app.insert_resource(DoomeRenderInit { pipeline })
         .insert_resource(Text::default())
         .add_plugin(bevy::log::LogPlugin::default())
         .add_plugin(bevy::core::CorePlugin::default())
@@ -195,12 +59,14 @@ fn main() {
         .add_plugin(DoomePlugin)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(LogDiagnosticsPlugin::default())
-        .add_system(update_camera)
         .add_system(quit_on_exit)
+        .add_system(process_movement)
+        .add_system(process_camera)
         .add_system(render_ui)
-        .add_system(rotate_triangle)
         .add_startup_system(hide_cursor)
-        .run();
+        .add_startup_system(levels::level1::init);
+
+    app.run();
 }
 
 fn hide_cursor(mut windows: ResMut<Windows>) {
@@ -214,29 +80,6 @@ fn quit_on_exit(keys: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
     if keys.just_pressed(KeyCode::Escape) {
         exit.send(AppExit);
     }
-}
-
-fn rotate_triangle(
-    time: Res<Time>,
-    mut renderer: ResMut<DoomeRendererContext>,
-) {
-    let mut xform = rt::math::identity();
-
-    rt::math::rotate(
-        &mut xform,
-        time.elapsed_seconds().sin(),
-        vec3(1.0, 0.0, 0.0),
-    );
-
-    let triangle = renderer.dynamic_geo.get_mut(rt::TriangleId::new_dynamic(0));
-
-    *triangle = rt::Triangle::new(
-        vec3(0.0, 0.0, 0.0),
-        vec3(-3.0, 0.0, 0.0),
-        vec3(-3.0, 3.0, 0.0),
-        triangle.material_id(),
-    )
-    .with_transform(xform);
 }
 
 fn render_ui(
@@ -272,99 +115,72 @@ fn render_ui(
     }
 }
 
-fn update_camera(
+fn process_movement(
     time: Res<Time>,
     keys: Res<Input<KeyCode>>,
     mut mouse_motion: EventReader<MouseMotion>,
-    mut context: ResMut<DoomeRendererContext>,
+    mut player: Query<(&mut Position, &mut Rotation), With<Player>>,
 ) {
-    let camera = &mut context.camera;
-    let delta = time.delta_seconds();
-
     const MOUSE_ROTATION_SENSITIVITY: f32 = 0.5;
     const PLANAR_MOVEMENT_SPEED: f32 = 10.0;
-    const CELESTIAL_MOVEMENT_SPEED: f32 = 4.0;
+    const CELESTIAL_MOVEMENT_SPEED: f32 = 8.0;
     const ROTATION_SPEED: f32 = 2.0;
 
-    for ev in mouse_motion.iter() {
-        camera.update(|origin, look_at, up| {
-            let dir = *look_at - *origin;
+    let (mut player_pos, mut player_rot) = player.single_mut();
+    let delta = time.delta_seconds();
 
-            let rot = Quat::from_axis_angle(
-                up.normalize(),
-                // For some reason the up direction here is negative, hence the minus sign
-                -MOUSE_ROTATION_SENSITIVITY * ev.delta.x * delta,
-            );
+    // TODO
+    //
+    // for ev in mouse_motion.iter() {
+    //     let dir = camera.look_at - camera.origin;
 
-            let new_dir = rot * dir;
-            let new_look_at = *origin + new_dir;
+    //     let rot = Quat::from_axis_angle(
+    //         camera.up.normalize(),
+    //         // For some reason the up direction here is negative, hence the minus sign
+    //         -MOUSE_ROTATION_SENSITIVITY * ev.delta.x * delta,
+    //     );
 
-            look_at.x = new_look_at.x;
-            look_at.z = new_look_at.z;
-        });
-    }
+    //     let new_dir = rot * dir;
+    //     let new_look_at = camera.origin + new_dir;
+
+    //     camera.look_at.x = new_look_at.x;
+    //     camera.look_at.z = new_look_at.z;
+    // }
 
     if keys.pressed(KeyCode::W) || keys.pressed(KeyCode::S) {
         let sign = if keys.pressed(KeyCode::W) { 1.0 } else { -1.0 };
 
-        camera.update(|origin, look_at, _| {
-            let dist = (*look_at - *origin).normalize();
+        player_pos.x +=
+            player_rot.angle.sin() * CELESTIAL_MOVEMENT_SPEED * delta * sign;
 
-            *origin += sign * dist * PLANAR_MOVEMENT_SPEED * delta;
-            *look_at += sign * dist * PLANAR_MOVEMENT_SPEED * delta;
-        });
+        player_pos.z +=
+            player_rot.angle.cos() * CELESTIAL_MOVEMENT_SPEED * delta * sign;
     }
 
     if keys.pressed(KeyCode::A) || keys.pressed(KeyCode::D) {
-        let sign = if keys.pressed(KeyCode::A) { 1.0 } else { -1.0 };
+        let sign = if keys.pressed(KeyCode::A) { -1.0 } else { 1.0 };
 
-        camera.update(|origin, look_at, _| {
-            let dir = look_at.xz() - origin.xz();
-            let dir_angle = dir.angle_between(vec2(0.0, 1.0));
-            let dir_angle_perpendicular = dir_angle + PI / 2.0 + PI;
-
-            let movement = vec2(
-                dir_angle_perpendicular.sin(),
-                dir_angle_perpendicular.cos(),
-            )
-            .normalize()
-                * PLANAR_MOVEMENT_SPEED
-                * sign
-                * delta;
-
-            origin.x += movement.x;
-            origin.z += movement.y;
-
-            look_at.x += movement.x;
-            look_at.z += movement.y;
-        });
+        player_rot.angle += ROTATION_SPEED * sign * delta;
     }
 
     if keys.pressed(KeyCode::Q) || keys.pressed(KeyCode::E) {
         let sign = if keys.pressed(KeyCode::Q) { -1.0 } else { 1.0 };
+        let angle = player_rot.angle + PI / 2.0;
 
-        camera.update(|origin, look_at, _| {
-            let dir = look_at.xz() - origin.xz();
-            let dir_len = dir.length();
-            let dir_angle = dir.angle_between(vec2(0.0, 1.0));
-            let dir_angle = dir_angle + ROTATION_SPEED * sign * delta;
-
-            let new_dir =
-                vec2(dir_len, dir_len) * vec2(dir_angle.sin(), dir_angle.cos());
-
-            let new_look_at = origin.xz() + new_dir;
-
-            look_at.x = new_look_at.x;
-            look_at.z = new_look_at.y;
-        });
+        player_pos.x += angle.sin() * CELESTIAL_MOVEMENT_SPEED * delta * sign;
+        player_pos.z += angle.cos() * CELESTIAL_MOVEMENT_SPEED * delta * sign;
     }
+}
 
-    if keys.pressed(KeyCode::R) || keys.pressed(KeyCode::F) {
-        let sign = if keys.pressed(KeyCode::R) { 1.0 } else { -1.0 };
+fn process_camera(
+    player: Query<(&Position, &Rotation), With<Player>>,
+    mut camera: Query<&mut Camera>,
+) {
+    let Ok(mut camera) = camera.get_single_mut() else { return };
+    let (player_pos, player_rot) = player.single();
 
-        camera.update(|origin, look_at, _| {
-            origin.y += sign * CELESTIAL_MOVEMENT_SPEED * delta;
-            look_at.y += sign * CELESTIAL_MOVEMENT_SPEED * delta;
-        });
-    }
+    camera.origin = vec3(player_pos.x, 1.0, player_pos.z);
+
+    camera.look_at = camera.origin
+        + vec3(player_rot.angle.sin(), 0.0, player_rot.angle.cos()) * 5.0;
 }

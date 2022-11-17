@@ -15,6 +15,7 @@ doome-wgpu-ext = { path = "../wgpu-ext" }
 # Crates.io
 bevy = { version = "0.9", default-features = false, features = ["bevy_winit"] }
 futures-lite = "1.12"
+glam = { version = "0.22", default-features = false }
 include_dir = "0.7"
 log = "0.4"
 wgpu = "0.14"

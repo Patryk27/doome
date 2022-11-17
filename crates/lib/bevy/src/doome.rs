@@ -9,6 +9,7 @@ use doome_scaler::Scaler;
 use doome_wgpu_ext::AllocatedUniform;
 use rt::ShaderConstants;
 
+use crate::raytracer::DoomeRaytracerPlugin;
 use crate::renderer::RendererState;
 
 pub struct DoomePlugin;
@@ -18,26 +19,13 @@ pub struct DoomeRenderer {
     pub raytracer: rt::Raytracer,
     pub scaler: Scaler,
     pub pixels: Pixels,
-
-    intermediate_output_texture_view: wgpu::TextureView,
-
-    shader_constants: AllocatedUniform<ShaderConstants>,
+    pub intermediate_output_texture_view: wgpu::TextureView,
+    pub shader_constants: AllocatedUniform<ShaderConstants>,
 }
 
 #[derive(Resource)]
 pub struct DoomeRenderInit {
     pub pipeline: Pipeline,
-}
-
-#[derive(Resource)]
-pub struct DoomeRendererContext {
-    pub static_geo: Box<rt::StaticGeometry>,
-    pub static_geo_index: Box<rt::StaticGeometryIndex>,
-    pub dynamic_geo: Box<rt::DynamicGeometry>,
-    pub geo_mapping: Box<rt::TriangleMappings>,
-    pub camera: rt::Camera,
-    pub lights: rt::Lights,
-    pub materials: rt::Materials,
 }
 
 impl Plugin for DoomePlugin {
@@ -111,59 +99,8 @@ impl Plugin for DoomePlugin {
             intermediate_output_texture_view,
         });
 
-        app.add_system(render);
-        app.add_system(on_resize);
+        app.add_system(on_resize).add_plugin(DoomeRaytracerPlugin);
     }
-}
-
-fn render(
-    renderer: Res<RendererState>,
-    state: ResMut<DoomeRenderer>,
-    ctxt: Res<DoomeRendererContext>,
-) {
-    let Ok(current_texture) = renderer.surface.get_current_texture() else { return };
-
-    let device = &renderer.device;
-    let queue = &renderer.queue;
-
-    let intermediate_texture = &state.intermediate_output_texture_view;
-
-    let DoomeRenderer {
-        raytracer,
-        pixels,
-        scaler,
-        shader_constants,
-        ..
-    } = state.as_ref();
-
-    let texture_view = current_texture
-        .texture
-        .create_view(&wgpu::TextureViewDescriptor::default());
-
-    let mut encoder =
-        device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("render_command_encoder"),
-        });
-
-    raytracer.render(
-        queue,
-        &mut encoder,
-        &ctxt.static_geo,
-        &ctxt.static_geo_index,
-        &ctxt.dynamic_geo,
-        &ctxt.geo_mapping,
-        &ctxt.camera,
-        &ctxt.lights,
-        &ctxt.materials,
-        intermediate_texture,
-    );
-
-    pixels.render(queue, &mut encoder, shader_constants, intermediate_texture);
-
-    scaler.render(queue, &mut encoder, shader_constants, &texture_view);
-
-    renderer.queue.submit(vec![encoder.finish()]);
-    current_texture.present();
 }
 
 fn on_resize(
@@ -172,8 +109,8 @@ fn on_resize(
     state: ResMut<DoomeRenderer>,
 ) {
     for window_resized in window_resized.iter() {
-        let width = window_resized.width;
-        let height = window_resized.height;
+        let width = window_resized.width * 2.0;
+        let height = window_resized.height * 2.0;
 
         log::info!("Window resized to ({width}, {height})");
 
