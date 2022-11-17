@@ -1,4 +1,7 @@
 use bevy::prelude::*;
+use glam::Vec3Swizzles;
+
+mod sat;
 
 #[derive(Default)]
 pub struct PhysicsPlugin;
@@ -11,9 +14,21 @@ impl Plugin for PhysicsPlugin {
     }
 }
 
-#[derive(Component)]
-pub struct Collider {
-    pub bounding_box: BoundingBox,
+#[derive(Component, Debug)]
+pub enum Collider {
+    Rect(RectCollider),
+    Line(LineCollider),
+}
+
+#[derive(Debug)]
+pub struct RectCollider {
+    pub half_extents: Vec2,
+}
+
+#[derive(Debug)]
+pub struct LineCollider {
+    pub start: Vec2,
+    pub end: Vec2,
 }
 
 #[derive(Component)]
@@ -23,39 +38,10 @@ pub struct Body {
     pub body_type: BodyType,
 }
 
-impl Body {
-    // pub fn
-}
-
 pub enum BodyType {
     Static,
     Kinematic,
     // Rigid, // TODO: implement rigid body physics
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct BoundingBox {
-    pub a: Vec3,
-    pub b: Vec3,
-}
-
-impl BoundingBox {
-    // TODO: Validate, GitHub Copilot generated this
-    pub fn intersects(&self, other: &BoundingBox) -> bool {
-        self.a.x <= other.b.x
-            && self.b.x >= other.a.x
-            && self.a.y <= other.b.y
-            && self.b.y >= other.a.y
-            && self.a.z <= other.b.z
-            && self.b.z >= other.a.z
-    }
-
-    pub fn offset(self, offset: Vec3) -> Self {
-        Self {
-            a: self.a + offset,
-            b: self.b + offset,
-        }
-    }
 }
 
 fn synchronize_physics_with_position(
@@ -68,36 +54,110 @@ fn synchronize_physics_with_position(
 
 fn update_physics(
     time: Res<Time>,
-    mut bodies_with_colliders: Query<(Entity, &mut Body, &Collider)>,
+    mut bodies_with_colliders: Query<(
+        Entity,
+        &mut Body,
+        &Transform,
+        &Collider,
+    )>,
     colliders: Query<(Entity, &Collider, &Transform)>,
 ) {
     let delta = time.delta_seconds();
 
-    for (body_entity, mut body, collider) in bodies_with_colliders.iter_mut() {
+    for (
+        active_entity,
+        mut body,
+        active_entity_transform,
+        active_entity_collider,
+    ) in bodies_with_colliders.iter_mut()
+    {
         let v = body.velocity * delta;
-        let new_position = body.position + v;
-        let new_bb = collider.bounding_box.offset(new_position);
+        let new_transform = active_entity_transform
+            .with_translation(active_entity_transform.translation + v);
 
-        for (col_entity, collider, transform) in colliders.iter() {
-            if body_entity == col_entity {
+        let mut collision = false;
+        for (
+            passive_entity,
+            passive_entity_collider,
+            passive_entity_transform,
+        ) in colliders.iter()
+        {
+            if active_entity == passive_entity {
                 continue;
             }
 
-            let bb = collider.bounding_box.offset(transform.translation);
-
-            log::info!("Checking collision between {new_bb:?} and {bb:?}");
-
-            if new_bb.intersects(&bb) {
-                log::info!(
-                    "Collision detected between {:?} and {:?}",
-                    body_entity,
-                    col_entity
-                );
-                body.velocity = Vec3::ZERO;
+            if are_colliding(
+                &new_transform,
+                active_entity_collider,
+                passive_entity_transform,
+                passive_entity_collider,
+            ) {
+                collision = true;
+                break;
             }
         }
 
-        let v = body.velocity * delta;
-        body.position = body.position + v;
+        // TODO: Calculate collision direction and only anneal the velocity in that direction
+        if !collision {
+            body.position = body.position + v;
+        } else {
+            body.velocity = Vec3::ZERO;
+        }
     }
+}
+
+fn are_colliding(
+    transform_a: &Transform,
+    collider_a: &Collider,
+    transform_b: &Transform,
+    collider_b: &Collider,
+) -> bool {
+    let polygon_a = collider_to_polygon(transform_a, collider_a);
+    let polygon_b = collider_to_polygon(transform_b, collider_b);
+
+    sat::resolve_sat(&polygon_a, &polygon_b)
+}
+
+fn collider_to_polygon(
+    transform: &Transform,
+    collider: &Collider,
+) -> sat::Polygon {
+    match collider {
+        Collider::Rect(rect_collider) => {
+            let half_extents = rect_collider.half_extents;
+
+            let offsets = &[
+                Vec2::new(-half_extents.x, -half_extents.y),
+                Vec2::new(half_extents.x, -half_extents.y),
+                Vec2::new(half_extents.x, half_extents.y),
+                Vec2::new(-half_extents.x, half_extents.y),
+            ];
+
+            sat::Polygon::new(offsets_to_points(transform, offsets))
+        }
+        Collider::Line(line_collider) => {
+            let offsets = &[line_collider.start, line_collider.end];
+
+            sat::Polygon::new(offsets_to_points(transform, offsets))
+        }
+    }
+}
+
+fn offsets_to_points(transform: &Transform, offsets: &[Vec2]) -> Vec<Vec2> {
+    // We map the 3D position to the XZ plane
+    let origin = transform.translation.xz();
+    // We're only interested in Y-axis rotation so the order doesn't really matter
+    let y_rotation = transform.rotation.to_euler(EulerRot::XYZ).1;
+
+    // rotate offsets
+    let points = offsets
+        .iter()
+        .map(|offset| {
+            let rotated_offset = offset.rotate(Vec2::from_angle(y_rotation));
+
+            rotated_offset + origin
+        })
+        .collect();
+
+    points
 }

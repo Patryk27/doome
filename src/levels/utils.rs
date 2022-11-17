@@ -3,8 +3,8 @@ use std::f32::consts::PI;
 use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
 use doome_bevy::components::*;
-use doome_bevy::physics::{BoundingBox, Collider};
-use glam::vec3;
+use doome_bevy::physics::{Collider, LineCollider};
+use glam::{vec2, vec3};
 
 pub trait LevelBuilderExt<'w, 's> {
     fn floor(&mut self, x1: i32, z1: i32, x2: i32, z2: i32);
@@ -45,9 +45,14 @@ impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
             center
         };
 
-        let transform =
-            Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, angle))
-                .with_translation(center);
+        let collider_start = vec2(x1 as f32, z1 as f32);
+        let collider_end = vec2(x2 as f32, z2 as f32);
+
+        // TODO: Walls are weird right now, because we're giving the geometry and colliders here and absolute coordinates
+        //       as opposed to coordinates in relation to the transform. As such, walls right now have the identity transform.
+        let transform = Transform::IDENTITY;
+        // Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, angle))
+        //     .with_translation(center);
 
         self.spawn((
             Wall {
@@ -57,12 +62,10 @@ impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
                 z2,
                 rot,
             },
-            Collider {
-                bounding_box: BoundingBox {
-                    a: vec3(-0.5, -0.5, -0.5),
-                    b: vec3(0.5, 0.5, 0.5),
-                },
-            },
+            Collider::Line(LineCollider {
+                start: collider_start,
+                end: collider_end,
+            }),
             transform,
         ));
     }
