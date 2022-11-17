@@ -1,6 +1,6 @@
 use bevy::log;
 use bevy::prelude::*;
-use bevy::window::WindowResized;
+use bevy::window::{WindowResized, WindowScaleFactorChanged};
 use doome_engine::pipeline::Pipeline;
 use doome_engine::{HEIGHT, WIDTH};
 use doome_pixels::Pixels;
@@ -99,7 +99,9 @@ impl Plugin for DoomePlugin {
             intermediate_output_texture_view,
         });
 
-        app.add_system(on_resize).add_plugin(DoomeRaytracerPlugin);
+        app.add_system(on_resize)
+            .add_system(report_scale_factor_changes)
+            .add_plugin(DoomeRaytracerPlugin);
     }
 }
 
@@ -109,8 +111,8 @@ fn on_resize(
     state: ResMut<DoomeRenderer>,
 ) {
     for window_resized in window_resized.iter() {
-        let width = window_resized.width * 2.0;
-        let height = window_resized.height * 2.0;
+        let width = window_resized.width;
+        let height = window_resized.height;
 
         log::info!("Window resized to ({width}, {height})");
 
@@ -145,5 +147,13 @@ fn on_resize(
                 scaled_height: height,
             },
         );
+    }
+}
+
+fn report_scale_factor_changes(
+    mut events: EventReader<WindowScaleFactorChanged>,
+) {
+    for changed in events.iter() {
+        log::info!("Scale Factor Changed: {changed:#?}");
     }
 }
