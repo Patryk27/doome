@@ -4,14 +4,11 @@ use doome_wgpu_ext::AllocatedUniform;
 pub struct Scaler {
     pub render_pipeline: wgpu::RenderPipeline,
     pub bind_group: wgpu::BindGroup,
-    pub extent: wgpu::Extent3d,
 }
 
 impl Scaler {
     pub fn new(
         device: &wgpu::Device,
-        width: u32,
-        height: u32,
         input_tex_view: &wgpu::TextureView,
         output_format: wgpu::TextureFormat,
         shader_constants: &AllocatedUniform<ShaderConstants>,
@@ -19,12 +16,6 @@ impl Scaler {
         let shader = device.create_shader_module(wgpu::include_spirv!(env!(
             "scaler_shader.spv"
         )));
-
-        let extent = wgpu::Extent3d {
-            width: width,
-            height: height,
-            depth_or_array_layers: 1,
-        };
 
         let sampler = &device.create_sampler(&wgpu::SamplerDescriptor {
             address_mode_u: wgpu::AddressMode::ClampToEdge,
@@ -120,7 +111,6 @@ impl Scaler {
         Self {
             render_pipeline,
             bind_group,
-            extent,
         }
     }
 

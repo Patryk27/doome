@@ -1,4 +1,3 @@
-use bevy::log;
 use bevy::prelude::{Plugin, Resource};
 
 #[derive(Default)]
@@ -12,8 +11,6 @@ pub struct RendererState {
     pub adapter: wgpu::Adapter,
     pub surface: wgpu::Surface,
     pub output_texture_format: wgpu::TextureFormat,
-    // pub width: f32,
-    // pub height: f32,
 }
 
 impl Plugin for RendererPlugin {
@@ -55,15 +52,6 @@ impl Plugin for RendererPlugin {
 
                 (device, queue, adapter.get_info(), adapter)
             });
-
-        log::info!(
-            "Window width and height: ({}, {})",
-            window.width(),
-            window.height()
-        );
-
-        // let width = window.width();
-        // let height = window.height();
 
         let output_texture_format = surface.get_supported_formats(&adapter)[0];
 

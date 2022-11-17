@@ -1,4 +1,6 @@
+use bevy::log;
 use bevy::prelude::*;
+use bevy::window::WindowResized;
 use doome_engine::pipeline::Pipeline;
 use doome_engine::{HEIGHT, WIDTH};
 use doome_pixels::Pixels;
@@ -96,8 +98,6 @@ impl Plugin for DoomePlugin {
 
         let scaler = Scaler::new(
             device,
-            WIDTH as _,
-            HEIGHT as _,
             &intermediate_output_texture_view,
             renderer.output_texture_format,
             &shader_constants,
@@ -112,6 +112,7 @@ impl Plugin for DoomePlugin {
         });
 
         app.add_system(render);
+        app.add_system(on_resize);
     }
 }
 
@@ -163,4 +164,49 @@ fn render(
 
     renderer.queue.submit(vec![encoder.finish()]);
     current_texture.present();
+}
+
+fn on_resize(
+    mut window_resized: EventReader<WindowResized>,
+    renderer: Res<RendererState>,
+    state: ResMut<DoomeRenderer>,
+) {
+    for window_resized in window_resized.iter() {
+        let width = window_resized.width;
+        let height = window_resized.height;
+
+        log::info!("Window resized to ({width}, {height})");
+
+        let RendererState {
+            surface,
+            device,
+            queue,
+            output_texture_format,
+            ..
+        } = renderer.as_ref();
+        let DoomeRenderer {
+            shader_constants, ..
+        } = state.as_ref();
+
+        let config = wgpu::SurfaceConfiguration {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format: *output_texture_format,
+            width: width as u32,
+            height: height as u32,
+            present_mode: wgpu::PresentMode::Fifo,
+            alpha_mode: wgpu::CompositeAlphaMode::Auto,
+        };
+
+        surface.configure(device, &config);
+
+        shader_constants.write0(
+            queue,
+            &ShaderConstants {
+                width: WIDTH as f32,
+                height: HEIGHT as f32,
+                scaled_width: width,
+                scaled_height: height,
+            },
+        );
+    }
 }
