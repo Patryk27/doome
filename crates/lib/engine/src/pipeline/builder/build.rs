@@ -1,6 +1,6 @@
+use doome_raytracer::{ATLAS_HEIGHT, ATLAS_WIDTH};
 use glam::{vec2, Vec2};
 use maplit::btreemap;
-use raytracer::{ATLAS_HEIGHT, ATLAS_WIDTH};
 use rectangle_pack::{
     contains_smallest_box, volume_heuristic, GroupedRectsToPlace, RectToInsert,
     TargetBin,

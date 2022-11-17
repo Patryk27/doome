@@ -1,5 +1,5 @@
+use doome_surface::{Color, Surface};
 use rusttype::{point, Font, Scale};
-use surface::{Color, Surface};
 
 pub struct TextEngine {
     fonts: Fonts,

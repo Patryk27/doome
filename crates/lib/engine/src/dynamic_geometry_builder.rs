@@ -1,4 +1,4 @@
-use raytracer as rt;
+use doome_raytracer as rt;
 
 pub struct DynamicGeometryBuilder<'a> {
     geometry: rt::DynamicGeometry,

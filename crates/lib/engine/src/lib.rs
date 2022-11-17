@@ -4,7 +4,7 @@ mod static_geometry_builder;
 pub mod canvas;
 pub mod pipeline;
 
-use surface::Color;
+use doome_surface::Color;
 
 pub use self::canvas::*;
 pub use self::dynamic_geometry_builder::*;

@@ -1,5 +1,5 @@
-use shader_common::ShaderConstants;
-use wgpu_ext::AllocatedUniform;
+use doome_shader_common::ShaderConstants;
+use doome_wgpu_ext::AllocatedUniform;
 
 pub struct Scaler {
     pub render_pipeline: wgpu::RenderPipeline,

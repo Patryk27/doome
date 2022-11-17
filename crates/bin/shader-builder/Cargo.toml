@@ -1,5 +1,5 @@
 [package]
-name = "shader-builder"
+name = "doome-shader-builder"
 version = "0.1.0"
 edition = "2021"
 

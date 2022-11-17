@@ -1,6 +1,6 @@
+use doome_raytracer as rt;
 use glam::Mat4;
 use include_dir::Dir;
-use raytracer as rt;
 
 pub use self::builder::PipelineBuilder;
 use crate::static_geometry_builder::StaticGeometryBuilder;

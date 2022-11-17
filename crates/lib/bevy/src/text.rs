@@ -1,5 +1,5 @@
 use bevy::prelude::Resource;
-use text::TextEngine;
+use doome_text::TextEngine;
 
 #[derive(Default, Resource)]
 pub struct Text {

@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
+use doome_raytracer as rt;
 use glam::vec3;
-use raytracer as rt;
 
 pub struct StaticGeometryBuilder<'a> {
     geometry: rt::StaticGeometry,

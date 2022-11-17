@@ -1,10 +1,12 @@
 [package]
-name = "pixels"
+name = "doome-pixels"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-shader-common = { path = "../shader-common" }
-wgpu-ext = { path = "../wgpu-ext" }
+# Workspace
+doome-shader-common = { path = "../shader-common" }
+doome-wgpu-ext = { path = "../wgpu-ext" }
 
+# Crates.io
 wgpu = { version = "0.14", features = ["spirv"] }

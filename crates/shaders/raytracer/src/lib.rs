@@ -1,7 +1,7 @@
 #![no_std]
 
-use shader_common::vertex_shader::full_screen_triangle;
-use shader_common::*;
+use doome_shader_common::vertex_shader::full_screen_triangle;
+use doome_shader_common::*;
 use spirv_std::glam::{Vec4, Vec4Swizzles};
 #[cfg(target_arch = "spirv")]
 use spirv_std::num_traits::real::Real;

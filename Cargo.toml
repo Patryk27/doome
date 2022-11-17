@@ -12,14 +12,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-doome-bevy = { path = "crates/lib/doome-bevy" }
-raytracer = { path = "crates/lib/raytracer" }
-engine = { path = "crates/lib/engine" }
-surface = { path = "crates/lib/surface" }
-text = { path = "crates/lib/text" }
+# Workspace
+doome-bevy = { path = "crates/lib/bevy" }
+doome-engine = { path = "crates/lib/engine" }
+doome-raytracer = { path = "crates/lib/raytracer" }
+doome-surface = { path = "crates/lib/surface" }
+doome-text = { path = "crates/lib/text" }
 
+# Crates.io
 bevy = { version = "0.9", default-features = false, features = ["bevy_winit"] }
-
 glam = "0.22"
 include_dir = "0.7"
 

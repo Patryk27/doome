@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use anyhow::{anyhow, bail};
+use doome_raytracer as rt;
 use glam::{vec2, vec3, Vec2, Vec3};
-use raytracer as rt;
 use tobj::LoadOptions;
 
 use super::{ModelHandle, PipelineBuilder};

@@ -1,5 +1,5 @@
-use surface::Surface as _;
-use text::TextEngine;
+use doome_surface::Surface as _;
+use doome_text::TextEngine;
 
 use crate::*;
 
@@ -36,7 +36,7 @@ struct Surface<'frame> {
     frame: &'frame mut [u8],
 }
 
-impl<'f> surface::Surface<'f> for Surface<'f> {
+impl<'f> doome_surface::Surface<'f> for Surface<'f> {
     fn set(&mut self, x: u16, y: u16, mut color: Color) {
         if x >= WIDTH || y >= HEIGHT {
             return;

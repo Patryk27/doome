@@ -1,11 +1,11 @@
 [package]
-name = "text"
+name = "doome-text"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 # Workspace
-surface = { path = "../surface" }
+doome-surface = { path = "../surface" }
 
 # Crates.io
 rusttype = "0.9"

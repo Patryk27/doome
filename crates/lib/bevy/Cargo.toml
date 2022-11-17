@@ -4,13 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-text = { path = "../text" }
-engine = { path = "../engine" }
-raytracer = { path = "../raytracer" }
-pixels = { path = "../pixels" }
-scaler = { path = "../scaler" }
-wgpu-ext = { path = "../wgpu-ext" }
+# Workspace
+doome-engine = { path = "../engine" }
+doome-pixels = { path = "../pixels" }
+doome-raytracer = { path = "../raytracer" }
+doome-scaler = { path = "../scaler" }
+doome-text = { path = "../text" }
+doome-wgpu-ext = { path = "../wgpu-ext" }
 
+# Crates.io
 bevy = { version = "0.9", default-features = false, features = ["bevy_winit"] }
 futures-lite = "1.12"
 include_dir = "0.7"

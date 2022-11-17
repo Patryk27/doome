@@ -1075,12 +1075,12 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "doome-bevy",
- "engine",
+ "doome-engine",
+ "doome-raytracer",
+ "doome-surface",
+ "doome-text",
  "glam",
  "include_dir",
- "raytracer",
- "surface",
- "text",
 ]
 
 [[package]]
@@ -1088,25 +1088,119 @@ name = "doome-bevy"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "engine",
+ "doome-engine",
+ "doome-pixels",
+ "doome-raytracer",
+ "doome-scaler",
+ "doome-text",
+ "doome-wgpu-ext",
  "futures-lite",
  "include_dir",
  "log",
- "pixels",
- "raytracer",
- "scaler",
- "text",
  "wgpu",
- "wgpu-ext",
  "winit",
+]
+
+[[package]]
+name = "doome-engine"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "doome-raytracer",
+ "doome-surface",
+ "doome-text",
+ "glam",
+ "image",
+ "include_dir",
+ "log",
+ "maplit",
+ "rectangle-pack",
+ "test-case",
+ "tobj",
+ "wgpu",
+]
+
+[[package]]
+name = "doome-pixels"
+version = "0.1.0"
+dependencies = [
+ "doome-shader-common",
+ "doome-wgpu-ext",
+ "wgpu",
+]
+
+[[package]]
+name = "doome-raytracer"
+version = "0.1.0"
+dependencies = [
+ "doome-shader-common",
+ "doome-wgpu-ext",
+ "glam",
+ "instant",
+ "log",
+ "spirv-builder",
+ "spirv-std",
+ "wgpu",
 ]
 
 [[package]]
 name = "doome-raytracer-shader"
 version = "0.1.0"
 dependencies = [
- "shader-common",
+ "doome-shader-common",
  "spirv-std",
+]
+
+[[package]]
+name = "doome-scaler"
+version = "0.1.0"
+dependencies = [
+ "doome-shader-common",
+ "doome-wgpu-ext",
+ "wgpu",
+]
+
+[[package]]
+name = "doome-shader-builder"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "dotenv",
+ "fs_extra",
+ "log",
+ "pretty_env_logger",
+ "spirv-builder",
+]
+
+[[package]]
+name = "doome-shader-common"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "glam",
+ "spirv-std",
+]
+
+[[package]]
+name = "doome-surface"
+version = "0.1.0"
+
+[[package]]
+name = "doome-text"
+version = "0.1.0"
+dependencies = [
+ "doome-surface",
+ "rusttype",
+]
+
+[[package]]
+name = "doome-wgpu-ext"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "log",
+ "wgpu",
 ]
 
 [[package]]
@@ -1171,25 +1265,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "engine"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "glam",
- "image",
- "include_dir",
- "log",
- "maplit",
- "raytracer",
- "rectangle-pack",
- "surface",
- "test-case",
- "text",
- "tobj",
- "wgpu",
 ]
 
 [[package]]
@@ -2155,17 +2230,8 @@ checksum = "e0a7ae3ac2f1173085d398531c705756c94a4c56843785df85a60c1a0afac116"
 name = "pixel-shader"
 version = "0.1.0"
 dependencies = [
- "shader-common",
+ "doome-shader-common",
  "spirv-std",
-]
-
-[[package]]
-name = "pixels"
-version = "0.1.0"
-dependencies = [
- "shader-common",
- "wgpu",
- "wgpu-ext",
 ]
 
 [[package]]
@@ -2331,21 +2397,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "raytracer"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "glam",
- "instant",
- "log",
- "shader-common",
- "spirv-builder",
- "spirv-std",
- "wgpu",
- "wgpu-ext",
-]
-
-[[package]]
 name = "rectangle-pack"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2493,19 +2544,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "scaler"
-version = "0.1.0"
-dependencies = [
- "shader-common",
- "wgpu",
- "wgpu-ext",
-]
-
-[[package]]
 name = "scaler-shader"
 version = "0.1.0"
 dependencies = [
- "shader-common",
+ "doome-shader-common",
  "spirv-std",
 ]
 
@@ -2589,28 +2631,6 @@ dependencies = [
  "expat-sys",
  "freetype-sys",
  "pkg-config",
-]
-
-[[package]]
-name = "shader-builder"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "dotenv",
- "fs_extra",
- "log",
- "pretty_env_logger",
- "spirv-builder",
-]
-
-[[package]]
-name = "shader-common"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "glam",
- "spirv-std",
 ]
 
 [[package]]
@@ -2761,10 +2781,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
-name = "surface"
-version = "0.1.0"
-
-[[package]]
 name = "syn"
 version = "1.0.103"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2818,14 +2834,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "text"
-version = "0.1.0"
-dependencies = [
- "rusttype",
- "surface",
 ]
 
 [[package]]
@@ -3256,15 +3264,6 @@ dependencies = [
  "web-sys",
  "wgpu-hal",
  "wgpu-types",
-]
-
-[[package]]
-name = "wgpu-ext"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "log",
- "wgpu",
 ]
 
 [[package]]

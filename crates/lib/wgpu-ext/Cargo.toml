@@ -1,5 +1,5 @@
 [package]
-name = "wgpu-ext"
+name = "doome-wgpu-ext"
 version = "0.1.0"
 edition = "2021"
 

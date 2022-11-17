@@ -1,7 +1,7 @@
 #![cfg_attr(target_arch = "spirv", no_std)]
 
-use shader_common::vertex_shader::full_screen_triangle;
-use shader_common::ShaderConstants;
+use doome_shader_common::vertex_shader::full_screen_triangle;
+use doome_shader_common::ShaderConstants;
 use spirv_std::glam::{vec2, Vec4};
 #[cfg(target_arch = "spirv")]
 use spirv_std::num_traits::Float;

@@ -28,7 +28,7 @@ fn main() {
             "run",
             "--release",
             "-p",
-            "shader-builder",
+            "doome-shader-builder",
             "--target-dir",
             &dir,
             "--",

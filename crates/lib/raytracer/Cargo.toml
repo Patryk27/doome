@@ -1,19 +1,18 @@
 [package]
-name = "raytracer"
+name = "doome-raytracer"
 version = "0.1.0"
 edition = "2021"
 
 [build-dependencies]
-spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "dcf37b75a7f9e7a94f52c8a3a5d93af795e34cd0", default-features = false, features = [ "use-installed-tools"] }
+spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "dcf37b75a7f9e7a94f52c8a3a5d93af795e34cd0", default-features = false, features = ["use-installed-tools"] }
 
 [dependencies]
 # Workspace
-shader-common = { path = "../shader-common" }
-wgpu-ext = { path = "../wgpu-ext" }
+doome-shader-common = { path = "../shader-common" }
+doome-wgpu-ext = { path = "../wgpu-ext" }
 
 # Crates.io
-bytemuck = "1.0"
-glam = { version = "0.22", default-features = false, features = ["bytemuck"] }
+glam = { version = "0.22", default-features = false }
 instant = "0.1"
 log = "0.4"
 spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = ["glam"] }

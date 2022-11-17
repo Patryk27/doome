@@ -4,8 +4,8 @@ mod geometry_indexer;
 
 use std::num::NonZeroU32;
 
-pub use shader_common::*;
-use wgpu_ext::AllocatedUniform;
+pub use doome_shader_common::*;
+use doome_wgpu_ext::AllocatedUniform;
 
 pub use self::geometry_indexer::*;
 

@@ -12,13 +12,13 @@ use doome_bevy::doome::{
 };
 use doome_bevy::renderer::RendererPlugin;
 use doome_bevy::text::Text;
-use engine::pipeline::PipelineBuilder;
-use engine::{
+use doome_engine::pipeline::PipelineBuilder;
+use doome_engine::{
     Canvas, DynamicGeometryBuilder, StaticGeometryBuilder, HEIGHT, WIDTH,
 };
+use doome_raytracer as rt;
+use doome_surface::Color;
 use glam::{vec2, vec3, Vec3Swizzles};
-use raytracer as rt;
-use surface::Color;
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?

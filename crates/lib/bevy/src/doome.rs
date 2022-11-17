@@ -1,11 +1,11 @@
 use bevy::prelude::*;
-use engine::pipeline::Pipeline;
-use engine::{HEIGHT, WIDTH};
-use pixels::Pixels;
-use raytracer as rt;
+use doome_engine::pipeline::Pipeline;
+use doome_engine::{HEIGHT, WIDTH};
+use doome_pixels::Pixels;
+use doome_raytracer as rt;
+use doome_scaler::Scaler;
+use doome_wgpu_ext::AllocatedUniform;
 use rt::ShaderConstants;
-use scaler::Scaler;
-use wgpu_ext::AllocatedUniform;
 
 use crate::renderer::RendererState;
 

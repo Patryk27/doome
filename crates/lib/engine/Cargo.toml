@@ -1,13 +1,13 @@
 [package]
-name = "engine"
+name = "doome-engine"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 # Workspace
-raytracer = { path = "../raytracer" }
-surface = { path = "../surface" }
-text = { path = "../text" }
+doome-raytracer = { path = "../raytracer" }
+doome-surface = { path = "../surface" }
+doome-text = { path = "../text" }
 
 # Crates.io
 anyhow = "1"
