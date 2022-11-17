@@ -24,6 +24,7 @@ impl Plugin for RendererPlugin {
         };
 
         let request_adapter_options = wgpu::RequestAdapterOptions {
+            power_preference: wgpu::PowerPreference::HighPerformance,
             compatible_surface: Some(&surface),
             ..Default::default()
         };
