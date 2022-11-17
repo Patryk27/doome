@@ -14,6 +14,11 @@ pub fn translate(xform: &mut Mat4, v: Vec3) -> &mut Mat4 {
     xform
 }
 
+pub fn set_translation(xform: &mut Mat4, v: Vec3) -> &mut Mat4 {
+    xform.w_axis = v.extend(1.0);
+    xform
+}
+
 /// Scales the transformation matrix along axes given by the vector.
 pub fn scale(xform: &mut Mat4, v: Vec3) -> &mut Mat4 {
     *xform *= Mat4::from_scale(v);

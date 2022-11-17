@@ -73,7 +73,7 @@ fn sync_static_geometry(
     floors: Query<&Floor>,
     ceilings: Query<&Ceiling>,
     walls: Query<&Wall>,
-    models: Query<(&ModelName, &Position)>,
+    models: Query<(&ModelName, &Transform)>,
     mut rx: EventReader<SyncStaticGeometry>,
 ) {
     if rx.iter().count() == 0 {
@@ -117,6 +117,8 @@ fn sync_static_geometry(
     }
 
     for (&model_name, &model_pos) in models.iter() {
+        let model_pos = model_pos.translation;
+
         let model = assets.model(model_name);
 
         let mut xform = rt::math::identity();
@@ -136,11 +138,13 @@ fn sync_static_geometry(
 // TODO doing this each frame feels wonky
 fn sync_lights(
     mut ctxt: ResMut<DoomeRaytracerState>,
-    lights: Query<(&Light, &Position, &Color)>,
+    lights: Query<(&Light, &Transform, &Color)>,
 ) {
     ctxt.lights = Default::default();
 
-    for (light, position, color) in lights.iter() {
+    for (light, transform, color) in lights.iter() {
+        let position = transform.translation;
+
         ctxt.lights.push(rt::Light::new(
             vec3(position.x, position.y, position.z),
             vec3(color.r, color.g, color.b),

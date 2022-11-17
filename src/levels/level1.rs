@@ -9,12 +9,7 @@ use super::utils::*;
 pub fn init(mut commands: Commands, mut tx: EventWriter<SyncStaticGeometry>) {
     commands.spawn((
         Player,
-        Position {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        },
-        Rotation { angle: 0.0 },
+        Transform::IDENTITY,
         Body {
             position: vec3(0.0, 0.0, 0.0),
             velocity: vec3(0.0, 0.0, 0.0),
@@ -22,8 +17,8 @@ pub fn init(mut commands: Commands, mut tx: EventWriter<SyncStaticGeometry>) {
         },
         Collider {
             bounding_box: BoundingBox {
-                a: vec3(-0.5, -0.5, -0.5),
-                b: vec3(0.5, 0.5, 0.5),
+                a: vec3(-0.2, -0.5, -0.2),
+                b: vec3(0.2, 0.5, 0.2),
             },
         },
     ));

@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::prelude::*;
 use doome_bevy::components::*;
 use doome_bevy::physics::{BoundingBox, Collider};
@@ -21,6 +23,24 @@ impl LevelBuilderExt for Commands<'_, '_> {
     }
 
     fn wall(&mut self, x1: i32, z1: i32, x2: i32, z2: i32, rot: u8) {
+        const HEIGHT: f32 = 4.0;
+
+        let angle = (rot as f32) * (PI / 2.0);
+
+        let center = {
+            let (x1, x2) = (x1.min(x2), x1.max(x2));
+            let (z1, z2) = (z1.min(z2), z1.max(z2));
+            let (x1, z1) = (x1 as f32, z1 as f32);
+            let (x2, z2) = (x2 as f32, z2 as f32);
+            let center = vec3((x1 + x2) / 2.0, HEIGHT / 2.0, (z1 + z2) / 2.0);
+
+            center
+        };
+
+        let transform =
+            Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, angle))
+                .with_translation(center);
+
         self.spawn((
             Wall {
                 x1,
@@ -35,18 +55,19 @@ impl LevelBuilderExt for Commands<'_, '_> {
                     b: vec3(0.5, 0.5, 0.5),
                 },
             },
+            transform,
         ));
     }
 
     fn light(&mut self, x: f32, y: f32, z: f32, r: f32, g: f32, b: f32) {
         self.spawn((
             Light { intensity: 1.0 },
-            Position { x, y, z },
+            Transform::from_xyz(x, y, z),
             Color { r, g, b },
         ));
     }
 
     fn model(&mut self, name: &'static str, x: f32, y: f32, z: f32) {
-        self.spawn((ModelName::new(name), Position { x, y, z }));
+        self.spawn((ModelName::new(name), Transform::from_xyz(x, y, z)));
     }
 }

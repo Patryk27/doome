@@ -116,26 +116,27 @@ fn process_movement(
     time: Res<Time>,
     keys: Res<Input<KeyCode>>,
     mut mouse_motion: EventReader<MouseMotion>,
-    mut player: Query<(&mut Body, &mut Rotation), With<Player>>,
+    mut player: Query<(&mut Body, &mut Transform), With<Player>>,
 ) {
     const MOUSE_ROTATION_SENSITIVITY: f32 = 0.5;
     const PLANAR_MOVEMENT_SPEED: f32 = 10.0;
     const ROTATION_SPEED: f32 = 2.0;
 
-    let (mut body, mut player_rot) = player.single_mut();
+    let (mut body, mut transform) = player.single_mut();
     let delta = time.delta_seconds();
 
     for ev in mouse_motion.iter() {
-        player_rot.angle += MOUSE_ROTATION_SENSITIVITY * ev.delta.x * delta;
+        transform.rotate_axis(
+            Vec3::Y,
+            MOUSE_ROTATION_SENSITIVITY * ev.delta.x * delta,
+        );
     }
 
     body.velocity = Vec3::ZERO;
 
     if keys.pressed(KeyCode::W) || keys.pressed(KeyCode::S) {
         let sign = if keys.pressed(KeyCode::W) { 1.0 } else { -1.0 };
-        let angle = player_rot.angle;
-
-        body.velocity += vec3(sign * angle.sin(), 0.0, sign * angle.cos());
+        body.velocity += transform.forward() * sign;
     }
 
     if keys.pressed(KeyCode::Comma) || keys.pressed(KeyCode::Period) {
@@ -145,28 +146,27 @@ fn process_movement(
             1.0
         };
 
-        player_rot.angle += ROTATION_SPEED * sign * delta;
+        transform.rotate_axis(Vec3::Y, ROTATION_SPEED * sign * delta);
     }
 
     if keys.pressed(KeyCode::A) || keys.pressed(KeyCode::D) {
         let sign = if keys.pressed(KeyCode::A) { -1.0 } else { 1.0 };
-        let angle = player_rot.angle + PI / 2.0;
-
-        body.velocity += vec3(sign * angle.sin(), 0.0, sign * angle.cos());
+        body.velocity += transform.left() * sign;
     }
 
     body.velocity = body.velocity.normalize_or_zero() * PLANAR_MOVEMENT_SPEED;
 }
 
 fn process_camera(
-    player: Query<(&Position, &Rotation), With<Player>>,
+    player: Query<(&Transform,), With<Player>>,
     mut camera: Query<&mut Camera>,
 ) {
     let Ok(mut camera) = camera.get_single_mut() else { return };
-    let (player_pos, player_rot) = player.single();
+    let (transform,) = player.single();
 
-    camera.origin = vec3(player_pos.x, 1.0, player_pos.z);
+    let pos = transform.translation;
 
-    camera.look_at = camera.origin
-        + vec3(player_rot.angle.sin(), 0.0, player_rot.angle.cos()) * 5.0;
+    camera.origin = vec3(pos.x, 1.0, pos.z);
+
+    camera.look_at = camera.origin + transform.forward() * 5.0;
 }

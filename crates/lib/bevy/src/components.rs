@@ -1,18 +1,6 @@
 use bevy::prelude::*;
 
 #[derive(Copy, Clone, Debug, PartialEq, Component)]
-pub struct Position {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Component)]
-pub struct Rotation {
-    pub angle: f32,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Color {
     pub r: f32,
     pub g: f32,
