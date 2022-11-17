@@ -47,7 +47,7 @@ impl Triangle {
         let pvec = ray.direction().cross(v0v2);
         let det = v0v1.dot(pvec);
 
-        if det < f32::EPSILON {
+        if det.abs() < f32::EPSILON {
             return Hit::none();
         }
 
