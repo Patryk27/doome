@@ -27,6 +27,8 @@ const ASSETS: include_dir::Dir = include_dir::include_dir!("assets");
 const RAYTRACER_HEIGHT: u16 = 200;
 const HUD_HEIGHT: u16 = 50;
 
+const WINDOW_SCALE: f32 = 4.0;
+
 fn main() {
     let camera = rt::Camera::new(
         vec3(0.0, 1.0, -3.0),
@@ -172,7 +174,23 @@ fn main() {
             materials,
         })
         .insert_resource(Text::default())
-        .add_plugins(DefaultPlugins)
+        .add_plugin(bevy::log::LogPlugin::default())
+        .add_plugin(bevy::core::CorePlugin::default())
+        .add_plugin(bevy::time::TimePlugin::default())
+        .add_plugin(bevy::transform::TransformPlugin::default())
+        .add_plugin(bevy::hierarchy::HierarchyPlugin::default())
+        .add_plugin(bevy::diagnostic::DiagnosticsPlugin::default())
+        .add_plugin(bevy::input::InputPlugin::default())
+        .add_plugin(bevy::window::WindowPlugin {
+            window: WindowDescriptor {
+                title: "Doomé".to_string(),
+                width: WIDTH as f32 * WINDOW_SCALE,
+                height: HEIGHT as f32 * WINDOW_SCALE,
+                ..WindowDescriptor::default()
+            },
+            ..bevy::window::WindowPlugin::default()
+        })
+        .add_plugin(bevy::winit::WinitPlugin::default())
         .add_plugin(RendererPlugin)
         .add_plugin(DoomePlugin)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
