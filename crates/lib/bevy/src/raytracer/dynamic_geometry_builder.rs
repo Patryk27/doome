@@ -13,14 +13,6 @@ impl<'a> DynamicGeometryBuilder<'a> {
         }
     }
 
-    // TODO get rid of
-    pub fn map_coords(&self, x: i32, z: i32) -> (f32, f32) {
-        let x = (x as f32) * 2.0;
-        let z = (z as f32) * 2.0;
-
-        (x, z)
-    }
-
     pub fn push(
         &mut self,
         triangle: rt::Triangle,

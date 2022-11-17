@@ -135,11 +135,24 @@ impl<'a> StaticGeometryBuilder<'a> {
         ));
     }
 
-    pub fn push_model(&mut self, model: &Model, xform: Mat4, alpha: f32) {
-        for &(triangle, triangle_mapping) in &model.triangles {
-            let triangle = triangle.with_transform(xform).with_alpha(alpha);
+    pub fn push_model(
+        &mut self,
+        model: &Model,
+        model_mat: rt::MaterialId,
+        model_alpha: f32,
+        model_xform: Mat4,
+    ) {
+        for model_tri in &model.triangles {
+            let tri =
+                model_tri.materialize(model_mat, model_alpha, model_xform);
 
-            self.push_ex(triangle, triangle_mapping);
+            let tri_mapping = rt::TriangleMapping::new(
+                model_tri.uvs[0],
+                model_tri.uvs[1],
+                model_tri.uvs[2],
+            );
+
+            self.push_ex(tri, tri_mapping);
         }
     }
 

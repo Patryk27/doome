@@ -55,23 +55,23 @@ impl AssetsLoader {
             for model_name in affected_models {
                 let model = self.models.get_mut(model_name).unwrap();
 
-                for (_, tri_map) in &mut model.triangles {
-                    tri_map.uv0 = remap_uv(
-                        tri_map.uv0,
+                for tri in &mut model.triangles {
+                    tri.uvs[0] = remap_uv(
+                        tri.uvs[0],
                         old_tex_size,
                         new_tex_size,
                         offset_in_new_tex,
                     );
 
-                    tri_map.uv1 = remap_uv(
-                        tri_map.uv1,
+                    tri.uvs[1] = remap_uv(
+                        tri.uvs[1],
                         old_tex_size,
                         new_tex_size,
                         offset_in_new_tex,
                     );
 
-                    tri_map.uv2 = remap_uv(
-                        tri_map.uv2,
+                    tri.uvs[2] = remap_uv(
+                        tri.uvs[2],
                         old_tex_size,
                         new_tex_size,
                         offset_in_new_tex,

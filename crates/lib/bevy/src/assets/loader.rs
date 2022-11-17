@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use include_dir::Dir;
 
-use super::{Assets, Model, ModelName};
+use super::{Assets, Model, ModelMaterial, ModelName, ModelTriangle};
 
 pub struct AssetsLoader {
     dir: &'static Dir<'static>,

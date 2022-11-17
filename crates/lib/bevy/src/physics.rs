@@ -1,6 +1,4 @@
 use bevy::prelude::*;
-use doome_raytracer::math;
-use glam::vec3;
 
 #[derive(Default)]
 pub struct PhysicsPlugin;

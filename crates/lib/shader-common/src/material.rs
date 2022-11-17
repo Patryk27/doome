@@ -1,7 +1,7 @@
 use crate::*;
 
 #[repr(C)]
-#[derive(Copy, Clone, Pod, Zeroable)]
+#[derive(Copy, Clone, PartialEq, Pod, Zeroable)]
 pub struct Material {
     // x,y,z is color, w is 1.0 indicates texture is present, 0.0 indicates texture is not present
     color: Vec4,
@@ -93,16 +93,12 @@ impl Material {
 
 #[cfg(not(target_arch = "spirv"))]
 impl Material {
-    pub fn with_color(mut self, color: u32) -> Self {
-        self.color = rgb_to_srgb(color).extend(self.color.w);
+    pub fn with_color(mut self, color: Vec3) -> Self {
+        self.color = color.extend(0.0);
         self
     }
 
-    pub fn with_texture(self) -> Self {
-        self.with_texture_of(true)
-    }
-
-    pub fn with_texture_of(mut self, val: bool) -> Self {
+    pub fn with_texture(mut self, val: bool) -> Self {
         self.color.w = if val { 1.0 } else { 0.0 };
         self
     }
@@ -110,9 +106,9 @@ impl Material {
     pub fn with_reflectivity(
         mut self,
         reflectivity: f32,
-        reflection_color: u32,
+        reflection_color: Vec3,
     ) -> Self {
-        self.reflectivity = rgb_to_srgb(reflection_color).extend(reflectivity);
+        self.reflectivity = reflection_color.extend(reflectivity);
         self
     }
 }
@@ -129,15 +125,14 @@ impl Default for Material {
 
 #[derive(Copy, Clone)]
 #[cfg_attr(not(target_arch = "spirv"), derive(Debug))]
-pub struct MaterialId(u32);
+pub struct MaterialId(usize);
 
 impl MaterialId {
-    // TODO make private
-    pub fn new(id: u32) -> Self {
+    pub fn new(id: usize) -> Self {
         Self(id)
     }
 
-    pub(crate) fn get(self) -> u32 {
+    pub fn get(self) -> usize {
         self.0
     }
 }

@@ -1,13 +1,14 @@
 mod loader;
+mod model;
 
 use std::collections::HashMap;
 
 use anyhow::{Context, Result};
 use bevy::prelude::*;
-use doome_raytracer as rt;
 use include_dir::Dir;
 
 use self::loader::*;
+pub(crate) use self::model::*;
 use crate::components::ModelName;
 
 #[derive(Resource)]
@@ -29,26 +30,16 @@ impl Assets {
                     entry.path().file_stem().unwrap().to_str().unwrap(),
                 );
 
-                loader
-                    .load_model(
-                        name,
-                        entry.path(),
-                        // TODO
-                        rt::MaterialId::new(0),
-                    )
-                    .with_context(|| {
-                        format!(
-                            "Couldn't load model: {}",
-                            entry.path().display()
-                        )
-                    })?;
+                loader.load_model(name, entry.path()).with_context(|| {
+                    format!("Couldn't load model: {}", entry.path().display())
+                })?;
             }
         }
 
         Ok(loader.build())
     }
 
-    pub fn atlas(&self) -> &image::RgbaImage {
+    pub(crate) fn atlas(&self) -> &image::RgbaImage {
         &self.atlas
     }
 
@@ -77,14 +68,4 @@ impl Assets {
     //         // geometry.push_ex(triangle, *triangle_mapping);
     //     }
     // }
-}
-
-pub struct Model {
-    pub triangles: Vec<(rt::Triangle, rt::TriangleMapping)>,
-}
-
-impl Model {
-    fn new(triangles: Vec<(rt::Triangle, rt::TriangleMapping)>) -> Self {
-        Self { triangles }
-    }
 }

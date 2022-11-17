@@ -1,7 +1,5 @@
 mod levels;
 
-use std::f32::consts::PI;
-
 use bevy::app::AppExit;
 use bevy::diagnostic::{
     Diagnostics, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin,
@@ -150,7 +148,7 @@ fn process_movement(
     }
 
     if keys.pressed(KeyCode::A) || keys.pressed(KeyCode::D) {
-        let sign = if keys.pressed(KeyCode::A) { -1.0 } else { 1.0 };
+        let sign = if keys.pressed(KeyCode::A) { 1.0 } else { -1.0 };
         body.velocity += transform.left() * sign;
     }
 
@@ -163,10 +161,8 @@ fn process_camera(
 ) {
     let Ok(mut camera) = camera.get_single_mut() else { return };
     let (transform,) = player.single();
-
     let pos = transform.translation;
 
     camera.origin = vec3(pos.x, 1.0, pos.z);
-
     camera.look_at = camera.origin + transform.forward() * 5.0;
 }

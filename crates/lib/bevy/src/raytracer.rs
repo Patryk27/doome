@@ -1,4 +1,5 @@
 mod dynamic_geometry_builder;
+mod materials_manager;
 mod static_geometry_builder;
 
 use std::f32::consts::PI;
@@ -8,7 +9,7 @@ use doome_engine::{RAYTRACER_HEIGHT, WIDTH};
 use doome_raytracer as rt;
 use glam::{vec2, vec3};
 
-use self::dynamic_geometry_builder::*;
+use self::materials_manager::*;
 use self::static_geometry_builder::*;
 use crate::assets::Assets;
 use crate::components::*;
@@ -30,10 +31,6 @@ impl Plugin for DoomeRaytracerPlugin {
                 PI / 2.0,
             );
 
-            let mut materials = rt::Materials::default();
-
-            materials.push(rt::Material::default().with_color(0x666666));
-
             DoomeRaytracerState {
                 static_geo: Default::default(),
                 static_geo_index: Default::default(),
@@ -41,7 +38,7 @@ impl Plugin for DoomeRaytracerPlugin {
                 mappings: Default::default(),
                 camera,
                 lights: Default::default(),
-                materials,
+                materials: Default::default(),
             }
         };
 
@@ -64,7 +61,7 @@ struct DoomeRaytracerState {
     mappings: Box<rt::TriangleMappings>,
     camera: rt::Camera,
     lights: rt::Lights,
-    materials: rt::Materials,
+    materials: MaterialsManager,
 }
 
 fn sync_static_geometry(
@@ -73,62 +70,54 @@ fn sync_static_geometry(
     floors: Query<&Floor>,
     ceilings: Query<&Ceiling>,
     walls: Query<&Wall>,
-    models: Query<(&ModelName, &Transform)>,
+    models: Query<(
+        &ModelName,
+        &Transform,
+        Option<&Color>,
+        Option<&Transparent>,
+        Option<&Reflective>,
+    )>,
     mut rx: EventReader<SyncStaticGeometry>,
 ) {
     if rx.iter().count() == 0 {
         return;
     }
 
+    let ctxt = &mut *ctxt;
     let mut static_geo = StaticGeometryBuilder::new(&mut ctxt.mappings);
 
+    // TODO use proper material
+    let dummy_mat = ctxt.materials.dummy();
+
     for floor in floors.iter() {
-        static_geo.push_floor(
-            floor.x1,
-            floor.z1,
-            floor.x2,
-            floor.z2,
-            // TODO use proper material
-            rt::MaterialId::new(0),
-        );
+        static_geo
+            .push_floor(floor.x1, floor.z1, floor.x2, floor.z2, dummy_mat);
     }
 
     for ceiling in ceilings.iter() {
         static_geo.push_ceiling(
-            ceiling.x1,
-            ceiling.z1,
-            ceiling.x2,
-            ceiling.z2,
-            // TODO use proper material
-            rt::MaterialId::new(0),
+            ceiling.x1, ceiling.z1, ceiling.x2, ceiling.z2, dummy_mat,
         );
     }
 
     for wall in walls.iter() {
-        static_geo.push_wall(
-            wall.x1,
-            wall.z1,
-            wall.x2,
-            wall.z2,
-            wall.rot,
-            // TODO use proper material
-            rt::MaterialId::new(0),
-        );
+        static_geo
+            .push_wall(wall.x1, wall.z1, wall.x2, wall.z2, wall.rot, dummy_mat);
     }
 
-    for (&model_name, &model_pos) in models.iter() {
-        let model_pos = model_pos.translation;
-
+    for (&model_name, &model_xform, model_color, model_transp, model_reflect) in
+        models.iter()
+    {
         let model = assets.model(model_name);
 
-        let mut xform = rt::math::identity();
+        let model_mat = ctxt
+            .materials
+            .allocate(model.material.materialize(model_color, model_reflect));
 
-        rt::math::translate(
-            &mut xform,
-            vec3(model_pos.x, model_pos.y, model_pos.z),
-        );
+        let model_xform = model_xform.compute_matrix();
+        let model_alpha = model_transp.map(|t| t.alpha).unwrap_or(1.0);
 
-        static_geo.push_model(model, xform, 1.0);
+        static_geo.push_model(model, model_mat, model_alpha, model_xform);
     }
 
     ctxt.static_geo = static_geo.build();
@@ -203,7 +192,7 @@ fn render(
         &raytracer_state.mappings,
         &raytracer_state.camera,
         &raytracer_state.lights,
-        &raytracer_state.materials,
+        raytracer_state.materials.library(),
         intermediate_texture,
     );
 

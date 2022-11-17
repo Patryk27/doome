@@ -1076,7 +1076,6 @@ dependencies = [
  "bevy",
  "doome-bevy",
  "doome-engine",
- "doome-physics",
  "doome-raytracer",
  "doome-surface",
  "doome-text",
@@ -1117,10 +1116,6 @@ dependencies = [
  "doome-surface",
  "doome-text",
 ]
-
-[[package]]
-name = "doome-physics"
-version = "0.1.0"
 
 [[package]]
 name = "doome-pixels"

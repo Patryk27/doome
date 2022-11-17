@@ -1,18 +1,16 @@
 use std::path::Path;
 
-use anyhow::{anyhow, bail, Context, Result};
-use doome_raytracer as rt;
-use glam::{vec2, vec3, Vec2, Vec3};
+use anyhow::{bail, Context, Result};
+use glam::{vec2, vec3};
 use tobj::LoadOptions;
 
-use super::{AssetsLoader, Model, ModelName};
+use super::{AssetsLoader, Model, ModelMaterial, ModelName, ModelTriangle};
 
 impl AssetsLoader {
     pub fn load_model(
         &mut self,
-        handle: ModelName,
+        name: ModelName,
         path: impl AsRef<Path>,
-        material_id: rt::MaterialId,
     ) -> Result<()> {
         let path = path.as_ref();
 
@@ -39,89 +37,102 @@ impl AssetsLoader {
             bail!("File contains multiple models ({})", models.len());
         }
 
-        let triangles = load_mesh_triangles(&models[0].mesh, material_id);
+        let triangles = self.process_mesh(&models[0].mesh);
 
-        if let Some(material) = materials.get(0) {
-            if material.diffuse_texture.is_empty() {
-                bail!("Model doesn't use diffuse texture");
-            }
+        let material = materials
+            .get(0)
+            .map(|mat| self.process_material(name, mat))
+            .transpose()?
+            .unwrap_or_default();
 
-            let tex = self.dir.get_file(&material.diffuse_texture).ok_or_else(
-                || anyhow!("Texture not found: {}", material.diffuse_texture),
-            )?;
-
-            let img = image::load_from_memory(tex.contents()).unwrap();
-            let img = img.to_rgba8();
-
-            self.textures
-                .entry(material.diffuse_texture.clone())
-                .and_modify(|e| {
-                    e.1.push(handle);
-                })
-                .or_insert((img, vec![handle]));
-        }
-
-        self.models.insert(handle, Model::new(triangles));
+        self.models.insert(
+            name,
+            Model {
+                triangles,
+                material,
+            },
+        );
 
         Ok(())
     }
-}
 
-fn load_mesh_triangles(
-    mesh: &tobj::Mesh,
-    material_id: rt::MaterialId,
-) -> Vec<(rt::Triangle, rt::TriangleMapping)> {
-    let mut triangles = vec![];
+    fn process_mesh(&self, mesh: &tobj::Mesh) -> Vec<ModelTriangle> {
+        assert_eq!(mesh.texcoord_indices.len(), mesh.indices.len());
 
-    assert_eq!(mesh.texcoord_indices.len(), mesh.indices.len());
+        let vertex_indices = mesh.indices.chunks(3);
+        let texcoord_indices = mesh.texcoord_indices.chunks(3);
 
-    let vertex_indices = mesh.indices.chunks(3);
-    let texcoord_indices = mesh.texcoord_indices.chunks(3);
+        vertex_indices
+            .zip(texcoord_indices)
+            .map(|(vertex_indices, texcoord_indices)| {
+                let vertices: Vec<_> = vertex_indices
+                    .iter()
+                    .copied()
+                    .map(|index| {
+                        let index = index as usize;
 
-    for (vertex_indices, texcoord_indices) in
-        vertex_indices.zip(texcoord_indices)
-    {
-        let vertices: Vec<Vec3> = vertex_indices
-            .iter()
-            .copied()
-            .map(|index| {
-                let index = index as usize;
+                        vec3(
+                            mesh.positions[3 * index],
+                            mesh.positions[3 * index + 1],
+                            mesh.positions[3 * index + 2],
+                        )
+                    })
+                    .collect();
 
-                let vertex = vec3(
-                    mesh.positions[3 * index],
-                    mesh.positions[3 * index + 1],
-                    mesh.positions[3 * index + 2],
-                );
+                let uvs: Vec<_> = texcoord_indices
+                    .iter()
+                    .copied()
+                    .map(|index| {
+                        let index = index as usize;
 
-                vertex
+                        vec2(
+                            mesh.texcoords[2 * index],
+                            mesh.texcoords[2 * index + 1],
+                        )
+                    })
+                    .collect();
+
+                ModelTriangle {
+                    vertices: [vertices[0], vertices[1], vertices[2]],
+                    uvs: [uvs[0], uvs[1], uvs[2]],
+                }
             })
-            .collect();
-
-        let texcoords: Vec<Vec2> = texcoord_indices
-            .iter()
-            .copied()
-            .map(|index| {
-                let index = index as usize;
-
-                let texcoord = vec2(
-                    mesh.texcoords[2 * index],
-                    mesh.texcoords[2 * index + 1],
-                );
-
-                texcoord
-            })
-            .collect();
-
-        triangles.push((
-            rt::Triangle::new(
-                vertices[0],
-                vertices[1],
-                vertices[2],
-                material_id,
-            ),
-            rt::TriangleMapping::new(texcoords[0], texcoords[1], texcoords[2]),
-        ));
+            .collect()
     }
 
-    triangles
+    fn process_material(
+        &mut self,
+        name: ModelName,
+        mat: &tobj::Material,
+    ) -> Result<ModelMaterial> {
+        let mut mm = ModelMaterial::default();
+
+        // TODO rgb to srgb?
+        mm.color = vec3(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
+
+        if !mat.diffuse_texture.is_empty() {
+            mm.is_textured = true;
+
+            let tex =
+                self.dir.get_file(&mat.diffuse_texture).with_context(|| {
+                    format!("Texture not found: {}", mat.diffuse_texture)
+                })?;
+
+            let tex =
+                image::load_from_memory(tex.contents()).with_context(|| {
+                    format!("Texture is invalid: {}", mat.diffuse_texture)
+                })?;
+
+            let tex = tex.to_rgba8();
+
+            self.textures
+                .entry(mat.diffuse_texture.clone())
+                .and_modify(|e| {
+                    e.1.push(name);
+                })
+                .or_insert((tex, vec![name]));
+        }
+
+        Ok(mm)
+    }
 }
