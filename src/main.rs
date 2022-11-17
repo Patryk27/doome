@@ -135,8 +135,12 @@ fn process_movement(
             player_rot.angle.cos() * CELESTIAL_MOVEMENT_SPEED * delta * sign;
     }
 
-    if keys.pressed(KeyCode::Q) || keys.pressed(KeyCode::E) {
-        let sign = if keys.pressed(KeyCode::Q) { -1.0 } else { 1.0 };
+    if keys.pressed(KeyCode::Comma) || keys.pressed(KeyCode::Period) {
+        let sign = if keys.pressed(KeyCode::Comma) {
+            -1.0
+        } else {
+            1.0
+        };
 
         player_rot.angle += ROTATION_SPEED * sign * delta;
     }
