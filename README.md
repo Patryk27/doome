@@ -1,6 +1,6 @@
 # Doomé
 
-Doom + Cliché = Doomé; a game.
+Doom + Cliché = Doomé; a game, made for playing.
 
 ## Running locally
 

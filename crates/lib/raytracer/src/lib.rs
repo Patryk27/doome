@@ -5,26 +5,27 @@ mod geometry_indexer;
 use std::num::NonZeroU32;
 
 pub use shader_common::*;
-use wgpu_ext::uniforms::{self, AllocatedUniform};
+use wgpu_ext::AllocatedUniform;
 
 pub use self::geometry_indexer::*;
 
 pub const ATLAS_WIDTH: u32 = 256;
 pub const ATLAS_HEIGHT: u32 = 256;
 
+type DescriptorSet0 = AllocatedUniform<StaticGeometry>;
+type DescriptorSet1 =
+    AllocatedUniform<StaticGeometryIndex, DynamicGeometry, TriangleMappings>;
+type DescriptorSet2 = AllocatedUniform<Camera, Lights, Materials>;
+type DescriptorSet3 = wgpu::BindGroup;
+
 pub struct Raytracer {
     width: u32,
     height: u32,
     pipeline: wgpu::RenderPipeline,
-    camera: AllocatedUniform<Camera>,
-    static_geo: AllocatedUniform<StaticGeometry>,
-    static_geo_mapping: AllocatedUniform<StaticGeometryMapping>,
-    static_geo_index: AllocatedUniform<StaticGeometryIndex>,
-    dynamic_geo: AllocatedUniform<DynamicGeometry>,
-    dynamic_geo_mapping: AllocatedUniform<DynamicGeometryMapping>,
-    lights_and_materials: AllocatedUniform<LightsAndMaterials>,
-
-    tex_bind_group: wgpu::BindGroup,
+    ds0: DescriptorSet0,
+    ds1: DescriptorSet1,
+    ds2: DescriptorSet2,
+    ds3: DescriptorSet3,
 }
 
 impl Raytracer {
@@ -38,16 +39,9 @@ impl Raytracer {
         let shader = wgpu::include_spirv!(env!("doome_raytracer_shader.spv"));
         let module = device.create_shader_module(shader);
 
-        let camera = uniforms::allocate(device, "camera");
-        let static_geo = uniforms::allocate(device, "static_geo");
-        let static_geo_mapping =
-            uniforms::allocate(device, "static_geo_mapping");
-        let static_geo_index = uniforms::allocate(device, "static_geo_index");
-        let dynamic_geo = uniforms::allocate(device, "dynamic_geo");
-        let dynamic_geo_mapping =
-            uniforms::allocate(device, "dynamic_geo_mapping");
-        let lights_and_materials =
-            uniforms::allocate(device, "lights_and_materials");
+        let ds0 = AllocatedUniform::create(device, "ds0");
+        let ds1 = AllocatedUniform::create(device, "ds1");
+        let ds2 = AllocatedUniform::create(device, "ds2");
 
         let tex_size = wgpu::Extent3d {
             width: ATLAS_WIDTH,
@@ -56,7 +50,7 @@ impl Raytracer {
         };
 
         let tex = device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("tex"),
+            label: Some("atlas_tex"),
             size: tex_size,
             mip_level_count: 1,
             sample_count: 1,
@@ -84,7 +78,9 @@ impl Raytracer {
         );
 
         let tex_view = tex.create_view(&wgpu::TextureViewDescriptor::default());
+
         let tex_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("atlas_tex_sampler"),
             address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
             address_mode_w: wgpu::AddressMode::ClampToEdge,
@@ -97,7 +93,7 @@ impl Raytracer {
             ..Default::default()
         });
 
-        let tex_bind_group_layout =
+        let ds3_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
@@ -124,34 +120,29 @@ impl Raytracer {
                 label: Some("tex_bind_group_layout"),
             });
 
-        let tex_bind_group =
-            device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &tex_bind_group_layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: wgpu::BindingResource::TextureView(&tex_view),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::Sampler(&tex_sampler),
-                    },
-                ],
-                label: Some("tex_bind_group"),
-            });
+        let ds3 = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("ds3"),
+            layout: &ds3_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&tex_view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&tex_sampler),
+                },
+            ],
+        });
 
         let pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("raytracer_pipeline_layout"),
                 bind_group_layouts: &[
-                    &camera.bind_group_layout,
-                    &static_geo.bind_group_layout,
-                    &static_geo_mapping.bind_group_layout,
-                    &static_geo_index.bind_group_layout,
-                    &dynamic_geo.bind_group_layout,
-                    &dynamic_geo_mapping.bind_group_layout,
-                    &lights_and_materials.bind_group_layout,
-                    &tex_bind_group_layout,
+                    ds0.bind_group_layout(),
+                    ds1.bind_group_layout(),
+                    ds2.bind_group_layout(),
+                    &ds3_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -184,14 +175,10 @@ impl Raytracer {
             width,
             height,
             pipeline,
-            camera,
-            static_geo,
-            static_geo_mapping,
-            static_geo_index,
-            dynamic_geo,
-            dynamic_geo_mapping,
-            lights_and_materials,
-            tex_bind_group,
+            ds0,
+            ds1,
+            ds2,
+            ds3,
         }
     }
 
@@ -199,30 +186,22 @@ impl Raytracer {
         &self,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
-        camera: &Camera,
         static_geo: &StaticGeometry,
-        static_geo_mapping: &StaticGeometryMapping,
         static_geo_index: &StaticGeometryIndex,
         dynamic_geo: &DynamicGeometry,
-        dynamic_geo_mapping: &DynamicGeometryMapping,
+        geo_mapping: &TriangleMappings,
+        camera: &Camera,
         lights: &Lights,
         materials: &Materials,
         output_texture: &wgpu::TextureView,
     ) {
-        self.camera.write(queue, camera);
-        self.static_geo.write(queue, static_geo);
-        self.static_geo_mapping.write(queue, static_geo_mapping);
-        self.static_geo_index.write(queue, static_geo_index);
-        self.dynamic_geo.write(queue, dynamic_geo);
-        self.dynamic_geo_mapping.write(queue, dynamic_geo_mapping);
-        // TODO pretty hacky
-        self.lights_and_materials.write(
-            queue,
-            &LightsAndMaterials {
-                lights: *lights,
-                materials: *materials,
-            },
-        );
+        self.ds0.write0(queue, static_geo);
+        self.ds1.write0(queue, static_geo_index);
+        self.ds1.write1(queue, dynamic_geo);
+        self.ds1.write2(queue, geo_mapping);
+        self.ds2.write0(queue, camera);
+        self.ds2.write1(queue, lights);
+        self.ds2.write2(queue, materials);
 
         let mut rpass =
             encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -241,14 +220,10 @@ impl Raytracer {
         rpass.set_scissor_rect(0, 0, self.width as _, self.height as _);
         rpass.set_pipeline(&self.pipeline);
 
-        rpass.set_bind_group(0, &self.camera.bind_group, &[]);
-        rpass.set_bind_group(1, &self.static_geo.bind_group, &[]);
-        rpass.set_bind_group(2, &self.static_geo_mapping.bind_group, &[]);
-        rpass.set_bind_group(3, &self.static_geo_index.bind_group, &[]);
-        rpass.set_bind_group(4, &self.dynamic_geo.bind_group, &[]);
-        rpass.set_bind_group(5, &self.dynamic_geo_mapping.bind_group, &[]);
-        rpass.set_bind_group(6, &self.lights_and_materials.bind_group, &[]);
-        rpass.set_bind_group(7, &self.tex_bind_group, &[]);
+        rpass.set_bind_group(0, &self.ds0.bind_group(), &[]);
+        rpass.set_bind_group(1, &self.ds1.bind_group(), &[]);
+        rpass.set_bind_group(2, &self.ds2.bind_group(), &[]);
+        rpass.set_bind_group(3, &self.ds3, &[]);
 
         rpass.draw(0..3, 0..1);
     }

@@ -1,2 +1,5 @@
 [alias]
-run-wasm = "run --package run-wasm --release -- doome --release"
+run-wasm = "run --release --target wasm32-unknown-unknown --target-dir target/wasm"
+
+[target.wasm32-unknown-unknown]
+runner = "wasm-server-runner"

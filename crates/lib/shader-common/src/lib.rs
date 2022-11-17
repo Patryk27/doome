@@ -5,7 +5,6 @@
 mod camera;
 mod constants;
 mod dynamic_geometry;
-mod dynamic_geometry_mapping;
 mod hit;
 mod light;
 mod lights;
@@ -15,9 +14,9 @@ pub mod math;
 mod ray;
 mod static_geometry;
 mod static_geometry_index;
-mod static_geometry_mapping;
 mod triangle;
 mod triangle_mapping;
+mod triangle_mappings;
 mod utils;
 pub mod vertex_shader;
 mod world;
@@ -33,7 +32,6 @@ use spirv_std::{Image, Sampler};
 
 pub use self::camera::*;
 pub use self::dynamic_geometry::*;
-pub use self::dynamic_geometry_mapping::*;
 pub use self::hit::*;
 pub use self::light::*;
 pub use self::lights::*;
@@ -42,18 +40,11 @@ pub use self::materials::*;
 pub use self::ray::*;
 pub use self::static_geometry::*;
 pub use self::static_geometry_index::*;
-pub use self::static_geometry_mapping::*;
 pub use self::triangle::*;
 pub use self::triangle_mapping::*;
+pub use self::triangle_mappings::*;
 use self::utils::*;
 pub use self::world::*;
-
-#[repr(C)]
-#[derive(Copy, Clone, Pod, Zeroable)]
-pub struct LightsAndMaterials {
-    pub lights: Lights,
-    pub materials: Materials,
-}
 
 // WebGL 2's limit
 pub const MAX_BUFFER_BINDING_SIZE: usize = 65536;

@@ -1,4 +1,4 @@
-use glam::{vec2, Vec2, Vec4Swizzles};
+use glam::{vec2, Vec2};
 use maplit::btreemap;
 use raytracer::{ATLAS_HEIGHT, ATLAS_WIDTH};
 use rectangle_pack::{
@@ -66,31 +66,25 @@ impl PipelineBuilder {
 
                 for (_, tri_map) in &mut model.triangles {
                     tri_map.uv0 = remap_uv(
-                        tri_map.uv0.xy(),
+                        tri_map.uv0,
                         old_tex_size,
                         new_tex_size,
                         offset_in_new_tex,
-                    )
-                    .extend(0.0)
-                    .extend(0.0);
+                    );
 
                     tri_map.uv1 = remap_uv(
-                        tri_map.uv1.xy(),
+                        tri_map.uv1,
                         old_tex_size,
                         new_tex_size,
                         offset_in_new_tex,
-                    )
-                    .extend(0.0)
-                    .extend(0.0);
+                    );
 
                     tri_map.uv2 = remap_uv(
-                        tri_map.uv2.xy(),
+                        tri_map.uv2,
                         old_tex_size,
                         new_tex_size,
                         offset_in_new_tex,
-                    )
-                    .extend(0.0)
-                    .extend(0.0);
+                    );
                 }
             }
         }

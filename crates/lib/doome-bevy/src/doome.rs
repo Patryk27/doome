@@ -5,7 +5,7 @@ use pixels::Pixels;
 use raytracer as rt;
 use rt::ShaderConstants;
 use scaler::Scaler;
-use wgpu_ext::uniforms::AllocatedUniform;
+use wgpu_ext::AllocatedUniform;
 
 use crate::renderer::RendererState;
 
@@ -29,12 +29,11 @@ pub struct DoomeRenderInit {
 
 #[derive(Resource)]
 pub struct DoomeRendererContext {
-    pub camera: rt::Camera,
     pub static_geo: Box<rt::StaticGeometry>,
-    pub static_geo_mapping: Box<rt::StaticGeometryMapping>,
     pub static_geo_index: Box<rt::StaticGeometryIndex>,
     pub dynamic_geo: Box<rt::DynamicGeometry>,
-    pub dynamic_geo_mapping: Box<rt::DynamicGeometryMapping>,
+    pub geo_mapping: Box<rt::TriangleMappings>,
+    pub camera: rt::Camera,
     pub lights: rt::Lights,
     pub materials: rt::Materials,
 }
@@ -48,14 +47,12 @@ impl Plugin for DoomePlugin {
         let device = &renderer.device;
         let queue = &renderer.queue;
 
-        let shader_constants = wgpu_ext::uniforms::allocate::<ShaderConstants>(
-            device,
-            "shader_constants",
-        );
+        let shader_constants =
+            AllocatedUniform::create(device, "shader_constants");
 
         let window = windows.get_primary().unwrap();
 
-        shader_constants.write(
+        shader_constants.write0(
             queue,
             &ShaderConstants {
                 width: WIDTH as f32,
@@ -150,12 +147,11 @@ fn render(
     raytracer.render(
         queue,
         &mut encoder,
-        &ctxt.camera,
         &ctxt.static_geo,
-        &ctxt.static_geo_mapping,
         &ctxt.static_geo_index,
         &ctxt.dynamic_geo,
-        &ctxt.dynamic_geo_mapping,
+        &ctxt.geo_mapping,
+        &ctxt.camera,
         &ctxt.lights,
         &ctxt.materials,
         intermediate_texture,

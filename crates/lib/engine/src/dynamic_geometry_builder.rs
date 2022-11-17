@@ -1,12 +1,18 @@
 use raytracer as rt;
 
-#[derive(Default)]
-pub struct DynamicGeometryBuilder {
+pub struct DynamicGeometryBuilder<'a> {
     geometry: rt::DynamicGeometry,
-    geometry_mapping: rt::DynamicGeometryMapping,
+    mappings: &'a mut rt::TriangleMappings,
 }
 
-impl DynamicGeometryBuilder {
+impl<'a> DynamicGeometryBuilder<'a> {
+    pub fn new(mappings: &'a mut rt::TriangleMappings) -> Self {
+        Self {
+            geometry: Default::default(),
+            mappings,
+        }
+    }
+
     pub fn map_coords(&self, x: i32, z: i32) -> (f32, f32) {
         let x = (x as f32) * 2.0;
         let z = (z as f32) * 2.0;
@@ -27,14 +33,13 @@ impl DynamicGeometryBuilder {
         triangle_mapping: rt::TriangleMapping,
     ) -> rt::TriangleId<rt::DynamicTriangle> {
         let triangle_id = self.geometry.push(triangle);
-        self.geometry_mapping.set(triangle_id, triangle_mapping);
+
+        self.mappings.set(triangle_id.into_any(), triangle_mapping);
 
         triangle_id
     }
 
-    pub fn build(
-        self,
-    ) -> (Box<rt::DynamicGeometry>, Box<rt::DynamicGeometryMapping>) {
-        (Box::new(self.geometry), Box::new(self.geometry_mapping))
+    pub fn build(self) -> Box<rt::DynamicGeometry> {
+        Box::new(self.geometry)
     }
 }

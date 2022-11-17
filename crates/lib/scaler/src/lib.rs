@@ -1,5 +1,5 @@
 use shader_common::ShaderConstants;
-use wgpu_ext::uniforms::AllocatedUniform;
+use wgpu_ext::AllocatedUniform;
 
 pub struct Scaler {
     pub render_pipeline: wgpu::RenderPipeline,
@@ -87,7 +87,7 @@ impl Scaler {
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("scaler_pipeline_layout"),
                 bind_group_layouts: &[
-                    &shader_constants.bind_group_layout,
+                    shader_constants.bind_group_layout(),
                     &bind_group_layout,
                 ],
                 push_constant_ranges: &[],
@@ -146,7 +146,7 @@ impl Scaler {
             });
 
         render_pass.set_pipeline(&self.render_pipeline);
-        render_pass.set_bind_group(0, &shader_contants.bind_group, &[]);
+        render_pass.set_bind_group(0, shader_contants.bind_group(), &[]);
         render_pass.set_bind_group(1, &self.bind_group, &[]);
 
         render_pass.draw(0..3, 0..1);

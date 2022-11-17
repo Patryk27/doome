@@ -12,8 +12,14 @@ scaler = { path = "../scaler" }
 wgpu-ext = { path = "../wgpu-ext" }
 
 bevy = { version = "0.9", default-features = false, features = ["bevy_winit"] }
-glam = { version = "0.22", default-features = false }
+futures-lite = "1.12"
 include_dir = "0.7"
 log = "0.4"
-futures-lite = "1.12"
 wgpu = "0.14"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wgpu = { version = "0.14", features = ["webgl"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# TODO what about wayland?
+winit = { version = "0.27.5", features = ["x11"] }

@@ -19,15 +19,14 @@ pub struct RendererState {
 impl Plugin for RendererPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         let windows = app.world.resource_mut::<bevy::window::Windows>();
-        let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
-
+        let instance = wgpu::Instance::new(wgpu::Backends::all());
         let window = windows.get_primary().expect("Missing primary window");
+
         let surface = unsafe {
             instance.create_surface(&window.raw_handle().unwrap().get_handle())
         };
 
         let request_adapter_options = wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::HighPerformance,
             compatible_surface: Some(&surface),
             ..Default::default()
         };
@@ -37,7 +36,7 @@ impl Plugin for RendererPlugin {
                 let adapter = instance
                     .request_adapter(&request_adapter_options)
                     .await
-                    .expect("Missing GPU adapter");
+                    .expect("Failed to find a compatible GPU adapter");
 
                 let (device, queue) = adapter
                     .request_device(
@@ -45,8 +44,8 @@ impl Plugin for RendererPlugin {
                             label: Some("device"),
                             features: wgpu::Features::default(),
                             limits: wgpu::Limits {
-                                max_bind_groups: 8,
-                                ..wgpu::Limits::default()
+                                max_uniform_buffer_binding_size: 64 * 1024,
+                                ..wgpu::Limits::downlevel_webgl2_defaults()
                             },
                         },
                         None,

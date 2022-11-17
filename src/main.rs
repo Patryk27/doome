@@ -91,7 +91,8 @@ fn main() {
 
     // -----
 
-    let mut static_geo = StaticGeometryBuilder::default();
+    let mut mappings = Box::new(rt::TriangleMappings::default());
+    let mut static_geo = StaticGeometryBuilder::new(&mut mappings);
 
     static_geo.push_floor(-3, -3, 3, 3, mat_matte);
     static_geo.push_wall(-3, 3, -1, 3, 0, mat_matte);
@@ -129,12 +130,12 @@ fn main() {
         false,
     );
 
-    let (static_geo, static_geo_mapping) = static_geo.build();
+    let static_geo = static_geo.build();
     let static_geo_index = rt::GeometryIndexer::index(&static_geo);
 
     // -----
 
-    let mut dynamic_geo = DynamicGeometryBuilder::default();
+    let mut dynamic_geo = DynamicGeometryBuilder::new(&mut mappings);
 
     dynamic_geo.push(rt::Triangle::new(
         vec3(0.0, 0.0, 0.0),
@@ -143,7 +144,7 @@ fn main() {
         mat_static,
     ));
 
-    let (dynamic_geo, dynamic_geo_mapping) = dynamic_geo.build();
+    let dynamic_geo = dynamic_geo.build();
 
     // -----
 
@@ -162,12 +163,11 @@ fn main() {
     App::new()
         .insert_resource(DoomeRenderInit { pipeline })
         .insert_resource(DoomeRendererContext {
-            camera,
             static_geo,
-            static_geo_mapping,
             static_geo_index,
             dynamic_geo,
-            dynamic_geo_mapping,
+            geo_mapping: mappings,
+            camera,
             lights,
             materials,
         })
