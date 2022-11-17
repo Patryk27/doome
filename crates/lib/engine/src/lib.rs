@@ -1,5 +1,4 @@
 pub mod canvas;
-pub mod pipeline;
 
 pub use self::canvas::*;
 

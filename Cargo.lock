@@ -1088,6 +1088,7 @@ dependencies = [
 name = "doome-bevy"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "bevy",
  "doome-engine",
  "doome-pixels",
@@ -1097,8 +1098,13 @@ dependencies = [
  "doome-wgpu-ext",
  "futures-lite",
  "glam",
+ "image",
  "include_dir",
  "log",
+ "maplit",
+ "rectangle-pack",
+ "test-case",
+ "tobj",
  "wgpu",
  "winit",
 ]
@@ -1107,19 +1113,9 @@ dependencies = [
 name = "doome-engine"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "bevy",
  "doome-raytracer",
  "doome-surface",
  "doome-text",
- "glam",
- "image",
- "include_dir",
- "log",
- "maplit",
- "rectangle-pack",
- "test-case",
- "tobj",
 ]
 
 [[package]]

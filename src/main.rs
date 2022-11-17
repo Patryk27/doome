@@ -9,34 +9,27 @@ use bevy::diagnostic::{
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
+use doome_bevy::assets::Assets;
 use doome_bevy::components::*;
-use doome_bevy::doome::{DoomePlugin, DoomeRenderInit, DoomeRenderer};
+use doome_bevy::doome::{DoomePlugin, DoomeRenderer};
 use doome_bevy::renderer::RendererPlugin;
 use doome_bevy::text::Text;
-use doome_engine::pipeline::PipelineBuilder;
 use doome_engine::{Canvas, HEIGHT, HUD_HEIGHT, WIDTH};
-use doome_raytracer as rt;
 use doome_surface::Color;
-use glam::{vec2, vec3, Vec3Swizzles};
+use glam::vec3;
+use include_dir::{include_dir, Dir};
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
-const ASSETS: include_dir::Dir = include_dir::include_dir!("assets");
+const ASSETS: Dir<'static> = include_dir!("assets");
 
 const WINDOW_SCALE: f32 = 4.0;
 
 fn main() {
-    let pipeline = {
-        let pipeline = PipelineBuilder::new(ASSETS);
+    let assets = Assets::init(&ASSETS).unwrap();
 
-        // TODO
-
-        pipeline.build()
-    };
-
-    let mut app = App::new();
-
-    app.insert_resource(DoomeRenderInit { pipeline })
+    App::new()
+        .insert_resource(assets)
         .insert_resource(Text::default())
         .add_plugin(bevy::log::LogPlugin::default())
         .add_plugin(bevy::core::CorePlugin::default())
@@ -64,9 +57,8 @@ fn main() {
         .add_system(process_camera)
         .add_system(render_ui)
         .add_startup_system(hide_cursor)
-        .add_startup_system(levels::level1::init);
-
-    app.run();
+        .add_startup_system(levels::level1::init)
+        .run();
 }
 
 fn hide_cursor(mut windows: ResMut<Windows>) {

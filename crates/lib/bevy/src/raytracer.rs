@@ -10,6 +10,7 @@ use glam::{vec2, vec3};
 
 use self::dynamic_geometry_builder::*;
 use self::static_geometry_builder::*;
+use crate::assets::Assets;
 use crate::components::*;
 use crate::doome::DoomeRenderer;
 use crate::events::*;
@@ -67,10 +68,12 @@ struct DoomeRaytracerState {
 }
 
 fn sync_static_geometry(
+    assets: Res<Assets>,
     mut ctxt: ResMut<DoomeRaytracerState>,
     floors: Query<&Floor>,
     ceilings: Query<&Ceiling>,
     walls: Query<&Wall>,
+    models: Query<(&ModelName, &Position)>,
     mut rx: EventReader<SyncStaticGeometry>,
 ) {
     if rx.iter().count() == 0 {
@@ -111,6 +114,19 @@ fn sync_static_geometry(
             // TODO use proper material
             rt::MaterialId::new(0),
         );
+    }
+
+    for (&model_name, &model_pos) in models.iter() {
+        let model = assets.model(model_name);
+
+        let mut xform = rt::math::identity();
+
+        rt::math::translate(
+            &mut xform,
+            vec3(model_pos.x, model_pos.y, model_pos.z),
+        );
+
+        static_geo.push_model(model, xform, 1.0);
     }
 
     ctxt.static_geo = static_geo.build();

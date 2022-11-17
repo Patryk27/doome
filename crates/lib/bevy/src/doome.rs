@@ -1,7 +1,6 @@
 use bevy::log;
 use bevy::prelude::*;
 use bevy::window::{WindowResized, WindowScaleFactorChanged};
-use doome_engine::pipeline::Pipeline;
 use doome_engine::{HEIGHT, WIDTH};
 use doome_pixels::Pixels;
 use doome_raytracer as rt;
@@ -9,6 +8,7 @@ use doome_scaler::Scaler;
 use doome_wgpu_ext::AllocatedUniform;
 use rt::ShaderConstants;
 
+use crate::assets::Assets;
 use crate::raytracer::DoomeRaytracerPlugin;
 use crate::renderer::RendererState;
 
@@ -23,15 +23,10 @@ pub struct DoomeRenderer {
     pub shader_constants: AllocatedUniform<ShaderConstants>,
 }
 
-#[derive(Resource)]
-pub struct DoomeRenderInit {
-    pub pipeline: Pipeline,
-}
-
 impl Plugin for DoomePlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
+        let assets = app.world.resource::<Assets>();
         let renderer = app.world.resource::<RendererState>();
-        let renderer_init = app.world.resource::<DoomeRenderInit>();
         let windows = app.world.resource::<Windows>();
 
         let device = &renderer.device;
@@ -58,7 +53,7 @@ impl Plugin for DoomePlugin {
             &renderer.queue,
             WIDTH as _,
             HEIGHT as _,
-            renderer_init.pipeline.atlas().as_raw(),
+            assets.atlas().as_raw(),
         );
 
         let pixels =

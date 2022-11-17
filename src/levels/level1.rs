@@ -26,7 +26,8 @@ pub fn init(mut commands: Commands, mut tx: EventWriter<SyncStaticGeometry>) {
     commands.wall(1, 3, 1, 5, 1);
     commands.wall(-1, 3, -1, 5, 3);
     commands.ceiling(-10, -10, 10, 10);
-    commands.light(0.0, 2.0, 0.0, 1.0, 1.0, 1.0);
+    commands.light(1.0, 2.0, -1.5, 1.0, 1.0, 1.0);
+    commands.model("monke", 0.0, 1.0, 4.0);
 
     tx.send(SyncStaticGeometry);
 }

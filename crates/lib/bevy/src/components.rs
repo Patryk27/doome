@@ -1,44 +1,44 @@
 use bevy::prelude::*;
 
-#[derive(Component)]
+#[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Position {
     pub x: f32,
     pub y: f32,
     pub z: f32,
 }
 
-#[derive(Component)]
+#[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Rotation {
     pub angle: f32,
 }
 
-#[derive(Component)]
+#[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Color {
     pub r: f32,
     pub g: f32,
     pub b: f32,
 }
 
-#[derive(Component)]
+#[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Health {
     pub val: f32,
 }
 
-#[derive(Component)]
+#[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Player;
 
-#[derive(Component)]
+#[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Light {
     pub intensity: f32,
 }
 
-#[derive(Component, Default)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Component)]
 pub struct Camera {
     pub origin: Vec3,
     pub look_at: Vec3,
 }
 
-#[derive(Component)]
+#[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Floor {
     pub x1: i32,
     pub z1: i32,
@@ -46,7 +46,7 @@ pub struct Floor {
     pub z2: i32,
 }
 
-#[derive(Component)]
+#[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Ceiling {
     pub x1: i32,
     pub z1: i32,
@@ -54,11 +54,22 @@ pub struct Ceiling {
     pub z2: i32,
 }
 
-#[derive(Component)]
+#[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Wall {
     pub x1: i32,
     pub z1: i32,
     pub x2: i32,
     pub z2: i32,
     pub rot: u8,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Component)]
+pub struct ModelName {
+    pub(crate) name: &'static str,
+}
+
+impl ModelName {
+    pub fn new(name: &'static str) -> Self {
+        Self { name }
+    }
 }

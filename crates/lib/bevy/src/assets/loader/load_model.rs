@@ -1,29 +1,24 @@
 use std::path::Path;
 
-use anyhow::{anyhow, bail};
+use anyhow::{anyhow, bail, Context, Result};
 use doome_raytracer as rt;
 use glam::{vec2, vec3, Vec2, Vec3};
 use tobj::LoadOptions;
 
-use super::{ModelHandle, PipelineBuilder};
-use crate::pipeline::Model;
+use super::{AssetsLoader, Model, ModelName};
 
-impl PipelineBuilder {
+impl AssetsLoader {
     pub fn load_model(
         &mut self,
+        handle: ModelName,
         path: impl AsRef<Path>,
         material_id: rt::MaterialId,
-    ) -> anyhow::Result<ModelHandle> {
-        let new_handle = ModelHandle(self.models.len());
-
+    ) -> Result<()> {
         let path = path.as_ref();
 
-        log::info!("Loading model from {}", path.display());
+        log::info!("Loading model: {}", path.display());
 
-        let model_file = self
-            .dir
-            .get_file(path)
-            .ok_or_else(|| anyhow!("Missing file {}", path.display()))?;
+        let model_file = self.dir.get_file(path).context("File not found")?;
 
         let (models, materials) = tobj::load_obj_buf(
             &mut model_file.contents(),
@@ -31,44 +26,44 @@ impl PipelineBuilder {
                 triangulate: true,
                 ..LoadOptions::default()
             },
-            |mat| self.load_material(mat),
+            |path| self.load_material(path),
         )?;
 
-        let materials = materials?;
+        let materials = materials.context("Couldn't load materials")?;
 
         if materials.len() > 1 {
-            bail!("Only one or none material per model is supported");
+            bail!("Model uses multiple materials, which is not supported");
         }
 
         if models.len() != 1 {
-            bail!("Expected exactly one model, got {}", models.len());
+            bail!("File contains multiple models ({})", models.len());
         }
 
         let triangles = load_mesh_triangles(&models[0].mesh, material_id);
 
         if let Some(material) = materials.get(0) {
             if material.diffuse_texture.is_empty() {
-                bail!("Expected diffuse texture");
+                bail!("Model doesn't use diffuse texture");
             }
 
             let tex = self.dir.get_file(&material.diffuse_texture).ok_or_else(
-                || anyhow!("Missing texture {}", material.diffuse_texture),
+                || anyhow!("Texture not found: {}", material.diffuse_texture),
             )?;
 
             let img = image::load_from_memory(tex.contents()).unwrap();
             let img = img.to_rgba8();
 
             self.textures
-                .entry(material.diffuse_texture.clone()) // :(
+                .entry(material.diffuse_texture.clone())
                 .and_modify(|e| {
-                    e.1.push(new_handle);
+                    e.1.push(handle);
                 })
-                .or_insert((img, vec![new_handle]));
+                .or_insert((img, vec![handle]));
         }
 
-        self.models.push(Model::new(triangles));
+        self.models.insert(handle, Model::new(triangles));
 
-        Ok(new_handle)
+        Ok(())
     }
 }
 

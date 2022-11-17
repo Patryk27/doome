@@ -1,7 +1,9 @@
 use std::f32::consts::PI;
 
 use doome_raytracer as rt;
-use glam::vec3;
+use glam::{vec3, Mat4};
+
+use crate::assets::Model;
 
 pub struct StaticGeometryBuilder<'a> {
     geometry: rt::StaticGeometry,
@@ -134,6 +136,14 @@ impl<'a> StaticGeometryBuilder<'a> {
             vertex(1.0 * rot.cos(), 4.0, -1.0 * rot.sin()),
             mat,
         ));
+    }
+
+    pub fn push_model(&mut self, model: &Model, xform: Mat4, alpha: f32) {
+        for &(triangle, triangle_mapping) in &model.triangles {
+            let triangle = triangle.with_transform(xform).with_alpha(alpha);
+
+            self.push_ex(triangle, triangle_mapping);
+        }
     }
 
     pub fn build(self) -> Box<rt::StaticGeometry> {

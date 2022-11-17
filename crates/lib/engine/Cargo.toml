@@ -8,17 +8,3 @@ edition = "2021"
 doome-raytracer = { path = "../raytracer" }
 doome-surface = { path = "../surface" }
 doome-text = { path = "../text" }
-
-# Crates.io
-anyhow = "1"
-bevy = { version = "0.9", default-features = false }
-glam = { version = "0.22", default-features = false }
-image = "0.24"
-include_dir = "0.7.3"
-log = "0.4"
-maplit = "1.0"
-rectangle-pack = "0.4"
-tobj = "3.2"
-
-[dev-dependencies]
-test-case = "2.2"

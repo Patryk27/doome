@@ -6,6 +6,7 @@ pub trait LevelBuilderExt {
     fn ceiling(&mut self, x1: i32, z1: i32, x2: i32, z2: i32);
     fn wall(&mut self, x1: i32, z1: i32, x2: i32, z2: i32, rot: u8);
     fn light(&mut self, x: f32, y: f32, z: f32, r: f32, g: f32, b: f32);
+    fn model(&mut self, name: &'static str, x: f32, y: f32, z: f32);
 }
 
 impl LevelBuilderExt for Commands<'_, '_> {
@@ -33,5 +34,9 @@ impl LevelBuilderExt for Commands<'_, '_> {
             Position { x, y, z },
             Color { r, g, b },
         ));
+    }
+
+    fn model(&mut self, name: &'static str, x: f32, y: f32, z: f32) {
+        self.spawn((ModelName::new(name), Position { x, y, z }));
     }
 }
