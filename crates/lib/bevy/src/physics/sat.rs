@@ -28,32 +28,57 @@ impl Polygon {
     }
 }
 
-pub fn resolve_sat(a: &Polygon, b: &Polygon) -> bool {
+/// Resolves the SAT collision between two polygons
+///
+/// Returns the minimum translation vector required to resolve the collision, if such occurred,
+/// otherwise returns None.
+pub fn resolve_sat(a: &Polygon, b: &Polygon) -> Option<Vec2> {
     let all_axes: Vec<Vec2> = a
         .iter_separation_axes()
         .chain(b.iter_separation_axes())
         .collect();
 
+    let mut mtvs = Vec::with_capacity(all_axes.len());
     for axis in all_axes {
         let a_vertices = project_vertices_onto(&a.vertices, axis);
         let b_vertices = project_vertices_onto(&b.vertices, axis);
 
-        if resolve_axis_projections(axis, &a_vertices, &b_vertices) {
-            return false;
-        }
+        // If there's no overlap we'll early return None
+        mtvs.push(resolve_axis_projections(axis, &a_vertices, &b_vertices)?);
     }
 
-    true
+    mtvs.into_iter().min_by(|a, b| {
+        a.length()
+            .partial_cmp(&b.length())
+            .unwrap_or(std::cmp::Ordering::Equal)
+    })
 }
 
-pub fn resolve_axis_projections(axis: Vec2, a: &[Vec2], b: &[Vec2]) -> bool {
+/// Resolves axis projections
+///
+/// if the projections overlap, returns the axis multiplied by the overlap sector
+/// otherwise returns None
+pub fn resolve_axis_projections(
+    axis: Vec2,
+    a: &[Vec2],
+    b: &[Vec2],
+) -> Option<Vec2> {
     let a_min = a.iter().map(|v| v.dot(axis)).fold(f32::NAN, f32::min);
     let a_max = a.iter().map(|v| v.dot(axis)).fold(f32::NAN, f32::max);
 
     let b_min = b.iter().map(|v| v.dot(axis)).fold(f32::NAN, f32::min);
     let b_max = b.iter().map(|v| v.dot(axis)).fold(f32::NAN, f32::max);
 
-    a_max < b_min || b_max < a_min
+    if a_max < b_min || b_max < a_min {
+        None
+    } else {
+        let a_overlap = a_max - b_min;
+        let b_overlap = b_max - a_min;
+
+        let overlap = a_overlap.min(b_overlap);
+
+        Some(axis * overlap)
+    }
 }
 
 pub fn project_vertices_onto(vertices: &[Vec2], axis: Vec2) -> Vec<Vec2> {

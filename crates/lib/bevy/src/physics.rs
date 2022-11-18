@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use glam::Vec3Swizzles;
+use glam::{vec3, Vec3Swizzles};
 
 use self::sat::{project_vertices_onto, resolve_axis_projections};
 
@@ -75,33 +75,37 @@ fn resolve_collisions(
         let new_transform = active_entity_transform
             .with_translation(active_entity_transform.translation + v);
 
-        let mut collision = false;
         for (
             passive_entity,
             passive_entity_collider,
             passive_entity_transform,
         ) in colliders.iter()
         {
+            if body.velocity.length() < f32::EPSILON {
+                break;
+            }
+
             if active_entity == passive_entity {
                 continue;
             }
 
-            if are_colliding(
+            if let Some(mtv) = are_colliding(
                 &new_transform,
                 active_entity_collider,
                 passive_entity_transform,
                 passive_entity_collider,
             ) {
-                collision = true;
-                break;
+                let mtv_component = vector_decompose(body.velocity.xz(), mtv);
+                let mtv = vec3(mtv.x, 0.0, mtv.y);
+                body.velocity -= mtv * mtv_component;
             }
         }
-
-        // TODO: Calculate collision direction and only anneal the velocity in that direction
-        if collision {
-            body.velocity = Vec3::ZERO;
-        }
     }
+}
+
+/// Decomposes the vector c along the vectors a and a.perp, returns only the component along a
+fn vector_decompose(c: Vec2, a: Vec2) -> f32 {
+    c.dot(a) / a.length_squared()
 }
 
 fn update_physics(time: Res<Time>, mut bodies: Query<(&Body, &mut Transform)>) {
@@ -117,15 +121,22 @@ fn are_colliding(
     collider_a: &Collider,
     transform_b: &Transform,
     collider_b: &Collider,
-) -> bool {
+) -> Option<Vec2> {
     match (collider_a, collider_b) {
         (Collider::Circle(a), Collider::Circle(b)) => {
             let a_pos = transform_a.translation.xz();
             let b_pos = transform_b.translation.xz();
 
-            let distance = (a_pos - b_pos).length();
+            let axis = b_pos - a_pos;
+            let distance = axis.length();
 
-            distance < a.radius + b.radius
+            if distance < a.radius + b.radius {
+                let overlap = a.radius + b.radius - distance;
+
+                Some(axis.normalize() * overlap)
+            } else {
+                None
+            }
         }
         (polygon_a, Collider::Circle(b)) => are_polygon_and_circle_colliding(
             transform_a,
@@ -153,7 +164,7 @@ fn are_polygon_and_circle_colliding(
     polygon: &Collider,
     circle_transform: &Transform,
     circle: &CircleCollider,
-) -> bool {
+) -> Option<Vec2> {
     let polygon = collider_to_polygon(polygon_transform, polygon);
     let circle_center = circle_transform.translation.xz();
 
@@ -172,11 +183,13 @@ fn are_polygon_and_circle_colliding(
     let circle_resolve_axis =
         (circle_center - vertex_closest_to_circle).normalize();
 
+    // TODO: Code duplication with sat::resolve_sat
     let all_axes: Vec<_> = polygon
         .iter_separation_axes()
         .chain(std::iter::once(circle_resolve_axis))
         .collect();
 
+    let mut mtvs = Vec::with_capacity(all_axes.len());
     for axis in all_axes {
         let polygon_projections =
             project_vertices_onto(&polygon.vertices, axis);
@@ -184,16 +197,18 @@ fn are_polygon_and_circle_colliding(
         let circle_projections =
             project_circle_onto_axis(circle_center, circle.radius, axis);
 
-        if resolve_axis_projections(
+        mtvs.push(resolve_axis_projections(
             axis,
             &polygon_projections,
             &circle_projections,
-        ) {
-            return false;
-        }
+        )?);
     }
 
-    true
+    mtvs.into_iter().min_by(|a, b| {
+        a.length()
+            .partial_cmp(&b.length())
+            .unwrap_or(std::cmp::Ordering::Equal)
+    })
 }
 
 fn project_circle_onto_axis(
