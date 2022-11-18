@@ -9,8 +9,9 @@ pub struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         // TODO: Play with staging so that this gets executed at a higher frame rate
+
         app.add_system(update_physics)
-            .add_system(synchronize_physics_with_position);
+            .add_system(resolve_collisions.before(update_physics));
     }
 }
 
@@ -33,7 +34,6 @@ pub struct LineCollider {
 
 #[derive(Component)]
 pub struct Body {
-    pub position: Vec3,
     pub velocity: Vec3,
     pub body_type: BodyType,
 }
@@ -44,15 +44,7 @@ pub enum BodyType {
     // Rigid, // TODO: implement rigid body physics
 }
 
-fn synchronize_physics_with_position(
-    mut bodies_with_colliders: Query<(&Body, &mut Transform)>,
-) {
-    for (body, mut transform) in bodies_with_colliders.iter_mut() {
-        transform.translation = body.position;
-    }
-}
-
-fn update_physics(
+fn resolve_collisions(
     time: Res<Time>,
     mut bodies_with_colliders: Query<(
         Entity,
@@ -98,11 +90,17 @@ fn update_physics(
         }
 
         // TODO: Calculate collision direction and only anneal the velocity in that direction
-        if !collision {
-            body.position = body.position + v;
-        } else {
+        if collision {
             body.velocity = Vec3::ZERO;
         }
+    }
+}
+
+fn update_physics(time: Res<Time>, mut bodies: Query<(&Body, &mut Transform)>) {
+    let delta = time.delta_seconds();
+
+    for (body, mut transform) in bodies.iter_mut() {
+        transform.translation += body.velocity * delta;
     }
 }
 

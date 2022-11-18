@@ -13,7 +13,6 @@ pub fn init(mut commands: Commands, mut tx: EventWriter<SyncStaticGeometry>) {
         Player,
         Transform::from_rotation(Quat::from_rotation_x(PI)),
         Body {
-            position: vec3(0.0, 0.0, 0.0),
             velocity: vec3(0.0, 0.0, 0.0),
             body_type: BodyType::Kinematic,
         },
