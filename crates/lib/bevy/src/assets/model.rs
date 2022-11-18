@@ -1,7 +1,7 @@
 use doome_raytracer as rt;
-use glam::{vec3, Mat4, Vec2, Vec3};
+use glam::{Mat4, Vec2, Vec3};
 
-use crate::components::{Color, Reflective};
+use crate::components::{Color, Material};
 
 pub struct Model {
     pub triangles: Vec<ModelTriangle>,
@@ -14,58 +14,39 @@ pub struct ModelTriangle {
 }
 
 impl ModelTriangle {
-    pub fn materialize(
+    pub fn materialize_triangle(
         &self,
-        mat: rt::MaterialId,
-        alpha: f32,
         xform: Mat4,
+        mat: Material,
+        mat_id: rt::MaterialId,
     ) -> rt::Triangle {
         rt::Triangle::new(
             self.vertices[0],
             self.vertices[1],
             self.vertices[2],
-            mat,
+            mat_id,
         )
-        .with_alpha(alpha)
+        .with_alpha(mat.alpha.unwrap_or(1.0))
         .with_transform(xform)
+    }
+
+    pub fn materialize_uvs(&self) -> rt::TriangleMapping {
+        rt::TriangleMapping::new(self.uvs[0], self.uvs[1], self.uvs[2])
     }
 }
 
+#[derive(Default)]
 pub struct ModelMaterial {
-    pub color: Vec3,
+    pub color: Color,
     pub is_textured: bool,
 }
 
 impl ModelMaterial {
-    pub fn materialize(
-        &self,
-        color: Option<&Color>,
-        reflect: Option<&Reflective>,
-    ) -> rt::Material {
-        let mut mat = rt::Material::default();
-
-        if let Some(color) = color {
-            mat = mat.with_color(color.into_vec3());
-        } else {
-            mat = mat.with_color(self.color).with_texture(self.is_textured);
-        }
-
-        if let Some(reflect) = reflect {
-            mat = mat.with_reflectivity(
-                reflect.reflectivity,
-                reflect.reflection_color.into_vec3(),
-            );
-        }
-
-        mat
-    }
-}
-
-impl Default for ModelMaterial {
-    fn default() -> Self {
-        Self {
-            color: vec3(1.0, 1.0, 1.0),
-            is_textured: false,
+    pub fn materialize(&self) -> Material {
+        Material {
+            color: Some(self.color),
+            is_textured: Some(self.is_textured),
+            ..Default::default()
         }
     }
 }

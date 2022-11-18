@@ -5,6 +5,7 @@ use glam::{vec2, vec3};
 use tobj::LoadOptions;
 
 use super::{AssetsLoader, Model, ModelMaterial, ModelName, ModelTriangle};
+use crate::components::Color;
 
 impl AssetsLoader {
     pub fn load_model(
@@ -103,36 +104,41 @@ impl AssetsLoader {
     fn process_material(
         &mut self,
         name: ModelName,
-        mat: &tobj::Material,
+        raw_mat: &tobj::Material,
     ) -> Result<ModelMaterial> {
-        let mut mm = ModelMaterial::default();
+        let mut mat = ModelMaterial::default();
 
-        // TODO rgb to srgb?
-        mm.color = vec3(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
+        mat.color = Color {
+            r: raw_mat.diffuse[0],
+            g: raw_mat.diffuse[1],
+            b: raw_mat.diffuse[2],
+        };
 
-        if !mat.diffuse_texture.is_empty() {
-            mm.is_textured = true;
+        mat.is_textured = !raw_mat.diffuse_texture.is_empty();
 
-            let tex =
-                self.dir.get_file(&mat.diffuse_texture).with_context(|| {
-                    format!("Texture not found: {}", mat.diffuse_texture)
+        if mat.is_textured {
+            let tex = self
+                .dir
+                .get_file(&raw_mat.diffuse_texture)
+                .with_context(|| {
+                    format!("Texture not found: {}", raw_mat.diffuse_texture)
                 })?;
 
             let tex =
                 image::load_from_memory(tex.contents()).with_context(|| {
-                    format!("Texture is invalid: {}", mat.diffuse_texture)
+                    format!("Texture is invalid: {}", raw_mat.diffuse_texture)
                 })?;
 
             let tex = tex.to_rgba8();
 
             self.textures
-                .entry(mat.diffuse_texture.clone())
+                .entry(raw_mat.diffuse_texture.clone())
                 .and_modify(|e| {
                     e.1.push(name);
                 })
                 .or_insert((tex, vec![name]));
         }
 
-        Ok(mm)
+        Ok(mat)
     }
 }

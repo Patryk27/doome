@@ -1,7 +1,8 @@
 use crate::*;
 
 #[repr(C)]
-#[derive(Copy, Clone, Default, Pod, Zeroable)]
+#[derive(Copy, Clone, Default, PartialEq, Pod, Zeroable)]
+#[cfg_attr(not(target_arch = "spirv"), derive(Debug))]
 pub struct Triangle {
     // X, Y, Z - vertex 0; W - material id (as u16)
     v0: Vec4,
@@ -21,6 +22,14 @@ impl Triangle {
             v1: v1.extend(1.0),
             v2: v2.extend(0.0),
         }
+    }
+
+    pub fn is_none(self) -> bool {
+        self == Self::default()
+    }
+
+    pub fn is_some(self) -> bool {
+        !self.is_none()
     }
 
     pub fn v0(&self) -> Vec3 {
@@ -47,6 +56,7 @@ impl Triangle {
         let pvec = ray.direction().cross(v0v2);
         let det = v0v1.dot(pvec);
 
+        // TODO enable culling for hit-testing & checking alphas
         if det.abs() < f32::EPSILON {
             return Hit::none();
         }
@@ -138,7 +148,7 @@ impl<T> TriangleId<T> {
         Self(provenance, id)
     }
 
-    pub fn get(self) -> (T, usize) {
+    pub fn unpack(self) -> (T, usize) {
         (self.0, self.1)
     }
 }
@@ -148,7 +158,7 @@ impl TriangleId<StaticTriangle> {
         Self(StaticTriangle, id)
     }
 
-    pub fn id(self) -> usize {
+    pub fn get(self) -> usize {
         self.1
     }
 
@@ -162,7 +172,7 @@ impl TriangleId<DynamicTriangle> {
         Self(DynamicTriangle, id)
     }
 
-    pub fn id(self) -> usize {
+    pub fn get(self) -> usize {
         self.1
     }
 

@@ -13,7 +13,7 @@ pub struct World<'a> {
 
 impl<'a> World<'a> {
     pub fn geometry(&self, triangle_id: TriangleId<AnyTriangle>) -> Triangle {
-        match triangle_id.get() {
+        match triangle_id.unpack() {
             (AnyTriangle::Static, id) => {
                 self.static_geo.get(TriangleId::new_static(id))
             }

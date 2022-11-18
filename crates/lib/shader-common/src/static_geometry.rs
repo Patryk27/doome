@@ -4,38 +4,32 @@ use crate::*;
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct StaticGeometry {
     items: [Triangle; MAX_STATIC_TRIANGLES],
-    len: PadU32,
 }
 
 impl StaticGeometry {
     pub fn get(&self, id: TriangleId<StaticTriangle>) -> Triangle {
-        self.items[id.id()]
-    }
-
-    pub fn len(&self) -> usize {
-        self.len.value as _
+        self.items[id.get()]
     }
 }
 
 #[cfg(not(target_arch = "spirv"))]
 impl StaticGeometry {
-    pub fn push(&mut self, item: Triangle) -> TriangleId<StaticTriangle> {
-        let id = self.len.value as usize;
+    pub fn set(&mut self, id: TriangleId<StaticTriangle>, item: Triangle) {
+        self.items[id.get()] = item;
+    }
 
-        self.items[id] = item;
-        self.len += 1;
-
-        TriangleId::new_static(id)
+    pub fn remove(&mut self, id: TriangleId<StaticTriangle>) {
+        self.set(id, Default::default());
     }
 
     pub fn iter(
         &self,
     ) -> impl Iterator<Item = (TriangleId<StaticTriangle>, Triangle)> + '_ {
-        self.items[0..self.len()]
+        self.items
             .iter()
-            .copied()
             .enumerate()
-            .map(|(id, triangle)| (TriangleId::new_static(id), triangle))
+            .filter(|(_, triangle)| triangle.is_some())
+            .map(|(id, triangle)| (TriangleId::new_static(id), *triangle))
     }
 }
 

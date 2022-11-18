@@ -29,9 +29,11 @@ impl GeometryIndexer {
     pub fn index(
         geometry: &StaticGeometry,
     ) -> Option<Box<StaticGeometryIndex>> {
-        log::info!("Indexing geometry; triangles = {}", geometry.len());
+        let len = geometry.iter().count();
 
-        if geometry.len() == 0 {
+        log::info!("Indexing geometry; triangles = {}", len);
+
+        if len == 0 {
             return None;
         }
 

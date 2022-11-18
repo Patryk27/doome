@@ -28,7 +28,7 @@ pub struct TriangleMappings {
 
 impl TriangleMappings {
     pub fn get(&self, id: TriangleId<AnyTriangle>) -> TriangleMapping {
-        match id.get() {
+        match id.unpack() {
             (AnyTriangle::Static, id) => Self::get_ex(&self.static_uvs, id),
             (AnyTriangle::Dynamic, id) => Self::get_ex(&self.dynamic_uvs, id),
         }
@@ -58,7 +58,7 @@ impl TriangleMappings {
 #[cfg(not(target_arch = "spirv"))]
 impl TriangleMappings {
     pub fn set(&mut self, id: TriangleId<AnyTriangle>, item: TriangleMapping) {
-        match id.get() {
+        match id.unpack() {
             (AnyTriangle::Static, id) => {
                 Self::set_ex(&mut self.static_uvs, id, item)
             }

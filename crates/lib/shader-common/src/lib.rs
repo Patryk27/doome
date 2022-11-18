@@ -55,5 +55,5 @@ pub const MAX_STATIC_TRIANGLES: usize = (MAX_BUFFER_BINDING_SIZE
 
 pub const MAX_DYNAMIC_TRIANGLES: usize = 64;
 
-pub const MAX_LIGHTS: usize = 16;
-pub const MAX_MATERIALS: usize = 16;
+pub const MAX_LIGHTS: usize = 128;
+pub const MAX_MATERIALS: usize = 128;

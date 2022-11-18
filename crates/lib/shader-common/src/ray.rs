@@ -47,9 +47,15 @@ impl Ray {
         // Check dynamic geometry
         let mut triangle_idx = 0;
 
-        while triangle_idx < world.dynamic_geo.len() {
+        while triangle_idx < MAX_DYNAMIC_TRIANGLES {
             let triangle_id = TriangleId::new_dynamic(triangle_idx);
             let triangle = world.dynamic_geo.get(triangle_id);
+
+            if triangle.is_none() {
+                triangle_idx += 1;
+                continue;
+            }
+
             let hit = triangle.hit(self);
 
             if hit.t < distance {
@@ -68,7 +74,6 @@ impl Ray {
         }
 
         // Check static geometry
-
         let mut ptr = 0;
 
         loop {
@@ -117,9 +122,15 @@ impl Ray {
         // Check dynamic geometry
         let mut triangle_idx = 0;
 
-        while triangle_idx < world.dynamic_geo.len() {
+        while triangle_idx < MAX_DYNAMIC_TRIANGLES {
             let triangle_id = TriangleId::new_dynamic(triangle_idx);
             let triangle = world.dynamic_geo.get(triangle_id);
+
+            if triangle.is_none() {
+                triangle_idx += 1;
+                continue;
+            }
+
             let curr_hit = triangle.hit(self);
 
             if curr_hit.is_closer_than(hit) {

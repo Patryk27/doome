@@ -8,8 +8,8 @@ pub struct Lights {
 }
 
 impl Lights {
-    pub fn get(&self, idx: usize) -> Light {
-        self.items[idx]
+    pub fn get(&self, id: usize) -> Light {
+        self.items[id]
     }
 
     pub fn len(&self) -> usize {
@@ -24,8 +24,8 @@ impl Lights {
         self.len += 1;
     }
 
-    pub fn get_mut(&mut self, idx: usize) -> &mut Light {
-        &mut self.items[idx]
+    pub fn get_mut(&mut self, id: usize) -> &mut Light {
+        &mut self.items[id]
     }
 }
 

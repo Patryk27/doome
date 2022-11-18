@@ -1,6 +1,5 @@
-mod dynamic_geometry_builder;
+mod geometry_manager;
 mod materials_manager;
-mod static_geometry_builder;
 
 use std::f32::consts::PI;
 
@@ -9,12 +8,11 @@ use doome_engine::{RAYTRACER_HEIGHT, WIDTH};
 use doome_raytracer as rt;
 use glam::{vec2, vec3};
 
+use self::geometry_manager::*;
 use self::materials_manager::*;
-use self::static_geometry_builder::*;
 use crate::assets::Assets;
 use crate::components::*;
 use crate::doome::DoomeRenderer;
-use crate::events::*;
 use crate::renderer::RendererState;
 
 pub struct DoomeRaytracerPlugin;
@@ -32,10 +30,7 @@ impl Plugin for DoomeRaytracerPlugin {
             );
 
             DoomeRaytracerState {
-                static_geo: Default::default(),
-                static_geo_index: Default::default(),
-                dynamic_geo: Default::default(),
-                mappings: Default::default(),
+                geometry: Default::default(),
                 camera,
                 lights: Default::default(),
                 materials: Default::default(),
@@ -43,11 +38,12 @@ impl Plugin for DoomeRaytracerPlugin {
         };
 
         app.insert_resource(state)
-            .add_event::<SyncStaticGeometry>()
-            .add_system(sync_static_geometry)
+            .add_system(sync_created_geometry)
+            .add_system(sync_updated_geometry)
             .add_system(sync_lights)
             .add_system(sync_camera)
-            .add_system(render);
+            .add_system(render)
+            .add_system_to_stage(CoreStage::PostUpdate, sync_deleted_geometry);
 
         app.world.spawn(Camera::default());
     }
@@ -55,73 +51,112 @@ impl Plugin for DoomeRaytracerPlugin {
 
 #[derive(Resource)]
 struct DoomeRaytracerState {
-    static_geo: Box<rt::StaticGeometry>,
-    static_geo_index: Option<Box<rt::StaticGeometryIndex>>,
-    dynamic_geo: Box<rt::DynamicGeometry>,
-    mappings: Box<rt::TriangleMappings>,
+    geometry: GeometryManager,
     camera: rt::Camera,
     lights: rt::Lights,
     materials: MaterialsManager,
 }
 
-fn sync_static_geometry(
-    assets: Res<Assets>,
+fn sync_created_geometry(
+    mut commands: Commands,
     mut ctxt: ResMut<DoomeRaytracerState>,
-    floors: Query<&Floor>,
-    ceilings: Query<&Ceiling>,
-    walls: Query<&Wall>,
-    models: Query<(
-        &ModelName,
-        &Transform,
-        Option<&Color>,
-        Option<&Transparent>,
-        Option<&Reflective>,
-    )>,
-    mut rx: EventReader<SyncStaticGeometry>,
+    assets: Res<Assets>,
+    floors: Query<(Entity, &GeometryType, &Floor), Added<Floor>>,
+    ceilings: Query<(Entity, &GeometryType, &Ceiling), Added<Ceiling>>,
+    walls: Query<(Entity, &GeometryType, &Wall), Added<Wall>>,
+    models: Query<
+        (
+            Entity,
+            &GeometryType,
+            &ModelName,
+            &Transform,
+            Option<&Material>,
+        ),
+        Added<ModelName>,
+    >,
 ) {
-    if rx.iter().count() == 0 {
-        return;
-    }
-
     let ctxt = &mut *ctxt;
-    let mut static_geo = StaticGeometryBuilder::new(&mut ctxt.mappings);
+    let mut geo = ctxt.geometry.builder();
 
-    // TODO use proper material
-    let dummy_mat = ctxt.materials.dummy();
+    for (entity, &geo_type, data) in floors.iter() {
+        // TODO
+        let mat = ctxt.materials.dummy(entity);
 
-    for floor in floors.iter() {
-        static_geo
-            .push_floor(floor.x1, floor.z1, floor.x2, floor.z2, dummy_mat);
-    }
-
-    for ceiling in ceilings.iter() {
-        static_geo.push_ceiling(
-            ceiling.x1, ceiling.z1, ceiling.x2, ceiling.z2, dummy_mat,
+        geo.add_floor(
+            entity, geo_type, data.x1, data.z1, data.x2, data.z2, mat,
         );
+        commands.entity(entity).insert(Synced);
     }
 
-    for wall in walls.iter() {
-        static_geo
-            .push_wall(wall.x1, wall.z1, wall.x2, wall.z2, wall.rot, dummy_mat);
+    for (entity, &geo_type, data) in ceilings.iter() {
+        // TODO
+        let mat = ctxt.materials.dummy(entity);
+
+        geo.ceiling(entity, geo_type, data.x1, data.z1, data.x2, data.z2, mat);
+        commands.entity(entity).insert(Synced);
     }
 
-    for (&model_name, &model_xform, model_color, model_transp, model_reflect) in
-        models.iter()
-    {
-        let model = assets.model(model_name);
+    for (entity, &geo_type, data) in walls.iter() {
+        // TODO
+        let mat = ctxt.materials.dummy(entity);
 
-        let model_mat = ctxt
-            .materials
-            .allocate(model.material.materialize(model_color, model_reflect));
-
-        let model_xform = model_xform.compute_matrix();
-        let model_alpha = model_transp.map(|t| t.alpha).unwrap_or(1.0);
-
-        static_geo.push_model(model, model_mat, model_alpha, model_xform);
+        geo.add_wall(
+            entity, geo_type, data.x1, data.z1, data.x2, data.z2, data.rot, mat,
+        );
+        commands.entity(entity).insert(Synced);
     }
 
-    ctxt.static_geo = static_geo.build();
-    ctxt.static_geo_index = rt::GeometryIndexer::index(&ctxt.static_geo);
+    for (entity, &geo_type, &name, &xform, mat) in models.iter() {
+        let model = assets.model(name);
+        let xform = xform.compute_matrix();
+
+        let mat = mat
+            .cloned()
+            .unwrap_or_default()
+            .merge_with(model.material.materialize());
+
+        let mat_id = ctxt.materials.alloc(entity, mat.materialize());
+
+        geo.add_model(entity, geo_type, model, xform, mat, mat_id);
+        commands.entity(entity).insert(Synced);
+    }
+}
+
+fn sync_updated_geometry(
+    mut ctxt: ResMut<DoomeRaytracerState>,
+    assets: Res<Assets>,
+    models: Query<
+        (
+            Entity,
+            &GeometryType,
+            &ModelName,
+            &Transform,
+            Option<&Material>,
+        ),
+        Or<(Changed<Transform>, Changed<Material>)>,
+    >,
+) {
+    let ctxt = &mut *ctxt;
+    let mut geo = ctxt.geometry.updater();
+
+    for (entity, &geo_type, &name, &xform, mat) in models.iter() {
+        if geo_type == GeometryType::Static {
+            // TODO it's fine to overwrite geometry for them
+            continue;
+        }
+
+        let model = assets.model(name);
+        let xform = xform.compute_matrix();
+
+        let mat = mat
+            .cloned()
+            .unwrap_or_default()
+            .merge_with(model.material.materialize());
+
+        let mat_id = ctxt.materials.alloc(entity, mat.materialize());
+
+        geo.update_model(entity, model, xform, mat, mat_id);
+    }
 }
 
 // TODO doing this each frame feels wonky
@@ -157,7 +192,7 @@ fn sync_camera(
 fn render(
     renderer: Res<DoomeRenderer>,
     renderer_state: Res<RendererState>,
-    raytracer_state: Res<DoomeRaytracerState>,
+    mut raytracer_state: ResMut<DoomeRaytracerState>,
 ) {
     let Ok(current_texture) = renderer_state.surface.get_current_texture() else { return };
     let device = &renderer_state.device;
@@ -172,7 +207,14 @@ fn render(
         ..
     } = &*renderer;
 
-    let Some(static_geo_index) = &raytracer_state.static_geo_index else { return };
+    let raytracer_state = &mut *raytracer_state;
+
+    let Some((
+        static_geo,
+        static_geo_index,
+        dynamic_geo,
+        mappings
+    )) = raytracer_state.geometry.inner() else { return };
 
     let texture_view = current_texture
         .texture
@@ -186,13 +228,13 @@ fn render(
     raytracer.render(
         queue,
         &mut encoder,
-        &raytracer_state.static_geo,
+        static_geo,
         static_geo_index,
-        &raytracer_state.dynamic_geo,
-        &raytracer_state.mappings,
+        dynamic_geo,
+        mappings,
         &raytracer_state.camera,
         &raytracer_state.lights,
-        raytracer_state.materials.library(),
+        raytracer_state.materials.inner(),
         intermediate_texture,
     );
 
@@ -201,4 +243,14 @@ fn render(
 
     renderer_state.queue.submit(vec![encoder.finish()]);
     current_texture.present();
+}
+
+fn sync_deleted_geometry(
+    mut ctxt: ResMut<DoomeRaytracerState>,
+    removed_entities: RemovedComponents<Synced>,
+) {
+    for entity in removed_entities.iter() {
+        ctxt.geometry.free(entity);
+        ctxt.materials.free(entity);
+    }
 }

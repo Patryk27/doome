@@ -2,6 +2,7 @@ use crate::*;
 
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, Pod, Zeroable)]
+#[cfg_attr(not(target_arch = "spirv"), derive(Debug))]
 pub struct Material {
     // x,y,z is color, w is 1.0 indicates texture is present, 0.0 indicates texture is not present
     color: Vec4,

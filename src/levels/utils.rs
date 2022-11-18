@@ -11,23 +11,16 @@ pub trait LevelBuilderExt<'w, 's> {
     fn ceiling(&mut self, x1: i32, z1: i32, x2: i32, z2: i32);
     fn wall(&mut self, x1: i32, z1: i32, x2: i32, z2: i32, rot: u8);
     fn light(&mut self, x: f32, y: f32, z: f32, r: f32, g: f32, b: f32);
-
-    fn model<'a>(
-        &'a mut self,
-        name: &'static str,
-        x: f32,
-        y: f32,
-        z: f32,
-    ) -> EntityCommands<'w, 's, 'a>;
+    fn model<'a>(&'a mut self, name: &'static str) -> ModelBuilder<'w, 's, 'a>;
 }
 
 impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
     fn floor(&mut self, x1: i32, z1: i32, x2: i32, z2: i32) {
-        self.spawn(Floor { x1, z1, x2, z2 });
+        self.spawn((GeometryType::Static, Floor { x1, z1, x2, z2 }));
     }
 
     fn ceiling(&mut self, x1: i32, z1: i32, x2: i32, z2: i32) {
-        self.spawn(Ceiling { x1, z1, x2, z2 });
+        self.spawn((GeometryType::Static, Ceiling { x1, z1, x2, z2 }));
     }
 
     fn wall(&mut self, x1: i32, z1: i32, x2: i32, z2: i32, rot: u8) {
@@ -55,6 +48,7 @@ impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
         //     .with_translation(center);
 
         self.spawn((
+            GeometryType::Static,
             Wall {
                 x1,
                 z1,
@@ -78,13 +72,66 @@ impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
         ));
     }
 
-    fn model<'a>(
-        &'a mut self,
-        name: &'static str,
-        x: f32,
-        y: f32,
-        z: f32,
-    ) -> EntityCommands<'w, 's, 'a> {
-        self.spawn((ModelName::new(name), Transform::from_xyz(x, y, z)))
+    fn model<'a>(&'a mut self, name: &'static str) -> ModelBuilder<'w, 's, 'a> {
+        ModelBuilder::new(self, name)
+    }
+}
+
+pub struct ModelBuilder<'w, 's, 'a> {
+    commands: &'a mut Commands<'w, 's>,
+    name: &'static str,
+    geo_type: GeometryType,
+    transform: Transform,
+    material: Option<Material>,
+}
+
+impl<'w, 's, 'a> ModelBuilder<'w, 's, 'a> {
+    fn new(commands: &'a mut Commands<'w, 's>, name: &'static str) -> Self {
+        Self {
+            commands,
+            name,
+            geo_type: GeometryType::Static,
+            transform: Default::default(),
+            material: Default::default(),
+        }
+    }
+
+    pub fn dynamic(mut self) -> Self {
+        self.geo_type = GeometryType::Dynamic;
+        self
+    }
+
+    pub fn with_translation(mut self, val: Vec3) -> Self {
+        self.transform.translation = val;
+        self
+    }
+
+    pub fn with_rotation(mut self, val: Quat) -> Self {
+        self.transform.rotation = val;
+        self
+    }
+
+    pub fn with_scale(mut self, val: Vec3) -> Self {
+        self.transform.scale = val;
+        self
+    }
+
+    pub fn with_material(mut self, val: Material) -> Self {
+        self.material = Some(val);
+        self
+    }
+
+    pub fn spawn(self) -> EntityCommands<'w, 's, 'a> {
+        let mut ec = self.commands.spawn((
+            ModelName::new(self.name),
+            self.transform,
+            self.geo_type,
+        ));
+
+        if let Some(material) = self.material {
+            ec.insert(material);
+        }
+
+        ec
     }
 }

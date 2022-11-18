@@ -42,19 +42,19 @@ impl<'f> doome_surface::Surface<'f> for Surface<'f> {
             return;
         }
 
-        let idx = 4 * ((y as usize) * (WIDTH as usize) + (x as usize));
+        let ptr = 4 * ((y as usize) * (WIDTH as usize) + (x as usize));
 
         if color.a < 255 {
-            color.r = blend(color.r, self.frame[idx], color.a);
-            color.g = blend(color.g, self.frame[idx + 1], color.a);
-            color.b = blend(color.b, self.frame[idx + 2], color.a);
-            color.a = blend(color.a, self.frame[idx + 3], color.a);
+            color.r = blend(color.r, self.frame[ptr], color.a);
+            color.g = blend(color.g, self.frame[ptr + 1], color.a);
+            color.b = blend(color.b, self.frame[ptr + 2], color.a);
+            color.a = blend(color.a, self.frame[ptr + 3], color.a);
         }
 
-        self.frame[idx] = color.r;
-        self.frame[idx + 1] = color.g;
-        self.frame[idx + 2] = color.b;
-        self.frame[idx + 3] = color.a;
+        self.frame[ptr] = color.r;
+        self.frame[ptr + 1] = color.g;
+        self.frame[ptr + 2] = color.b;
+        self.frame[ptr + 3] = color.a;
     }
 }
 

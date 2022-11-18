@@ -1,6 +1,7 @@
 use crate::*;
 
 #[derive(Copy, Clone, Default)]
+#[cfg_attr(not(target_arch = "spirv"), derive(Debug))]
 pub struct TriangleMapping {
     pub uv0: Vec2,
     pub uv1: Vec2,

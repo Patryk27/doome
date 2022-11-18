@@ -7,10 +7,6 @@ pub struct Materials {
 }
 
 impl Materials {
-    pub fn set(&mut self, id: MaterialId, item: Material) {
-        self.items[id.get()] = item;
-    }
-
     pub fn get(&self, id: MaterialId) -> Material {
         self.items[id.get()]
     }
@@ -18,8 +14,8 @@ impl Materials {
 
 #[cfg(not(target_arch = "spirv"))]
 impl Materials {
-    pub fn get_mut(&mut self, id: MaterialId) -> &mut Material {
-        &mut self.items[id.get() as usize]
+    pub fn set(&mut self, id: MaterialId, item: Material) {
+        self.items[id.get()] = item;
     }
 }
 
