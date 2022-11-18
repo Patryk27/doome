@@ -48,12 +48,13 @@ impl<'f> doome_surface::Surface<'f> for Surface<'f> {
             color.r = blend(color.r, self.frame[idx], color.a);
             color.g = blend(color.g, self.frame[idx + 1], color.a);
             color.b = blend(color.b, self.frame[idx + 2], color.a);
+            color.a = blend(color.a, self.frame[idx + 3], color.a);
         }
 
         self.frame[idx] = color.r;
         self.frame[idx + 1] = color.g;
         self.frame[idx + 2] = color.b;
-        self.frame[idx + 3] = color.a; // TODO: This doesn't seem right :/
+        self.frame[idx + 3] = color.a;
     }
 }
 
