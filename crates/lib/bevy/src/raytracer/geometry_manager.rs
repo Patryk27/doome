@@ -12,8 +12,8 @@ pub struct GeometryManager {
     static_geo_index: Option<Box<rt::StaticGeometryIndex>>,
     static_geo_owners: Vec<Option<Entity>>,
     dynamic_geo: Box<rt::DynamicGeometry>,
-    dynamic_geo_owners: Vec<Option<Entity>>,
-    mappings: Box<rt::TriangleMappings>,
+    dynamic_geo_owners: Vec<Entity>,
+    uvs: Box<rt::TriangleMappings>,
 }
 
 impl GeometryManager {
@@ -46,7 +46,7 @@ impl GeometryManager {
         self.static_geo.set(id, triangle);
         self.static_geo_index = None;
         self.static_geo_owners[id.get()] = Some(entity);
-        self.mappings.set(id.into_any(), triangle_uv);
+        self.uvs.set(id.into_any(), triangle_uv);
     }
 
     fn alloc_dynamic(
@@ -62,14 +62,13 @@ impl GeometryManager {
             triangle_uv
         );
 
-        let id = (0..rt::MAX_DYNAMIC_TRIANGLES)
-            .map(rt::TriangleId::new_dynamic)
-            .find(|id| self.dynamic_geo_owners[id.get()].is_none())
+        let id = self
+            .dynamic_geo
+            .push(triangle)
             .expect("Tried to allocate too many static triangles at once");
 
-        self.dynamic_geo.set(id, triangle);
-        self.dynamic_geo_owners[id.get()] = Some(entity);
-        self.mappings.set(id.into_any(), triangle_uv);
+        self.dynamic_geo_owners.push(entity);
+        self.uvs.set(id.into_any(), triangle_uv);
     }
 
     fn update_dynamic(
@@ -77,16 +76,16 @@ impl GeometryManager {
         entity: Entity,
         mut for_each: impl FnMut(&mut rt::Triangle, &mut rt::TriangleMapping),
     ) {
-        for id in 0..rt::MAX_DYNAMIC_TRIANGLES {
-            if self.dynamic_geo_owners[id] == Some(entity) {
+        for id in 0..self.dynamic_geo.len() {
+            if self.dynamic_geo_owners[id] == entity {
                 let id = rt::TriangleId::new_dynamic(id);
                 let mut tri = self.dynamic_geo.get(id);
-                let mut tri_uv = self.mappings.get(id.into_any());
+                let mut tri_uv = self.uvs.get(id.into_any());
 
                 for_each(&mut tri, &mut tri_uv);
 
                 self.dynamic_geo.set(id, tri);
-                self.mappings.set(id.into_any(), tri_uv);
+                self.uvs.set(id.into_any(), tri_uv);
             }
         }
     }
@@ -103,10 +102,12 @@ impl GeometryManager {
 
         for id in 0..rt::MAX_STATIC_TRIANGLES {
             if self.static_geo_owners[id] == Some(entity) {
-                self.static_geo.remove(rt::TriangleId::new_static(id));
+                self.static_geo
+                    .set(rt::TriangleId::new_static(id), Default::default());
+
                 self.static_geo_owners[id] = None;
 
-                is_dirty |= true;
+                is_dirty = true;
             }
         }
 
@@ -116,10 +117,17 @@ impl GeometryManager {
     }
 
     fn free_dynamic(&mut self, entity: Entity) {
-        for id in 0..rt::MAX_DYNAMIC_TRIANGLES {
-            if self.dynamic_geo_owners[id] == Some(entity) {
-                self.dynamic_geo.remove(rt::TriangleId::new_dynamic(id));
-                self.dynamic_geo_owners[id] = None;
+        let mut id = 0;
+
+        while id < self.dynamic_geo.len() {
+            if self.dynamic_geo_owners[id] == entity {
+                let tid = rt::TriangleId::new_dynamic(id);
+
+                self.dynamic_geo.remove(tid);
+                self.dynamic_geo_owners.remove(id);
+                self.uvs.remove(tid);
+            } else {
+                id += 1;
             }
         }
     }
@@ -141,7 +149,7 @@ impl GeometryManager {
             &self.static_geo,
             self.static_geo_index.as_ref()?,
             &self.dynamic_geo,
-            &self.mappings,
+            &self.uvs,
         ))
     }
 }
@@ -153,8 +161,8 @@ impl Default for GeometryManager {
             static_geo_index: Default::default(),
             static_geo_owners: vec![None; rt::MAX_STATIC_TRIANGLES],
             dynamic_geo: Default::default(),
-            dynamic_geo_owners: vec![None; rt::MAX_DYNAMIC_TRIANGLES],
-            mappings: Default::default(),
+            dynamic_geo_owners: Vec::with_capacity(rt::MAX_DYNAMIC_TRIANGLES),
+            uvs: Default::default(),
         }
     }
 }

@@ -36,7 +36,7 @@ impl TriangleMappings {
 
     fn get_ex<const N: usize>(uvs: &[Vec4; N], id: usize) -> TriangleMapping {
         if id % 2 == 0 {
-            let ptr = 3 * id;
+            let ptr = 3 * (id / 2);
 
             TriangleMapping {
                 uv0: uvs[ptr].xy(),
@@ -44,7 +44,7 @@ impl TriangleMappings {
                 uv2: uvs[ptr + 1].xy(),
             }
         } else {
-            let ptr = 3 * (id - 1) + 1;
+            let ptr = 3 * ((id - 1) / 2) + 1;
 
             TriangleMapping {
                 uv0: uvs[ptr].zw(),
@@ -74,7 +74,7 @@ impl TriangleMappings {
         TriangleMapping { uv0, uv1, uv2 }: TriangleMapping,
     ) {
         if id % 2 == 0 {
-            let ptr = &mut uvs[3 * id..][..2];
+            let ptr = &mut uvs[3 * (id / 2)..][..2];
 
             ptr[0].x = uv0.x;
             ptr[0].y = uv0.y;
@@ -83,7 +83,7 @@ impl TriangleMappings {
             ptr[1].x = uv2.x;
             ptr[1].y = uv2.y;
         } else {
-            let ptr = &mut uvs[3 * (id - 1) + 1..][..2];
+            let ptr = &mut uvs[3 * ((id - 1) / 2) + 1..][..2];
 
             ptr[0].z = uv0.x;
             ptr[0].w = uv0.y;
@@ -91,6 +91,15 @@ impl TriangleMappings {
             ptr[1].y = uv1.y;
             ptr[1].z = uv2.x;
             ptr[1].w = uv2.y;
+        }
+    }
+
+    pub fn remove(&mut self, id: TriangleId<DynamicTriangle>) {
+        for id in id.get()..(MAX_DYNAMIC_TRIANGLES - 1) {
+            let curr_id = TriangleId::new_dynamic(id).into_any();
+            let next_id = TriangleId::new_dynamic(id + 1).into_any();
+
+            self.set(curr_id, self.get(next_id));
         }
     }
 }

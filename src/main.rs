@@ -124,6 +124,8 @@ fn process_movement(
     let (mut body, mut transform) = player.single_mut();
     let delta = time.delta_seconds();
 
+    // TODO a bit wonky
+    #[cfg(not(target_arch = "wasm32"))]
     for ev in mouse_motion.iter() {
         transform.rotate_axis(
             Vec3::Y,

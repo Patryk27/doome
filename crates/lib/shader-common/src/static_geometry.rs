@@ -18,10 +18,6 @@ impl StaticGeometry {
         self.items[id.get()] = item;
     }
 
-    pub fn remove(&mut self, id: TriangleId<StaticTriangle>) {
-        self.set(id, Default::default());
-    }
-
     pub fn iter(
         &self,
     ) -> impl Iterator<Item = (TriangleId<StaticTriangle>, Triangle)> + '_ {

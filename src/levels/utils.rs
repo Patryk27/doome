@@ -10,7 +10,17 @@ pub trait LevelBuilderExt<'w, 's> {
     fn floor(&mut self, x1: i32, z1: i32, x2: i32, z2: i32);
     fn ceiling(&mut self, x1: i32, z1: i32, x2: i32, z2: i32);
     fn wall(&mut self, x1: i32, z1: i32, x2: i32, z2: i32, rot: u8);
-    fn light(&mut self, x: f32, y: f32, z: f32, r: f32, g: f32, b: f32);
+
+    fn light<'a>(
+        &'a mut self,
+        x: f32,
+        y: f32,
+        z: f32,
+        r: f32,
+        g: f32,
+        b: f32,
+    ) -> EntityCommands<'w, 's, 'a>;
+
     fn model<'a>(&'a mut self, name: &'static str) -> ModelBuilder<'w, 's, 'a>;
 }
 
@@ -64,12 +74,20 @@ impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
         ));
     }
 
-    fn light(&mut self, x: f32, y: f32, z: f32, r: f32, g: f32, b: f32) {
+    fn light<'a>(
+        &'a mut self,
+        x: f32,
+        y: f32,
+        z: f32,
+        r: f32,
+        g: f32,
+        b: f32,
+    ) -> EntityCommands<'w, 's, 'a> {
         self.spawn((
             Light { intensity: 1.0 },
             Transform::from_xyz(x, y, z),
             Color { r, g, b },
-        ));
+        ))
     }
 
     fn model<'a>(&'a mut self, name: &'static str) -> ModelBuilder<'w, 's, 'a> {

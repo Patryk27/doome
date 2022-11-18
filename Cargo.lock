@@ -1099,6 +1099,7 @@ dependencies = [
  "glam",
  "image",
  "include_dir",
+ "instant",
  "log",
  "maplit",
  "rectangle-pack",

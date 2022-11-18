@@ -24,10 +24,12 @@ impl Triangle {
         }
     }
 
+    #[cfg(not(target_arch = "spirv"))]
     pub fn is_none(self) -> bool {
         self == Self::default()
     }
 
+    #[cfg(not(target_arch = "spirv"))]
     pub fn is_some(self) -> bool {
         !self.is_none()
     }
