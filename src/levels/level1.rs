@@ -3,7 +3,9 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 use doome_bevy::components::*;
 use doome_bevy::events::SyncStaticGeometry;
-use doome_bevy::physics::{Body, BodyType, Collider, RectCollider};
+use doome_bevy::physics::{
+    Body, BodyType, CircleCollider, Collider, RectCollider,
+};
 use glam::{vec2, vec3};
 
 use super::utils::*;
@@ -16,9 +18,10 @@ pub fn init(mut commands: Commands, mut tx: EventWriter<SyncStaticGeometry>) {
             velocity: vec3(0.0, 0.0, 0.0),
             body_type: BodyType::Kinematic,
         },
-        Collider::Rect(RectCollider {
-            half_extents: vec2(0.5, 0.5),
-        }),
+        Collider::Circle(CircleCollider { radius: 0.5 }),
+        // Collider::Rect(RectCollider {
+        //     half_extents: vec2(0.5, 0.5),
+        // }),
     ));
 
     commands.floor(-3, -3, 3, 3);
@@ -34,7 +37,9 @@ pub fn init(mut commands: Commands, mut tx: EventWriter<SyncStaticGeometry>) {
     commands.ceiling(-10, -10, 10, 10);
     commands.light(1.0, 2.0, -1.5, 1.0, 1.0, 1.0);
 
-    commands.model("monke", -1.5, 1.0, 2.0);
+    commands
+        .model("monke", -1.5, 1.0, 2.0)
+        .insert(Collider::Circle(CircleCollider { radius: 1.0 }));
 
     commands
         .model("monke", 1.5, 1.0, 2.0)
@@ -50,7 +55,8 @@ pub fn init(mut commands: Commands, mut tx: EventWriter<SyncStaticGeometry>) {
                 g: 1.0,
                 b: 1.0,
             },
-        });
+        })
+        .insert(Collider::Circle(CircleCollider { radius: 1.0 }));
 
     tx.send(SyncStaticGeometry);
 }

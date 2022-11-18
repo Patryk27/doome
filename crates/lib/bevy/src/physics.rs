@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use glam::Vec3Swizzles;
 
+use self::sat::{project_vertices_onto, resolve_axis_projections};
+
 mod sat;
 
 #[derive(Default)]
@@ -19,6 +21,7 @@ impl Plugin for PhysicsPlugin {
 pub enum Collider {
     Rect(RectCollider),
     Line(LineCollider),
+    Circle(CircleCollider),
 }
 
 #[derive(Debug)]
@@ -30,6 +33,11 @@ pub struct RectCollider {
 pub struct LineCollider {
     pub start: Vec2,
     pub end: Vec2,
+}
+
+#[derive(Debug)]
+pub struct CircleCollider {
+    pub radius: f32,
 }
 
 #[derive(Component)]
@@ -110,10 +118,93 @@ fn are_colliding(
     transform_b: &Transform,
     collider_b: &Collider,
 ) -> bool {
-    let polygon_a = collider_to_polygon(transform_a, collider_a);
-    let polygon_b = collider_to_polygon(transform_b, collider_b);
+    match (collider_a, collider_b) {
+        (Collider::Circle(a), Collider::Circle(b)) => {
+            let a_pos = transform_a.translation.xz();
+            let b_pos = transform_b.translation.xz();
 
-    sat::resolve_sat(&polygon_a, &polygon_b)
+            let distance = (a_pos - b_pos).length();
+
+            distance < a.radius + b.radius
+        }
+        (polygon_a, Collider::Circle(b)) => are_polygon_and_circle_colliding(
+            transform_a,
+            polygon_a,
+            transform_b,
+            b,
+        ),
+        (Collider::Circle(a), polygon_b) => are_polygon_and_circle_colliding(
+            transform_b,
+            polygon_b,
+            transform_a,
+            a,
+        ),
+        _ => {
+            let polygon_a = collider_to_polygon(transform_a, collider_a);
+            let polygon_b = collider_to_polygon(transform_b, collider_b);
+
+            sat::resolve_sat(&polygon_a, &polygon_b)
+        }
+    }
+}
+
+fn are_polygon_and_circle_colliding(
+    polygon_transform: &Transform,
+    polygon: &Collider,
+    circle_transform: &Transform,
+    circle: &CircleCollider,
+) -> bool {
+    let polygon = collider_to_polygon(polygon_transform, polygon);
+    let circle_center = circle_transform.translation.xz();
+
+    let vertex_closest_to_circle = polygon
+        .vertices
+        .iter()
+        .copied()
+        .min_by(|a, b| {
+            let a_distance = (*a - circle_center).length();
+            let b_distance = (*b - circle_center).length();
+
+            a_distance.partial_cmp(&b_distance).unwrap()
+        })
+        .unwrap();
+
+    let circle_resolve_axis =
+        (circle_center - vertex_closest_to_circle).normalize();
+
+    let all_axes: Vec<_> = polygon
+        .iter_separation_axes()
+        .chain(std::iter::once(circle_resolve_axis))
+        .collect();
+
+    for axis in all_axes {
+        let polygon_projections =
+            project_vertices_onto(&polygon.vertices, axis);
+
+        let circle_projections =
+            project_circle_onto_axis(circle_center, circle.radius, axis);
+
+        if resolve_axis_projections(
+            axis,
+            &polygon_projections,
+            &circle_projections,
+        ) {
+            return false;
+        }
+    }
+
+    true
+}
+
+fn project_circle_onto_axis(
+    center: Vec2,
+    radius: f32,
+    axis: Vec2,
+) -> Vec<Vec2> {
+    let center = axis * center.dot(axis);
+    let radius_projection = radius * axis;
+
+    vec![center + radius_projection, center - radius_projection]
 }
 
 fn collider_to_polygon(
@@ -138,6 +229,7 @@ fn collider_to_polygon(
 
             sat::Polygon::new(offsets_to_points(transform, offsets))
         }
+        Collider::Circle(_) => unimplemented!(),
     }
 }
 

@@ -26,13 +26,6 @@ impl Polygon {
     pub fn iter_separation_axes(&self) -> impl Iterator<Item = Vec2> + '_ {
         self.iter_edge_vectors().map(|v| v.perp().normalize())
     }
-
-    pub fn project_vertices_onto(&self, axis: Vec2) -> Vec<Vec2> {
-        self.vertices
-            .iter()
-            .map(|v| axis * v.dot(axis))
-            .collect::<Vec<_>>()
-    }
 }
 
 pub fn resolve_sat(a: &Polygon, b: &Polygon) -> bool {
@@ -42,31 +35,30 @@ pub fn resolve_sat(a: &Polygon, b: &Polygon) -> bool {
         .collect();
 
     for axis in all_axes {
-        let a_vertices = a.project_vertices_onto(axis);
-        let b_vertices = b.project_vertices_onto(axis);
+        let a_vertices = project_vertices_onto(&a.vertices, axis);
+        let b_vertices = project_vertices_onto(&b.vertices, axis);
 
-        let a_min = a_vertices
-            .iter()
-            .map(|v| v.dot(axis))
-            .fold(f32::NAN, f32::min);
-        let a_max = a_vertices
-            .iter()
-            .map(|v| v.dot(axis))
-            .fold(f32::NAN, f32::max);
-
-        let b_min = b_vertices
-            .iter()
-            .map(|v| v.dot(axis))
-            .fold(f32::NAN, f32::min);
-        let b_max = b_vertices
-            .iter()
-            .map(|v| v.dot(axis))
-            .fold(f32::NAN, f32::max);
-
-        if a_max < b_min || b_max < a_min {
+        if resolve_axis_projections(axis, &a_vertices, &b_vertices) {
             return false;
         }
     }
 
     true
+}
+
+pub fn resolve_axis_projections(axis: Vec2, a: &[Vec2], b: &[Vec2]) -> bool {
+    let a_min = a.iter().map(|v| v.dot(axis)).fold(f32::NAN, f32::min);
+    let a_max = a.iter().map(|v| v.dot(axis)).fold(f32::NAN, f32::max);
+
+    let b_min = b.iter().map(|v| v.dot(axis)).fold(f32::NAN, f32::min);
+    let b_max = b.iter().map(|v| v.dot(axis)).fold(f32::NAN, f32::max);
+
+    a_max < b_min || b_max < a_min
+}
+
+pub fn project_vertices_onto(vertices: &[Vec2], axis: Vec2) -> Vec<Vec2> {
+    vertices
+        .iter()
+        .map(|v| axis * v.dot(axis))
+        .collect::<Vec<_>>()
 }
