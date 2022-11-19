@@ -68,11 +68,11 @@ fn sync_created_geometry(
         (
             Entity,
             &GeometryType,
-            &ModelName,
+            &ModelHandle,
             &Transform,
             Option<&Material>,
         ),
-        Added<ModelName>,
+        Added<ModelHandle>,
     >,
 ) {
     let ctxt = &mut *ctxt;
@@ -129,7 +129,7 @@ fn sync_updated_geometry(
         (
             Entity,
             &GeometryType,
-            &ModelName,
+            &ModelHandle,
             &Transform,
             Option<&Material>,
         ),

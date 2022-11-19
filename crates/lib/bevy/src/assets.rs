@@ -10,12 +10,13 @@ use include_dir::Dir;
 
 use self::loader::*;
 pub(crate) use self::model::*;
-use crate::components::ModelName;
+use crate::components::ModelHandle;
 
 #[derive(Resource)]
 pub struct Assets {
     atlas: image::RgbaImage,
-    models: HashMap<ModelName, Model>,
+    models: Vec<Model>,
+    name_to_index: HashMap<String, usize>,
 }
 
 impl Assets {
@@ -38,7 +39,7 @@ impl Assets {
 
             if entry_ext.to_str() == Some("obj") {
                 let file_stem = entry.file_stem().unwrap();
-                let name = ModelName::new(file_stem.to_str().unwrap());
+                let name = file_stem.to_str().unwrap();
 
                 loader.load_model(name, &entry).with_context(|| {
                     format!("Couldn't load model: {}", entry.display())
@@ -53,29 +54,15 @@ impl Assets {
         &self.atlas
     }
 
-    pub(crate) fn model(&self, name: ModelName) -> &Model {
-        self.models
-            .get(&name)
-            .unwrap_or_else(|| panic!("Unknown model: {}", name.name))
+    pub(crate) fn model(&self, handle: ModelHandle) -> &Model {
+        &self.models[handle.0]
     }
 
-    // pub fn insert_to_geometry(
-    //     &self,
-    //     model_handle: ModelHandle,
-    //     xform: Mat4,
-    //     alpha: f32,
-    //     uv_transparency: bool,
-    // ) {
-    //     let model = &self.models[model_handle.0];
-
-    //     for (triangle, triangle_mapping) in &model.triangles {
-    //         let triangle = triangle
-    //             .with_transform(xform)
-    //             .with_alpha(alpha)
-    //             .with_uv_transparency_of(uv_transparency);
-
-    //         // TODO
-    //         // geometry.push_ex(triangle, *triangle_mapping);
-    //     }
-    // }
+    /// "Loads" a model and returns a handle to it
+    ///
+    /// Panics if the given model doesn't exist
+    pub fn load_model(&self, name: &str) -> ModelHandle {
+        let index = self.name_to_index.get(name).expect("Failed to load model");
+        ModelHandle(*index)
+    }
 }

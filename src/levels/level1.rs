@@ -2,6 +2,7 @@ use std::f32::consts::PI;
 use std::time::Duration;
 
 use bevy::prelude::*;
+use doome_bevy::assets::Assets;
 use doome_bevy::components::*;
 use doome_bevy::physics::{Body, BodyType, CircleCollider, Collider, RayCast};
 use glam::{vec3, Vec3Swizzles};
@@ -10,7 +11,7 @@ use super::utils::*;
 use crate::interaction::TextInteraction;
 use crate::markers::{FollowPlayerAbove, InteractableHighlight};
 
-pub fn init(mut commands: Commands) {
+pub fn init(mut commands: Commands, assets: Res<Assets>) {
     commands.spawn((
         Player,
         // Transform::IDENTITY,
@@ -41,6 +42,12 @@ pub fn init(mut commands: Commands) {
     // commands.wall(-1, 3, -1, 5, 3);
     // commands.ceiling(-10, -10, 10, 10);
 
+    let column = assets.load_model("column");
+    let chandelier = assets.load_model("chandelier");
+    let thingy = assets.load_model("thingy");
+    let monke = assets.load_model("monke");
+    let diamond = assets.load_model("diamond");
+
     let column_positions = (0..5).map(|n| n as f32 * 3.0);
     const X_OFFSET: f32 = 4.0;
 
@@ -49,20 +56,20 @@ pub fn init(mut commands: Commands) {
         let right_column_pos = vec3(X_OFFSET, 0.0, z);
 
         commands
-            .model("column")
+            .model(column)
             .with_translation(left_column_pos)
             .spawn()
             .insert(Collider::Circle(CircleCollider { radius: 0.5 }));
 
         commands
-            .model("column")
+            .model(column)
             .with_translation(right_column_pos)
             .spawn()
             .insert(Collider::Circle(CircleCollider { radius: 0.5 }));
     }
 
     commands
-        .model("chandelier")
+        .model(chandelier)
         .with_translation(vec3(0.0, 6.0, 7.5))
         .with_material(
             Material::default().with_reflectivity(1.0).without_texture(),
@@ -70,7 +77,7 @@ pub fn init(mut commands: Commands) {
         .spawn();
 
     commands
-        .model("thingy")
+        .model(thingy)
         .with_translation(vec3(0.0, 0.0, 7.5))
         .with_material(
             Material::default().with_reflectivity(1.0).without_texture(),
@@ -98,7 +105,7 @@ pub fn init(mut commands: Commands) {
         .insert(InteractableHighlight);
 
     commands
-        .model("monke")
+        .model(monke)
         .with_translation(middle_monke_pos)
         .with_scale(Vec3::splat(0.5))
         .spawn()
@@ -130,7 +137,7 @@ pub fn init(mut commands: Commands) {
         .insert(FollowPlayerAbove { offset: 1.0 });
 
     let d1 = commands
-        .model("diamond")
+        .model(diamond)
         .dynamic()
         .with_translation(vec3(0.0, 1.5, 2.0))
         .with_scale(Vec3::splat(0.4))

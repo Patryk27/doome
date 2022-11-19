@@ -29,7 +29,8 @@ pub trait LevelBuilderExt<'w, 's> {
         color: Vec3,
     ) -> EntityCommands<'w, 's, 'a>;
 
-    fn model<'a>(&'a mut self, name: &'static str) -> ModelBuilder<'w, 's, 'a>;
+    fn model<'a>(&'a mut self, handle: ModelHandle)
+        -> ModelBuilder<'w, 's, 'a>;
 }
 
 impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
@@ -120,24 +121,27 @@ impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
         ))
     }
 
-    fn model<'a>(&'a mut self, name: &'static str) -> ModelBuilder<'w, 's, 'a> {
-        ModelBuilder::new(self, name)
+    fn model<'a>(
+        &'a mut self,
+        handle: ModelHandle,
+    ) -> ModelBuilder<'w, 's, 'a> {
+        ModelBuilder::new(self, handle)
     }
 }
 
 pub struct ModelBuilder<'w, 's, 'a> {
     commands: &'a mut Commands<'w, 's>,
-    name: &'static str,
+    handle: ModelHandle,
     geo_type: GeometryType,
     transform: Transform,
     material: Option<Material>,
 }
 
 impl<'w, 's, 'a> ModelBuilder<'w, 's, 'a> {
-    fn new(commands: &'a mut Commands<'w, 's>, name: &'static str) -> Self {
+    fn new(commands: &'a mut Commands<'w, 's>, handle: ModelHandle) -> Self {
         Self {
             commands,
-            name,
+            handle,
             geo_type: GeometryType::Static,
             transform: Default::default(),
             material: Default::default(),
@@ -170,11 +174,9 @@ impl<'w, 's, 'a> ModelBuilder<'w, 's, 'a> {
     }
 
     pub fn spawn(self) -> EntityCommands<'w, 's, 'a> {
-        let mut ec = self.commands.spawn((
-            ModelName::new(self.name),
-            self.transform,
-            self.geo_type,
-        ));
+        let mut ec =
+            self.commands
+                .spawn((self.handle, self.transform, self.geo_type));
 
         if let Some(material) = self.material {
             ec.insert(material);

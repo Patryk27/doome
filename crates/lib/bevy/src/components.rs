@@ -88,19 +88,8 @@ pub struct Wall {
     pub rot: u8,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Component)]
-pub struct ModelName {
-    // TODO: String comparison :(
-    pub(crate) name: String,
-}
-
-impl ModelName {
-    pub fn new(name: &str) -> Self {
-        Self {
-            name: name.to_string(),
-        }
-    }
-}
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Component)]
+pub struct ModelHandle(pub(crate) usize);
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Component)]
 pub struct Material {

@@ -5,7 +5,7 @@ use glam::{vec2, vec3};
 use tobj::LoadOptions;
 
 use super::source::AssetsSource;
-use super::{AssetsLoader, Model, ModelMaterial, ModelName, ModelTriangle};
+use super::{AssetsLoader, Model, ModelMaterial, ModelTriangle};
 use crate::components::Color;
 
 impl<S> AssetsLoader<S>
@@ -14,7 +14,7 @@ where
 {
     pub fn load_model<'a, 'p>(
         &'a mut self,
-        name: ModelName,
+        name: &str,
         path: impl AsRef<Path> + 'p,
     ) -> Result<()> {
         let path = path.as_ref();
@@ -50,13 +50,13 @@ where
             .transpose()?
             .unwrap_or_default();
 
-        self.models.insert(
-            name,
-            Model {
-                triangles,
-                material,
-            },
-        );
+        let index = self.models.len();
+        self.models.push(Model {
+            triangles,
+            material,
+        });
+
+        self.name_to_index.insert(name.to_string(), index);
 
         Ok(())
     }
@@ -107,7 +107,7 @@ where
 
     fn process_material(
         &mut self,
-        name: ModelName,
+        name: &str,
         raw_mat: &tobj::Material,
     ) -> Result<ModelMaterial> {
         let mut mat = ModelMaterial::default();
@@ -132,9 +132,9 @@ where
             self.textures
                 .entry(raw_mat.diffuse_texture.clone())
                 .and_modify(|e| {
-                    e.1.push(name.clone());
+                    e.1.push(name.to_string());
                 })
-                .or_insert((tex, vec![name]));
+                .or_insert((tex, vec![name.to_string()]));
         }
 
         Ok(mat)
