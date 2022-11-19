@@ -8,6 +8,7 @@ use glam::{vec3, Vec3Swizzles};
 
 use super::utils::*;
 use crate::interaction::TextInteraction;
+use crate::markers::InteractableHighlight;
 
 pub fn init(mut commands: Commands) {
     commands.spawn((
@@ -49,12 +50,14 @@ pub fn init(mut commands: Commands) {
 
     let middle_monke_pos = vec3(0.0, 1.0, 3.0);
 
-    commands.spot_light(
-        vec3(0.0, 4.0, 0.0),
-        middle_monke_pos,
-        PI / 12.0,
-        vec3(1.0, 0.0, 0.0),
-    );
+    commands
+        .spot_light(
+            vec3(0.0, 4.0, 0.0),
+            middle_monke_pos,
+            PI / 12.0,
+            vec3(1.0, 0.0, 0.0),
+        )
+        .insert(InteractableHighlight);
 
     commands
         .model("monke")

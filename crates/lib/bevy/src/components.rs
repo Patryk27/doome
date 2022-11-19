@@ -44,6 +44,9 @@ pub struct Player;
 
 #[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Light {
+    // I feel like for proper bevy-ness this should be a different component
+    // but I like the brevity and simplicity of this solution
+    pub enabled: bool,
     pub intensity: f32,
     pub kind: LightKind,
 }

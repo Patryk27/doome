@@ -93,6 +93,7 @@ impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
     ) -> EntityCommands<'w, 's, 'a> {
         self.spawn((
             Light {
+                enabled: true,
                 intensity: 1.0,
                 kind: LightKind::Point,
             },
@@ -110,6 +111,7 @@ impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
     ) -> EntityCommands<'w, 's, 'a> {
         self.spawn((
             Light {
+                enabled: true,
                 intensity: 1.0,
                 kind: LightKind::Spot { point_at, angle },
             },

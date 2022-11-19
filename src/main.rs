@@ -1,5 +1,6 @@
 mod interaction;
 mod levels;
+mod markers;
 
 use bevy::app::AppExit;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
@@ -16,6 +17,7 @@ use doome_engine::{Canvas, HEIGHT, WIDTH};
 use glam::vec3;
 use include_dir::{include_dir, Dir};
 use interaction::TextInteraction;
+use markers::InteractableHighlight;
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
@@ -58,6 +60,7 @@ fn main() {
         .add_system(process_movement)
         .add_system(process_camera)
         .add_system(render_ui)
+        .add_system(highlight_interactable)
         .add_system(levels::level1::animate)
         .add_system(levels::level1::sync_raycast_marker)
         .add_system(levels::level1::log_player_position)
@@ -95,6 +98,38 @@ fn render_ui(
     if let Some(hit) = raycast.hit.as_ref() {
         if let Ok(interactable) = interactables.get(hit.entity) {
             canvas.text(10, HEIGHT - 30, &interactable.content);
+        }
+    }
+}
+
+fn highlight_interactable(
+    mut highlight: Query<
+        (&mut Transform, &mut Light),
+        With<InteractableHighlight>,
+    >,
+    raycaster: Query<(&Player, &RayCast)>,
+    interactables: Query<
+        (&TextInteraction, &Transform),
+        Without<InteractableHighlight>,
+    >,
+) {
+    let (_player, raycast) = raycaster.single();
+
+    let (mut highlight_transform, mut light) = highlight.single_mut();
+    light.enabled = false;
+
+    if let Some(hit) = raycast.hit.as_ref() {
+        if let Ok((_interactable, transform)) = interactables.get(hit.entity) {
+            let new_point_at = transform.translation;
+
+            highlight_transform.translation =
+                transform.translation + Vec3::Y * 5.0;
+
+            if let LightKind::Spot { point_at, .. } = &mut light.kind {
+                *point_at = new_point_at;
+            }
+
+            light.enabled = true;
         }
     }
 }
