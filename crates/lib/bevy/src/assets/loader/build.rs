@@ -57,12 +57,7 @@ where
             let offset_in_new_tex = vec2(x as f32, y as f32);
 
             for model_name in affected_models {
-                let model = {
-                    self.name_to_index
-                        .get_mut(model_name)
-                        .map(|index| &mut self.models[*index])
-                }
-                .unwrap();
+                let model = self.models.modify(model_name);
 
                 for tri in &mut model.triangles {
                     tri.uvs[0] = remap_uv(
@@ -90,8 +85,8 @@ where
         }
 
         Assets {
-            models: self.models,
-            name_to_index: self.name_to_index,
+            models: self.models.build(),
+            images: self.images.build(),
             atlas,
         }
     }

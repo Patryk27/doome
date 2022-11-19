@@ -50,13 +50,13 @@ where
             .transpose()?
             .unwrap_or_default();
 
-        let index = self.models.len();
-        self.models.push(Model {
-            triangles,
-            material,
-        });
-
-        self.name_to_index.insert(name.to_string(), index);
+        self.models.push(
+            name,
+            Model {
+                triangles,
+                material,
+            },
+        );
 
         Ok(())
     }

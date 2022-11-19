@@ -88,9 +88,6 @@ pub struct Wall {
     pub rot: u8,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Component)]
-pub struct ModelHandle(pub(crate) usize);
-
 #[derive(Copy, Clone, Debug, Default, PartialEq, Component)]
 pub struct Material {
     pub alpha: Option<f32>,

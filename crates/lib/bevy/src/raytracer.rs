@@ -10,7 +10,7 @@ use glam::{vec2, vec3};
 
 use self::geometry_manager::*;
 use self::materials_manager::*;
-use crate::assets::Assets;
+use crate::assets::{AssetHandle, Assets, Model};
 use crate::components::*;
 use crate::doome::DoomeRenderer;
 use crate::renderer::RendererState;
@@ -68,11 +68,11 @@ fn sync_created_geometry(
         (
             Entity,
             &GeometryType,
-            &ModelHandle,
+            &AssetHandle<Model>,
             &Transform,
             Option<&Material>,
         ),
-        Added<ModelHandle>,
+        Added<AssetHandle<Model>>,
     >,
 ) {
     let ctxt = &mut *ctxt;
@@ -129,7 +129,7 @@ fn sync_updated_geometry(
         (
             Entity,
             &GeometryType,
-            &ModelHandle,
+            &AssetHandle<Model>,
             &Transform,
             Option<&Material>,
         ),

@@ -2,6 +2,8 @@ use std::f32::consts::PI;
 
 use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
+use doome_bevy::assets::model::Model;
+use doome_bevy::assets::AssetHandle;
 use doome_bevy::components::*;
 use doome_bevy::physics::{Collider, LineCollider};
 use glam::{vec2, vec3};
@@ -29,8 +31,10 @@ pub trait LevelBuilderExt<'w, 's> {
         color: Vec3,
     ) -> EntityCommands<'w, 's, 'a>;
 
-    fn model<'a>(&'a mut self, handle: ModelHandle)
-        -> ModelBuilder<'w, 's, 'a>;
+    fn model<'a>(
+        &'a mut self,
+        handle: AssetHandle<Model>,
+    ) -> ModelBuilder<'w, 's, 'a>;
 }
 
 impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
@@ -123,7 +127,7 @@ impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
 
     fn model<'a>(
         &'a mut self,
-        handle: ModelHandle,
+        handle: AssetHandle<Model>,
     ) -> ModelBuilder<'w, 's, 'a> {
         ModelBuilder::new(self, handle)
     }
@@ -131,14 +135,17 @@ impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
 
 pub struct ModelBuilder<'w, 's, 'a> {
     commands: &'a mut Commands<'w, 's>,
-    handle: ModelHandle,
+    handle: AssetHandle<Model>,
     geo_type: GeometryType,
     transform: Transform,
     material: Option<Material>,
 }
 
 impl<'w, 's, 'a> ModelBuilder<'w, 's, 'a> {
-    fn new(commands: &'a mut Commands<'w, 's>, handle: ModelHandle) -> Self {
+    fn new(
+        commands: &'a mut Commands<'w, 's>,
+        handle: AssetHandle<Model>,
+    ) -> Self {
         Self {
             commands,
             handle,
