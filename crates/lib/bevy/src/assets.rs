@@ -2,6 +2,7 @@ mod loader;
 mod model;
 
 use std::collections::HashMap;
+use std::path::Path;
 
 use anyhow::{Context, Result};
 use bevy::prelude::*;
@@ -18,20 +19,29 @@ pub struct Assets {
 }
 
 impl Assets {
-    pub fn init(dir: &'static Dir<'static>) -> Result<Self> {
-        let mut loader = AssetsLoader::new(dir);
+    pub fn init_static(dir: &'static Dir<'static>) -> Result<Self> {
+        let loader = AssetsLoader::new(dir);
+        Self::init_inner(loader)
+    }
 
-        for entry in dir.entries() {
-            let Some(entry) = entry.as_file() else { continue };
-            let Some(entry_ext) = entry.path().extension() else { continue };
+    pub fn init(path: impl AsRef<Path>) -> Result<Self> {
+        let runtime_source = RuntimeSource::new(path);
+        let loader = AssetsLoader::new(runtime_source);
+        Self::init_inner(loader)
+    }
+
+    fn init_inner<S: AssetsSource>(
+        mut loader: AssetsLoader<S>,
+    ) -> Result<Self> {
+        for entry in loader.list() {
+            let Some(entry_ext) = entry.extension() else { continue };
 
             if entry_ext.to_str() == Some("obj") {
-                let name = ModelName::new(
-                    entry.path().file_stem().unwrap().to_str().unwrap(),
-                );
+                let file_stem = entry.file_stem().unwrap();
+                let name = ModelName::new(file_stem.to_str().unwrap());
 
-                loader.load_model(name, entry.path()).with_context(|| {
-                    format!("Couldn't load model: {}", entry.path().display())
+                loader.load_model(name, &entry).with_context(|| {
+                    format!("Couldn't load model: {}", entry.display())
                 })?;
             }
         }

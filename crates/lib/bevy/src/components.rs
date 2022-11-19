@@ -88,14 +88,17 @@ pub struct Wall {
     pub rot: u8,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Component)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Component)]
 pub struct ModelName {
-    pub(crate) name: &'static str,
+    // TODO: String comparison :(
+    pub(crate) name: String,
 }
 
 impl ModelName {
-    pub fn new(name: &'static str) -> Self {
-        Self { name }
+    pub fn new(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+        }
     }
 }
 

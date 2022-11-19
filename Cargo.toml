@@ -24,5 +24,8 @@ bevy = { version = "0.9", default-features = false, features = ["bevy_winit"] }
 glam = "0.22"
 include_dir = "0.7"
 
+[features]
+static-assets = []
+
 [profile.dev]
 overflow-checks = false

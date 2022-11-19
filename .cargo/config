@@ -1,5 +1,5 @@
 [alias]
-run-wasm = "run --release --target wasm32-unknown-unknown --target-dir target/wasm"
+run-wasm = "run --release --target wasm32-unknown-unknown --features static-assets --target-dir target/wasm"
 
 [target.wasm32-unknown-unknown]
 runner = "wasm-server-runner"

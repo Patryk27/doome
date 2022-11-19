@@ -6,11 +6,15 @@ use rectangle_pack::{
     TargetBin,
 };
 
+use super::source::AssetsSource;
 use super::{Assets, AssetsLoader};
 
 const DEPTH: u32 = 1;
 
-impl AssetsLoader {
+impl<S> AssetsLoader<S>
+where
+    S: AssetsSource,
+{
     pub fn build(mut self) -> Assets {
         let mut rects_to_place: GroupedRectsToPlace<String, ()> =
             GroupedRectsToPlace::new();

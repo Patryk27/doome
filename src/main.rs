@@ -21,12 +21,16 @@ use markers::{FollowPlayerAbove, InteractableHighlight};
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
+#[cfg(feature = "static-assets")]
 const ASSETS: Dir<'static> = include_dir!("assets");
 
 const WINDOW_SCALE: f32 = 4.0;
 
 fn main() {
-    let assets = Assets::init(&ASSETS).unwrap();
+    #[cfg(feature = "static-assets")]
+    let assets = Assets::init_static(&ASSETS).unwrap();
+    #[cfg(not(feature = "static-assets"))]
+    let assets = Assets::init("assets").unwrap();
 
     App::new()
         .insert_resource(assets)

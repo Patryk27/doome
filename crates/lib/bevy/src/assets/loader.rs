@@ -1,15 +1,16 @@
 mod build;
 mod load_material;
 mod load_model;
+mod source;
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 
-use include_dir::Dir;
-
+pub use self::source::{AssetsSource, RuntimeSource};
 use super::{Assets, Model, ModelMaterial, ModelName, ModelTriangle};
 
-pub struct AssetsLoader {
-    dir: &'static Dir<'static>,
+pub struct AssetsLoader<S> {
+    source: S,
     models: HashMap<ModelName, Model>,
 
     /// Maps texture path to (texture data, models that use it)
@@ -18,12 +19,21 @@ pub struct AssetsLoader {
     textures: HashMap<String, (image::RgbaImage, Vec<ModelName>)>,
 }
 
-impl AssetsLoader {
-    pub fn new(dir: &'static Dir<'static>) -> Self {
+impl<S> AssetsLoader<S> {
+    pub fn new(source: S) -> Self {
         Self {
-            dir,
+            source,
             models: Default::default(),
             textures: Default::default(),
         }
+    }
+}
+
+impl<S> AssetsLoader<S>
+where
+    S: AssetsSource,
+{
+    pub fn list(&self) -> Vec<PathBuf> {
+        self.source.list()
     }
 }

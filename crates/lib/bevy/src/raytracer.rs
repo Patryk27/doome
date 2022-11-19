@@ -106,8 +106,8 @@ fn sync_created_geometry(
         commands.entity(entity).insert(Synced);
     }
 
-    for (entity, &geo_type, &name, &xform, mat) in models.iter() {
-        let model = assets.model(name);
+    for (entity, &geo_type, name, &xform, mat) in models.iter() {
+        let model = assets.model(name.clone());
         let xform = xform.compute_matrix();
 
         let mat = mat
@@ -139,13 +139,13 @@ fn sync_updated_geometry(
     let ctxt = &mut *ctxt;
     let mut geo = ctxt.geometry.updater();
 
-    for (entity, &geo_type, &name, &xform, mat) in models.iter() {
+    for (entity, &geo_type, name, &xform, mat) in models.iter() {
         if geo_type == GeometryType::Static {
             // TODO it's fine to overwrite geometry for them
             continue;
         }
 
-        let model = assets.model(name);
+        let model = assets.model(name.clone());
         let xform = xform.compute_matrix();
 
         let mat = mat

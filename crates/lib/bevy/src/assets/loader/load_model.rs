@@ -4,23 +4,27 @@ use anyhow::{bail, Context, Result};
 use glam::{vec2, vec3};
 use tobj::LoadOptions;
 
+use super::source::AssetsSource;
 use super::{AssetsLoader, Model, ModelMaterial, ModelName, ModelTriangle};
 use crate::components::Color;
 
-impl AssetsLoader {
-    pub fn load_model(
-        &mut self,
+impl<S> AssetsLoader<S>
+where
+    S: AssetsSource,
+{
+    pub fn load_model<'a, 'p>(
+        &'a mut self,
         name: ModelName,
-        path: impl AsRef<Path>,
+        path: impl AsRef<Path> + 'p,
     ) -> Result<()> {
         let path = path.as_ref();
 
         log::info!("Loading model: {}", path.display());
 
-        let model_file = self.dir.get_file(path).context("File not found")?;
+        let model_file = self.source.read_file(path)?;
 
         let (models, materials) = tobj::load_obj_buf(
-            &mut model_file.contents(),
+            &mut model_file.as_slice(),
             &LoadOptions {
                 triangulate: true,
                 ..LoadOptions::default()
@@ -42,7 +46,7 @@ impl AssetsLoader {
 
         let material = materials
             .get(0)
-            .map(|mat| self.process_material(name, mat))
+            .map(|mat| self.process_material(name.clone(), mat))
             .transpose()?
             .unwrap_or_default();
 
@@ -117,24 +121,18 @@ impl AssetsLoader {
         mat.is_textured = !raw_mat.diffuse_texture.is_empty();
 
         if mat.is_textured {
-            let tex = self
-                .dir
-                .get_file(&raw_mat.diffuse_texture)
-                .with_context(|| {
-                    format!("Texture not found: {}", raw_mat.diffuse_texture)
-                })?;
+            let tex = self.source.read_file(&raw_mat.diffuse_texture)?;
 
-            let tex =
-                image::load_from_memory(tex.contents()).with_context(|| {
-                    format!("Texture is invalid: {}", raw_mat.diffuse_texture)
-                })?;
+            let tex = image::load_from_memory(&tex).with_context(|| {
+                format!("Texture is invalid: {}", raw_mat.diffuse_texture)
+            })?;
 
             let tex = tex.to_rgba8();
 
             self.textures
                 .entry(raw_mat.diffuse_texture.clone())
                 .and_modify(|e| {
-                    e.1.push(name);
+                    e.1.push(name.clone());
                 })
                 .or_insert((tex, vec![name]));
         }
