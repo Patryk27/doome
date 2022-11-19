@@ -1,22 +1,21 @@
+mod interaction;
 mod levels;
 
 use bevy::app::AppExit;
-use bevy::diagnostic::{
-    Diagnostics, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin,
-};
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
 use doome_bevy::assets::Assets;
 use doome_bevy::components::*;
 use doome_bevy::doome::{DoomePlugin, DoomeRenderer};
-use doome_bevy::physics::{Body, PhysicsPlugin};
+use doome_bevy::physics::{Body, PhysicsPlugin, RayCast};
 use doome_bevy::renderer::RendererPlugin;
 use doome_bevy::text::Text;
-use doome_engine::{Canvas, HEIGHT, HUD_HEIGHT, WIDTH};
-use doome_surface::Color;
+use doome_engine::{Canvas, HEIGHT, WIDTH};
 use glam::vec3;
 use include_dir::{include_dir, Dir};
+use interaction::TextInteraction;
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
@@ -83,33 +82,20 @@ fn quit_on_exit(keys: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
 fn render_ui(
     mut doome_renderer: ResMut<DoomeRenderer>,
     text: Res<Text>,
-    diagnostics: Res<Diagnostics>,
+    raycaster: Query<(&Player, &RayCast)>,
+    interactables: Query<&TextInteraction>,
 ) {
     let frame = &mut doome_renderer.pixels.image_data;
     let mut canvas = Canvas::new(&text.text_engine, frame);
 
-    canvas.rect(
-        0,
-        HEIGHT - HUD_HEIGHT,
-        WIDTH,
-        HEIGHT,
-        Color {
-            r: 0x10,
-            g: 0x10,
-            b: 0x10,
-            a: 0x66,
-        },
-    );
+    canvas.clear();
 
-    let fps_diagnostic =
-        diagnostics.get(FrameTimeDiagnosticsPlugin::FPS).unwrap();
+    let (_player, raycast) = raycaster.single();
 
-    if let Some(fps) = fps_diagnostic.smoothed() {
-        canvas.text(
-            10,
-            HEIGHT - 30,
-            format!("FPS: {fps:>.6}{}", fps_diagnostic.suffix),
-        );
+    if let Some(hit) = raycast.hit.as_ref() {
+        if let Ok(interactable) = interactables.get(hit.entity) {
+            canvas.text(10, HEIGHT - 30, &interactable.content);
+        }
     }
 }
 

@@ -7,6 +7,7 @@ use doome_bevy::physics::{Body, BodyType, CircleCollider, Collider, RayCast};
 use glam::{vec3, Vec3Swizzles};
 
 use super::utils::*;
+use crate::interaction::TextInteraction;
 
 pub fn init(mut commands: Commands) {
     commands.spawn((
@@ -61,7 +62,10 @@ pub fn init(mut commands: Commands) {
         .with_rotation(Quat::from_rotation_z(0.3))
         .with_scale(Vec3::splat(0.5))
         .spawn()
-        .insert(Collider::Circle(CircleCollider { radius: 0.5 }));
+        .insert(Collider::Circle(CircleCollider { radius: 0.5 }))
+        .insert(TextInteraction {
+            content: format!("Left Monke"),
+        });
 
     commands
         .model("monke")
@@ -69,32 +73,38 @@ pub fn init(mut commands: Commands) {
         .with_rotation(Quat::from_rotation_z(-0.3))
         .with_scale(Vec3::splat(0.5))
         .spawn()
-        .insert(Collider::Circle(CircleCollider { radius: 0.5 }));
+        .insert(Collider::Circle(CircleCollider { radius: 0.5 }))
+        .insert(TextInteraction {
+            content: format!("Right Monke"),
+        });
 
     commands
         .model("monke")
         .with_translation(middle_monke_pos)
         .with_scale(Vec3::splat(0.5))
         .spawn()
-        .insert(Collider::Circle(CircleCollider { radius: 0.5 }));
+        .insert(Collider::Circle(CircleCollider { radius: 0.5 }))
+        .insert(TextInteraction {
+            content: format!("Middle Monke"),
+        });
 
-    commands
-        .model("diamond")
-        .dynamic()
-        .with_translation(vec3(0.0, 0.0, 0.0))
-        .with_scale(Vec3::splat(0.4))
-        .with_material(
-            Material::default()
-                .with_color(Color {
-                    r: 1.0,
-                    g: 1.0,
-                    b: 1.0,
-                })
-                .with_reflectivity(1.0)
-                .without_texture(),
-        )
-        .spawn()
-        .insert(PlayerRayCastMarker);
+    // commands
+    //     .model("diamond")
+    //     .dynamic()
+    //     .with_translation(vec3(0.0, 0.0, 0.0))
+    //     .with_scale(Vec3::splat(0.4))
+    //     .with_material(
+    //         Material::default()
+    //             .with_color(Color {
+    //                 r: 1.0,
+    //                 g: 1.0,
+    //                 b: 1.0,
+    //             })
+    //             .with_reflectivity(1.0)
+    //             .without_texture(),
+    //     )
+    //     .spawn()
+    //     .insert(PlayerRayCastMarker);
 
     let d1 = commands
         .model("diamond")

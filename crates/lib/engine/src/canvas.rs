@@ -13,6 +13,10 @@ impl<'f> Canvas<'f> {
         Self { text_engine, frame }
     }
 
+    pub fn clear(&mut self) {
+        self.frame.fill(0);
+    }
+
     pub fn set(&mut self, x: u16, y: u16, color: Color) {
         Surface { frame: self.frame }.set(x, y, color);
     }
