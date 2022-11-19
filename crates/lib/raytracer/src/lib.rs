@@ -36,8 +36,12 @@ impl Raytracer {
         height: u32,
         atlas_data: &[u8],
     ) -> Self {
-        let shader = wgpu::include_spirv!(env!("doome_raytracer_shader.spv"));
-        let module = device.create_shader_module(shader);
+        #[cfg(not(target_arch = "wasm32"))]
+        let shader =
+            device.create_shader_module(wgpu::include_spirv!("./shader.spv"));
+        #[cfg(target_arch = "wasm32")]
+        let shader =
+            device.create_shader_module(wgpu::include_wgsl!("./shader.wgsl"));
 
         let ds0 = AllocatedUniform::create(device, "ds0");
         let ds1 = AllocatedUniform::create(device, "ds1");
@@ -152,7 +156,7 @@ impl Raytracer {
                 label: Some("raytracer_pipeline"),
                 layout: Some(&pipeline_layout),
                 vertex: wgpu::VertexState {
-                    module: &module,
+                    module: &shader,
                     entry_point: "vs_main",
                     buffers: &[],
                 },
@@ -160,7 +164,7 @@ impl Raytracer {
                 depth_stencil: None,
                 multisample: wgpu::MultisampleState::default(),
                 fragment: Some(wgpu::FragmentState {
-                    module: &module,
+                    module: &shader,
                     entry_point: "fs_main",
                     targets: &[Some(wgpu::ColorTargetState {
                         format: wgpu::TextureFormat::Rgba8UnormSrgb,

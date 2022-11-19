@@ -19,9 +19,10 @@ impl Pixels {
         height: u32,
         shader_constants: &AllocatedUniform<ShaderConstants>,
     ) -> Self {
-        let shader = device.create_shader_module(wgpu::include_spirv!(env!(
-            "pixel_shader.spv"
-        )));
+        #[cfg(not(target_arch = "wasm32"))]
+        let shader = device.create_shader_module(wgpu::include_spirv!("./shader.spv"));
+        #[cfg(target_arch = "wasm32")]
+        let shader = device.create_shader_module(wgpu::include_wgsl!("./shader.wgsl"));
 
         let extent = wgpu::Extent3d {
             width: width,

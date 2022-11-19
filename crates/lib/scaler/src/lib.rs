@@ -13,9 +13,12 @@ impl Scaler {
         output_format: wgpu::TextureFormat,
         shader_constants: &AllocatedUniform<ShaderConstants>,
     ) -> Self {
-        let shader = device.create_shader_module(wgpu::include_spirv!(env!(
-            "scaler_shader.spv"
-        )));
+        #[cfg(not(target_arch = "wasm32"))]
+        let shader =
+            device.create_shader_module(wgpu::include_spirv!("./shader.spv"));
+        #[cfg(target_arch = "wasm32")]
+        let shader =
+            device.create_shader_module(wgpu::include_wgsl!("./shader.wgsl"));
 
         let sampler = &device.create_sampler(&wgpu::SamplerDescriptor {
             address_mode_u: wgpu::AddressMode::ClampToEdge,

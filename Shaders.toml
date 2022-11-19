@@ -1,0 +1,15 @@
+dirs = [
+    "crates/lib/shader-common"
+]
+
+[[shaders]]
+path_to_shader = "crates/shaders/raytracer"
+path_to_copy_to = "crates/lib/raytracer/src/shader"
+
+[[shaders]]
+path_to_shader = "crates/shaders/scaler"
+path_to_copy_to = "crates/lib/scaler/src/shader"
+
+[[shaders]]
+path_to_shader = "crates/shaders/pixels"
+path_to_copy_to = "crates/lib/pixels/src/shader"
