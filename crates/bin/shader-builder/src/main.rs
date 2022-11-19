@@ -77,7 +77,7 @@ fn build_shader(shader_config: &ShaderConfig) -> anyhow::Result<()> {
     let spirv_module_path = shader_config.path_to_copy_to.with_extension("spv");
     let naga_module_path = shader_config.path_to_copy_to.with_extension("naga");
 
-    fs_extra::file::move_file(
+    fs_extra::file::copy(
         build_result.module.unwrap_single(),
         &spirv_module_path,
         &fs_extra::file::CopyOptions {
