@@ -13,13 +13,26 @@ use self::raycasting::resolve_raycasts;
 #[derive(Default)]
 pub struct PhysicsPlugin;
 
+#[derive(StageLabel, Debug, Clone, PartialEq, Eq, Hash)]
+struct PhysicsStage;
+
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
-        // TODO: Play with staging so that this gets executed at a higher frame rate
+        app.add_stage_before(
+            CoreStage::Update,
+            PhysicsStage,
+            SystemStage::single_threaded(),
+        );
 
-        app.add_system(update_physics)
-            .add_system(resolve_collisions.before(update_physics))
-            .add_system(resolve_raycasts);
+        app.add_system_to_stage(PhysicsStage, update_physics)
+            .add_system_to_stage(
+                PhysicsStage,
+                resolve_collisions.before(update_physics),
+            )
+            .add_system_to_stage(
+                PhysicsStage,
+                resolve_raycasts.after(update_physics),
+            );
     }
 }
 
