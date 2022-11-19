@@ -15,14 +15,13 @@ use doome_bevy::renderer::RendererPlugin;
 use doome_bevy::text::Text;
 use doome_engine::{Canvas, HEIGHT, WIDTH};
 use glam::vec3;
-use include_dir::{include_dir, Dir};
 use interaction::TextInteraction;
 use markers::{FollowPlayerAbove, InteractableHighlight};
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
 #[cfg(feature = "static-assets")]
-const ASSETS: Dir<'static> = include_dir!("assets");
+const ASSETS: include_dir::Dir<'static> = include_dir::include_dir!("assets");
 
 const WINDOW_SCALE: f32 = 4.0;
 
