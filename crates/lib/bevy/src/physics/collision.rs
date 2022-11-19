@@ -4,6 +4,8 @@ use glam::{vec3, Vec3Swizzles};
 use super::sat::{self, project_vertices_onto, resolve_axis_projections};
 use super::{Body, CircleCollider, Collider};
 
+const MIN_VELOCITY: f32 = 0.1;
+
 pub fn resolve_collisions(
     time: Res<Time>,
     mut bodies_with_colliders: Query<(
@@ -23,10 +25,6 @@ pub fn resolve_collisions(
         active_entity_collider,
     ) in bodies_with_colliders.iter_mut()
     {
-        let v = body.velocity * delta;
-        let new_transform = active_entity_transform
-            .with_translation(active_entity_transform.translation + v);
-
         for (
             passive_entity,
             passive_entity_collider,
@@ -41,6 +39,10 @@ pub fn resolve_collisions(
                 continue;
             }
 
+            let v = body.velocity * delta;
+            let new_transform = active_entity_transform
+                .with_translation(active_entity_transform.translation + v);
+
             if let Some(mtv) = are_colliding(
                 &new_transform,
                 active_entity_collider,
@@ -50,6 +52,10 @@ pub fn resolve_collisions(
                 let mtv_component = vector_decompose(body.velocity.xz(), mtv);
                 let mtv = vec3(mtv.x, 0.0, mtv.y);
                 body.velocity -= mtv * mtv_component;
+
+                if body.velocity.length() < MIN_VELOCITY {
+                    body.velocity = Vec3::ZERO;
+                }
             }
         }
     }
