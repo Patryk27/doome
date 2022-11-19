@@ -61,6 +61,7 @@ fn main() {
         .add_system(render_ui)
         .add_system(levels::level1::animate)
         .add_system(levels::level1::sync_raycast_marker)
+        .add_system(levels::level1::log_player_position)
         .add_startup_system(hide_cursor)
         .add_startup_system(levels::level1::init)
         .run();

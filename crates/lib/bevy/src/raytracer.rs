@@ -169,11 +169,24 @@ fn sync_lights(
     for (light, transform, color) in lights.iter() {
         let position = transform.translation;
 
-        ctxt.lights.push(rt::Light::new(
-            vec3(position.x, position.y, position.z),
-            vec3(color.r, color.g, color.b),
-            light.intensity,
-        ));
+        match light.kind {
+            LightKind::Point => {
+                ctxt.lights.push(rt::Light::point(
+                    position,
+                    vec3(color.r, color.g, color.b),
+                    light.intensity,
+                ));
+            }
+            LightKind::Spot { point_at, angle } => {
+                ctxt.lights.push(rt::Light::spot(
+                    position,
+                    point_at,
+                    angle,
+                    vec3(color.r, color.g, color.b),
+                    light.intensity,
+                ));
+            }
+        }
     }
 }
 

@@ -11,6 +11,7 @@ use super::utils::*;
 pub fn init(mut commands: Commands) {
     commands.spawn((
         Player,
+        // Transform::IDENTITY,
         Transform::from_rotation(Quat::from_rotation_x(PI)),
         Body {
             velocity: vec3(0.0, 0.0, 0.0),
@@ -35,11 +36,24 @@ pub fn init(mut commands: Commands) {
     commands.wall(-1, 5, 1, 5, 0);
     commands.wall(1, 3, 1, 5, 1);
     commands.wall(-1, 3, -1, 5, 3);
-    commands.ceiling(-10, -10, 10, 10);
+    // commands.ceiling(-10, -10, 10, 10);
 
-    let l1 = commands.light(-1.5, 3.0, -1.0, 0.8, 0.0, 0.0).id();
-    let l2 = commands.light(0.0, 3.0, -1.0, 0.0, 0.8, 0.0).id();
-    let l3 = commands.light(1.5, 3.0, -1.0, 0.0, 0.0, 0.8).id();
+    // let l1 = commands.point_light(-1.5, 3.0, -1.0, 0.8, 0.0, 0.0).id();
+    // let l2 = commands.point_light(0.0, 3.0, -1.0, 0.0, 0.8, 0.0).id();
+    // let l3 = commands.point_light(1.5, 3.0, -1.0, 0.0, 0.0, 0.8).id();
+
+    // Main "ambient" light
+    const AMBIENT: f32 = 0.2;
+    commands.point_light(0.0, 4.0, 0.0, AMBIENT, AMBIENT, AMBIENT);
+
+    let middle_monke_pos = vec3(0.0, 1.0, 3.0);
+
+    commands.spot_light(
+        vec3(0.0, 4.0, 0.0),
+        middle_monke_pos,
+        PI / 12.0,
+        vec3(1.0, 0.0, 0.0),
+    );
 
     commands
         .model("monke")
@@ -59,7 +73,7 @@ pub fn init(mut commands: Commands) {
 
     commands
         .model("monke")
-        .with_translation(vec3(0.0, 1.0, 3.0))
+        .with_translation(middle_monke_pos)
         .with_scale(Vec3::splat(0.5))
         .spawn()
         .insert(Collider::Circle(CircleCollider { radius: 0.5 }));
@@ -100,9 +114,9 @@ pub fn init(mut commands: Commands) {
         .id();
 
     commands.insert_resource(Data {
-        l1,
-        l2,
-        l3,
+        // l1,
+        // l2,
+        // l3,
         d1,
         d2: None,
         timer: Timer::new(Duration::from_millis(1500), TimerMode::Repeating),
@@ -111,9 +125,9 @@ pub fn init(mut commands: Commands) {
 
 #[derive(Resource)]
 pub struct Data {
-    l1: Entity,
-    l2: Entity,
-    l3: Entity,
+    // l1: Entity,
+    // l2: Entity,
+    // l3: Entity,
     d1: Entity,
     d2: Option<Entity>,
     timer: Timer,
@@ -126,12 +140,31 @@ pub fn sync_raycast_marker(
     player: Query<(&Player, &RayCast)>,
     mut marker: Query<(&PlayerRayCastMarker, &mut Transform)>,
 ) {
-    let Ok((player, raycast)) = player.get_single() else { return };
+    let Ok((_, raycast)) = player.get_single() else { return };
     let Some(raycast_hit) = raycast.hit.as_ref() else { return };
 
     let Ok((_, mut marker_transform)) = marker.get_single_mut() else { return };
 
     marker_transform.translation = raycast_hit.position.extend(0.0).xzy();
+}
+
+pub fn log_player_position(
+    mut last_logged_at: Local<f32>,
+    time: Res<Time>,
+    player: Query<(&Player, &Transform)>,
+) {
+    const LOG_INTERVAL: f32 = 1.0; // in seconds
+
+    let Ok((_, transform)) = player.get_single() else { return };
+
+    if time.elapsed_seconds() - *last_logged_at > LOG_INTERVAL {
+        info!("Player position: {:?}", transform.translation);
+        info!(
+            "Player orientation (euler XYZ): {:?}",
+            transform.rotation.to_euler(EulerRot::XYZ)
+        );
+        *last_logged_at = time.elapsed_seconds();
+    }
 }
 
 pub fn animate(
@@ -148,13 +181,13 @@ pub fn animate(
     // ------------------ //
     // ---- l1,l2,l3 ---- //
 
-    let lights = [data.l1, data.l2, data.l3].into_iter().enumerate();
+    // let lights = [data.l1, data.l2, data.l3].into_iter().enumerate();
 
-    for (light_id, light) in lights {
-        let mut xform = xforms.get_mut(light).unwrap();
+    // for (light_id, light) in lights {
+    //     let mut xform = xforms.get_mut(light).unwrap();
 
-        xform.translation.y = 2.0 + (t * 2.5 + (light_id as f32)).cos() * 1.8;
-    }
+    //     xform.translation.y = 2.0 + (t * 2.5 + (light_id as f32)).cos() * 1.8;
+    // }
 
     // ------------ //
     // ---- d1 ---- //

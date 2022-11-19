@@ -14,6 +14,14 @@ impl Color {
     pub fn into_vec3(self) -> Vec3 {
         vec3(self.r, self.g, self.b)
     }
+
+    pub fn from_vec3(vec: Vec3) -> Self {
+        Self {
+            r: vec.x,
+            g: vec.y,
+            b: vec.z,
+        }
+    }
 }
 
 impl Default for Color {
@@ -37,6 +45,13 @@ pub struct Player;
 #[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Light {
     pub intensity: f32,
+    pub kind: LightKind,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum LightKind {
+    Point,
+    Spot { point_at: Vec3, angle: f32 },
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Component)]

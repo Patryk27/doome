@@ -11,7 +11,7 @@ pub trait LevelBuilderExt<'w, 's> {
     fn ceiling(&mut self, x1: i32, z1: i32, x2: i32, z2: i32);
     fn wall(&mut self, x1: i32, z1: i32, x2: i32, z2: i32, rot: u8);
 
-    fn light<'a>(
+    fn point_light<'a>(
         &'a mut self,
         x: f32,
         y: f32,
@@ -19,6 +19,14 @@ pub trait LevelBuilderExt<'w, 's> {
         r: f32,
         g: f32,
         b: f32,
+    ) -> EntityCommands<'w, 's, 'a>;
+
+    fn spot_light<'a>(
+        &'a mut self,
+        pos: Vec3,
+        orientation: Vec3,
+        angle: f32,
+        color: Vec3,
     ) -> EntityCommands<'w, 's, 'a>;
 
     fn model<'a>(&'a mut self, name: &'static str) -> ModelBuilder<'w, 's, 'a>;
@@ -74,7 +82,7 @@ impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
         ));
     }
 
-    fn light<'a>(
+    fn point_light<'a>(
         &'a mut self,
         x: f32,
         y: f32,
@@ -84,9 +92,29 @@ impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
         b: f32,
     ) -> EntityCommands<'w, 's, 'a> {
         self.spawn((
-            Light { intensity: 1.0 },
+            Light {
+                intensity: 1.0,
+                kind: LightKind::Point,
+            },
             Transform::from_xyz(x, y, z),
             Color { r, g, b },
+        ))
+    }
+
+    fn spot_light<'a>(
+        &'a mut self,
+        pos: Vec3,
+        point_at: Vec3,
+        angle: f32,
+        color: Vec3,
+    ) -> EntityCommands<'w, 's, 'a> {
+        self.spawn((
+            Light {
+                intensity: 1.0,
+                kind: LightKind::Spot { point_at, angle },
+            },
+            Transform::from_translation(pos),
+            Color::from_vec3(color),
         ))
     }
 
