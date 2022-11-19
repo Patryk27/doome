@@ -2,6 +2,8 @@ mod interaction;
 mod levels;
 mod markers;
 
+use std::sync::{Arc, Mutex};
+
 use bevy::app::AppExit;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::input::mouse::MouseMotion;
@@ -23,13 +25,22 @@ use markers::{FollowPlayerAbove, InteractableHighlight};
 #[cfg(feature = "static-assets")]
 const ASSETS: include_dir::Dir<'static> = include_dir::include_dir!("assets");
 
+#[cfg(not(target_arch = "wasm32"))]
 const WINDOW_SCALE: f32 = 4.0;
+
+// TODO
+#[cfg(target_arch = "wasm32")]
+const WINDOW_SCALE: f32 = 2.0;
 
 fn main() {
     #[cfg(feature = "static-assets")]
     let assets = Assets::init_static(&ASSETS).unwrap();
+
     #[cfg(not(feature = "static-assets"))]
     let assets = Assets::init("assets").unwrap();
+
+    let shader =
+        Arc::new(Mutex::new(Some(doome_raytracer::Raytracer::shader())));
 
     App::new()
         .insert_resource(assets)
@@ -56,7 +67,7 @@ fn main() {
         .add_plugin(bevy::winit::WinitPlugin::default())
         // Internal plugins
         .add_plugin(RendererPlugin)
-        .add_plugin(DoomePlugin)
+        .add_plugin(DoomePlugin { shader })
         .add_plugin(PhysicsPlugin::default())
         // Misc systems
         .add_system(quit_on_exit)
