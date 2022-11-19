@@ -60,6 +60,7 @@ fn main() {
         .add_system(process_camera)
         .add_system(render_ui)
         .add_system(levels::level1::animate)
+        .add_system(levels::level1::sync_raycast_marker)
         .add_startup_system(hide_cursor)
         .add_startup_system(levels::level1::init)
         .run();

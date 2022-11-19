@@ -3,8 +3,8 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 use doome_bevy::components::*;
-use doome_bevy::physics::{Body, BodyType, CircleCollider, Collider};
-use glam::vec3;
+use doome_bevy::physics::{Body, BodyType, CircleCollider, Collider, RayCast};
+use glam::{vec3, Vec3Swizzles};
 
 use super::utils::*;
 
@@ -17,6 +17,12 @@ pub fn init(mut commands: Commands) {
             body_type: BodyType::Kinematic,
         },
         Collider::Circle(CircleCollider { radius: 0.5 }),
+        // TODO: How to have multiple raycasts on the same entity?
+        RayCast {
+            origin: Vec2::NEG_Y * 0.6, // A little in front of our own collider
+            direction: Vec2::NEG_Y * 120.0,
+            hit: None,
+        },
     ));
 
     commands.floor(-3, -3, 3, 3);
@@ -40,20 +46,41 @@ pub fn init(mut commands: Commands) {
         .with_translation(vec3(-2.0, 1.0, 2.0))
         .with_rotation(Quat::from_rotation_z(0.3))
         .with_scale(Vec3::splat(0.5))
-        .spawn();
+        .spawn()
+        .insert(Collider::Circle(CircleCollider { radius: 0.5 }));
 
     commands
         .model("monke")
         .with_translation(vec3(2.0, 1.0, 2.0))
         .with_rotation(Quat::from_rotation_z(-0.3))
         .with_scale(Vec3::splat(0.5))
-        .spawn();
+        .spawn()
+        .insert(Collider::Circle(CircleCollider { radius: 0.5 }));
 
     commands
         .model("monke")
         .with_translation(vec3(0.0, 1.0, 3.0))
         .with_scale(Vec3::splat(0.5))
-        .spawn();
+        .spawn()
+        .insert(Collider::Circle(CircleCollider { radius: 0.5 }));
+
+    commands
+        .model("diamond")
+        .dynamic()
+        .with_translation(vec3(0.0, 0.0, 0.0))
+        .with_scale(Vec3::splat(0.4))
+        .with_material(
+            Material::default()
+                .with_color(Color {
+                    r: 1.0,
+                    g: 1.0,
+                    b: 1.0,
+                })
+                .with_reflectivity(1.0)
+                .without_texture(),
+        )
+        .spawn()
+        .insert(PlayerRayCastMarker);
 
     let d1 = commands
         .model("diamond")
@@ -90,6 +117,21 @@ pub struct Data {
     d1: Entity,
     d2: Option<Entity>,
     timer: Timer,
+}
+
+#[derive(Component)]
+pub struct PlayerRayCastMarker;
+
+pub fn sync_raycast_marker(
+    player: Query<(&Player, &RayCast)>,
+    mut marker: Query<(&PlayerRayCastMarker, &mut Transform)>,
+) {
+    let Ok((player, raycast)) = player.get_single() else { return };
+    let Some(raycast_hit) = raycast.hit.as_ref() else { return };
+
+    let Ok((_, mut marker_transform)) = marker.get_single_mut() else { return };
+
+    marker_transform.translation = raycast_hit.position.extend(0.0).xzy();
 }
 
 pub fn animate(
