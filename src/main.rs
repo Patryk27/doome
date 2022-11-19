@@ -17,7 +17,7 @@ use doome_engine::{Canvas, HEIGHT, WIDTH};
 use glam::vec3;
 use include_dir::{include_dir, Dir};
 use interaction::TextInteraction;
-use markers::InteractableHighlight;
+use markers::{FollowPlayerAbove, InteractableHighlight};
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
@@ -61,6 +61,7 @@ fn main() {
         .add_system(process_camera)
         .add_system(render_ui)
         .add_system(highlight_interactable)
+        .add_system(follow_player)
         .add_system(levels::level1::animate)
         .add_system(levels::level1::sync_raycast_marker)
         .add_system(levels::level1::log_player_position)
@@ -191,4 +192,17 @@ fn process_camera(
 
     camera.origin = vec3(pos.x, 1.0, pos.z);
     camera.look_at = camera.origin + transform.forward() * 5.0;
+}
+
+fn follow_player(
+    player: Query<&Transform, With<Player>>,
+    mut followers: Query<(&mut Transform, &FollowPlayerAbove), Without<Player>>,
+) {
+    let player = player.single();
+
+    for (mut follower_transform, follower) in followers.iter_mut() {
+        let new_translation = player.translation + Vec3::Y * follower.offset;
+        let lerped = follower_transform.translation.lerp(new_translation, 0.1);
+        follower_transform.translation = lerped;
+    }
 }

@@ -8,7 +8,7 @@ use glam::{vec3, Vec3Swizzles};
 
 use super::utils::*;
 use crate::interaction::TextInteraction;
-use crate::markers::InteractableHighlight;
+use crate::markers::{FollowPlayerAbove, InteractableHighlight};
 
 pub fn init(mut commands: Commands) {
     commands.spawn((
@@ -28,17 +28,54 @@ pub fn init(mut commands: Commands) {
         },
     ));
 
-    commands.floor(-3, -3, 3, 3);
-    commands.wall(-3, 3, -1, 3, 0);
-    commands.wall(1, 3, 3, 3, 0);
-    commands.wall(3, 3, 3, -3, 1);
-    commands.wall(-3, -3, 3, -3, 2);
-    commands.wall(-3, -3, -3, 3, 3);
-    commands.floor(-1, 3, 1, 5);
-    commands.wall(-1, 5, 1, 5, 0);
-    commands.wall(1, 3, 1, 5, 1);
-    commands.wall(-1, 3, -1, 5, 3);
+    commands.floor(-6, -3, 6, 15 + 3);
+    commands.wall(-6, -3, -6, 15 + 3, 3);
+    commands.wall(6, -3, 6, 15 + 3, 1);
+    // commands.wall(1, 3, 3, 3, 0);
+    // commands.wall(3, 3, 3, -3, 1);
+    // commands.wall(-3, -3, 3, -3, 2);
+    // commands.wall(-3, -3, -3, 3, 3);
+    // commands.floor(-1, 3, 1, 5);
+    // commands.wall(-1, 5, 1, 5, 0);
+    // commands.wall(1, 3, 1, 5, 1);
+    // commands.wall(-1, 3, -1, 5, 3);
     // commands.ceiling(-10, -10, 10, 10);
+
+    let column_positions = (0..5).map(|n| n as f32 * 3.0);
+    const X_OFFSET: f32 = 4.0;
+
+    for z in column_positions {
+        let left_column_pos = vec3(-X_OFFSET, 0.0, z);
+        let right_column_pos = vec3(X_OFFSET, 0.0, z);
+
+        commands
+            .model("column")
+            .with_translation(left_column_pos)
+            .spawn()
+            .insert(Collider::Circle(CircleCollider { radius: 0.5 }));
+
+        commands
+            .model("column")
+            .with_translation(right_column_pos)
+            .spawn()
+            .insert(Collider::Circle(CircleCollider { radius: 0.5 }));
+    }
+
+    commands
+        .model("chandelier")
+        .with_translation(vec3(0.0, 6.0, 7.5))
+        .with_material(
+            Material::default().with_reflectivity(1.0).without_texture(),
+        )
+        .spawn();
+
+    commands
+        .model("thingy")
+        .with_translation(vec3(0.0, 0.0, 7.5))
+        .with_material(
+            Material::default().with_reflectivity(1.0).without_texture(),
+        )
+        .spawn();
 
     // let l1 = commands.point_light(-1.5, 3.0, -1.0, 0.8, 0.0, 0.0).id();
     // let l2 = commands.point_light(0.0, 3.0, -1.0, 0.0, 0.8, 0.0).id();
@@ -46,40 +83,19 @@ pub fn init(mut commands: Commands) {
 
     // Main "ambient" light
     const AMBIENT: f32 = 0.2;
-    commands.point_light(0.0, 4.0, 0.0, AMBIENT, AMBIENT, AMBIENT);
+    commands.point_light(0.0, 4.0, 4.0, 0.6, AMBIENT, AMBIENT);
+    commands.point_light(0.0, 2.0, -4.0, AMBIENT, AMBIENT, 0.6);
 
-    let middle_monke_pos = vec3(0.0, 1.0, 3.0);
+    let middle_monke_pos = vec3(0.0, 1.0, 11.0);
 
     commands
         .spot_light(
-            vec3(0.0, 4.0, 0.0),
+            vec3(0.0, 4.0, 7.5),
             middle_monke_pos,
             PI / 12.0,
             vec3(1.0, 0.0, 0.0),
         )
         .insert(InteractableHighlight);
-
-    commands
-        .model("monke")
-        .with_translation(vec3(-2.0, 1.0, 2.0))
-        .with_rotation(Quat::from_rotation_z(0.3))
-        .with_scale(Vec3::splat(0.5))
-        .spawn()
-        .insert(Collider::Circle(CircleCollider { radius: 0.5 }))
-        .insert(TextInteraction {
-            content: format!("Left Monke"),
-        });
-
-    commands
-        .model("monke")
-        .with_translation(vec3(2.0, 1.0, 2.0))
-        .with_rotation(Quat::from_rotation_z(-0.3))
-        .with_scale(Vec3::splat(0.5))
-        .spawn()
-        .insert(Collider::Circle(CircleCollider { radius: 0.5 }))
-        .insert(TextInteraction {
-            content: format!("Right Monke"),
-        });
 
     commands
         .model("monke")
@@ -108,6 +124,10 @@ pub fn init(mut commands: Commands) {
     //     )
     //     .spawn()
     //     .insert(PlayerRayCastMarker);
+
+    commands
+        .point_light(0.0, 2.0, -4.0, AMBIENT, AMBIENT, AMBIENT)
+        .insert(FollowPlayerAbove { offset: 1.0 });
 
     let d1 = commands
         .model("diamond")
