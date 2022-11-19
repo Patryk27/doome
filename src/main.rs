@@ -1,6 +1,7 @@
 mod interaction;
 mod levels;
 mod markers;
+mod ui_and_2d;
 
 use std::sync::{Arc, Mutex};
 
@@ -19,6 +20,7 @@ use doome_engine::{Canvas, HEIGHT, WIDTH};
 use glam::vec3;
 use interaction::TextInteraction;
 use markers::{FollowPlayerAbove, InteractableHighlight};
+use ui_and_2d::UiAnd2dPlugin;
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
@@ -69,11 +71,11 @@ fn main() {
         .add_plugin(RendererPlugin)
         .add_plugin(DoomePlugin { shader })
         .add_plugin(PhysicsPlugin::default())
+        .add_plugin(UiAnd2dPlugin)
         // Misc systems
         .add_system(quit_on_exit)
         .add_system(process_movement)
         .add_system(process_camera)
-        .add_system(render_ui)
         .add_system(highlight_interactable)
         .add_system(follow_player)
         .add_system(levels::level1::animate)
@@ -94,26 +96,6 @@ fn hide_cursor(mut windows: ResMut<Windows>) {
 fn quit_on_exit(keys: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
     if keys.just_pressed(KeyCode::Escape) {
         exit.send(AppExit);
-    }
-}
-
-fn render_ui(
-    mut doome_renderer: ResMut<DoomeRenderer>,
-    text: Res<Text>,
-    raycaster: Query<(&Player, &RayCast)>,
-    interactables: Query<&TextInteraction>,
-) {
-    let frame = &mut doome_renderer.pixels.image_data;
-    let mut canvas = Canvas::new(&text.text_engine, frame);
-
-    canvas.clear();
-
-    let (_player, raycast) = raycaster.single();
-
-    if let Some(hit) = raycast.hit.as_ref() {
-        if let Ok(interactable) = interactables.get(hit.entity) {
-            canvas.text(10, HEIGHT - 30, &interactable.content);
-        }
     }
 }
 

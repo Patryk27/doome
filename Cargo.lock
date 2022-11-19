@@ -1105,6 +1105,7 @@ dependencies = [
  "doome-surface",
  "doome-text",
  "glam",
+ "image",
  "include_dir",
 ]
 
@@ -1141,6 +1142,7 @@ dependencies = [
  "doome-raytracer",
  "doome-surface",
  "doome-text",
+ "image",
 ]
 
 [[package]]

@@ -8,3 +8,6 @@ edition = "2021"
 doome-raytracer = { path = "../raytracer" }
 doome-surface = { path = "../surface" }
 doome-text = { path = "../text" }
+
+# External
+image = "0.24"

@@ -23,6 +23,7 @@ doome-text = { path = "crates/lib/text" }
 bevy = { version = "0.9", default-features = false, features = ["bevy_winit"] }
 glam = "0.22"
 include_dir = "0.7"
+image = "0.24"
 
 [features]
 static-assets = []

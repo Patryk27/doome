@@ -1,5 +1,6 @@
 use doome_surface::{Color, Surface as _};
 use doome_text::TextEngine;
+use image::RgbaImage;
 
 use crate::*;
 
@@ -25,6 +26,23 @@ impl<'f> Canvas<'f> {
         for x in x1..=x2 {
             for y in y1..=y2 {
                 self.set(x, y, color);
+            }
+        }
+    }
+
+    pub fn blit(&mut self, x_offset: u16, y_offset: u16, image: &RgbaImage) {
+        let (width, height) = image.dimensions();
+        for x in 0..width {
+            for y in 0..height {
+                let color = image.get_pixel(x, y).0;
+                let color = Color {
+                    r: color[0],
+                    g: color[1],
+                    b: color[2],
+                    a: color[3],
+                };
+
+                self.set(x_offset + x as u16, y_offset + y as u16, color);
             }
         }
     }
