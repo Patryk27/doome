@@ -122,11 +122,15 @@ fn are_polygon_and_circle_colliding(
         .vertices
         .iter()
         .copied()
-        .min_by(|a, b| {
-            let a_distance = (*a - circle_center).length();
-            let b_distance = (*b - circle_center).length();
+        .reduce(|curr, x| {
+            let curr_distance = (curr - circle_center).length_squared();
+            let x_distance = (x - circle_center).length_squared();
 
-            a_distance.partial_cmp(&b_distance).unwrap()
+            if x_distance < curr_distance {
+                x
+            } else {
+                curr
+            }
         })
         .unwrap();
 
