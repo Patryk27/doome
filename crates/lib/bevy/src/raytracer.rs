@@ -4,7 +4,7 @@ mod materials_manager;
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
-use doome_engine::{RAYTRACER_HEIGHT, WIDTH};
+use doome_engine::{HEIGHT, WIDTH};
 use doome_raytracer as rt;
 use glam::{vec2, vec3};
 
@@ -25,7 +25,7 @@ impl Plugin for DoomeRaytracerPlugin {
                 Default::default(),
                 vec3(0.0, -1.0, 0.0),
                 1.0,
-                vec2(WIDTH as _, RAYTRACER_HEIGHT as _),
+                vec2(WIDTH as _, HEIGHT as _),
                 PI / 2.0,
             );
 
