@@ -1,4 +1,8 @@
 use bevy::prelude::*;
+use doome_geo::Polygon;
+use glam::Vec3Swizzles;
+
+const CIRCLE_POINTS: usize = 16;
 
 #[derive(Component)]
 pub struct RayCast {
@@ -7,32 +11,47 @@ pub struct RayCast {
     pub hit: Option<RayCastHit>,
 }
 
+impl RayCast {
+    pub fn transformed_origin_and_dir(&self, matrix: &Mat4) -> (Vec2, Vec2) {
+        let origin =
+            matrix.transform_point3(self.origin.extend(0.0).xzy()).xz();
+
+        let direction = matrix
+            .transform_vector3(self.direction.extend(0.0).xzy())
+            .xz();
+
+        (origin, direction)
+    }
+}
+
 pub struct RayCastHit {
     pub entity: Entity,
     pub position: Vec2,
 }
 
 #[derive(Component, Debug)]
-pub enum Collider {
-    Rect(RectCollider),
-    Line(LineCollider),
-    Circle(CircleCollider),
+pub struct Collider {
+    pub(super) polygon: Polygon,
 }
 
-#[derive(Debug)]
-pub struct RectCollider {
-    pub half_extents: Vec2,
-}
+impl Collider {
+    pub fn circle(radius: f32) -> Self {
+        Self {
+            polygon: Polygon::circle(radius, CIRCLE_POINTS),
+        }
+    }
 
-#[derive(Debug)]
-pub struct LineCollider {
-    pub start: Vec2,
-    pub end: Vec2,
-}
+    pub fn rect(width: f32, height: f32) -> Self {
+        Self {
+            polygon: Polygon::rect(Vec2::new(width, height)),
+        }
+    }
 
-#[derive(Debug)]
-pub struct CircleCollider {
-    pub radius: f32,
+    pub fn line(start: Vec2, end: Vec2) -> Self {
+        Self {
+            polygon: Polygon::new(vec![start, end]),
+        }
+    }
 }
 
 #[derive(Component)]

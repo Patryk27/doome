@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use doome_geo::Polygon;
+use glam::Vec3Swizzles;
 
 use self::collision::resolve_collisions;
 
@@ -42,4 +44,12 @@ fn update_physics(time: Res<Time>, mut bodies: Query<(&Body, &mut Transform)>) {
     for (body, mut transform) in bodies.iter_mut() {
         transform.translation += body.velocity * delta;
     }
+}
+
+fn collider_to_polygon(transform: &Transform, collider: &Collider) -> Polygon {
+    let matrix = transform.compute_matrix();
+    collider
+        .polygon
+        .clone()
+        .map_points(|p| matrix.transform_point3(p.extend(0.0).xzy()).xz())
 }

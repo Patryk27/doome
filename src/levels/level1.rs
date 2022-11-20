@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 use doome_bevy::assets::Assets;
 use doome_bevy::components::*;
-use doome_bevy::physics::{Body, BodyType, CircleCollider, Collider};
+use doome_bevy::physics::{Body, BodyType, Collider};
 use glam::vec3;
 
 use super::utils::*;
@@ -22,7 +22,7 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
             velocity: vec3(0.0, 0.0, 0.0),
             body_type: BodyType::Kinematic,
         },
-        Collider::Circle(CircleCollider { radius: 0.5 }),
+        Collider::circle(0.5),
     ));
 
     let mut lvl = LevelBuilder::new(&mut commands, &assets);

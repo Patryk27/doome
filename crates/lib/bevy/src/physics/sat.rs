@@ -1,47 +1,22 @@
+use doome_geo::Polygon;
 use glam::Vec2;
 
 /// Separating Axis Theorem
 /// https://dyn4j.org/2010/01/sat/
-
-#[derive(Debug)]
-pub struct Polygon {
-    pub vertices: Vec<Vec2>,
-}
-
-impl Polygon {
-    pub fn new(vertices: Vec<Vec2>) -> Self {
-        Self { vertices }
-    }
-
-    pub fn iter_edge_vectors(&self) -> impl Iterator<Item = Vec2> + '_ {
-        self.vertices.iter().enumerate().map(move |(i, v)| {
-            let v = *v;
-
-            let next = self.vertices[(i + 1) % self.vertices.len()];
-
-            next - v
-        })
-    }
-
-    pub fn iter_separation_axes(&self) -> impl Iterator<Item = Vec2> + '_ {
-        self.iter_edge_vectors().map(|v| v.perp().normalize())
-    }
-}
 
 /// Resolves the SAT collision between two polygons
 ///
 /// Returns the minimum translation vector required to resolve the collision, if such occurred,
 /// otherwise returns None.
 pub fn resolve_sat(a: &Polygon, b: &Polygon) -> Option<Vec2> {
-    let all_axes: Vec<Vec2> = a
-        .iter_separation_axes()
-        .chain(b.iter_separation_axes())
+    let all_axes: Vec<Vec2> = iter_separation_axes(a)
+        .chain(iter_separation_axes(b))
         .collect();
 
     let mut mtvs = Vec::with_capacity(all_axes.len());
     for axis in all_axes {
-        let a_vertices = project_vertices_onto(&a.vertices, axis);
-        let b_vertices = project_vertices_onto(&b.vertices, axis);
+        let a_vertices = project_vertices_onto(a.points(), axis);
+        let b_vertices = project_vertices_onto(b.points(), axis);
 
         // If there's no overlap we'll early return None
         mtvs.push(resolve_axis_projections(axis, &a_vertices, &b_vertices)?);
@@ -52,6 +27,10 @@ pub fn resolve_sat(a: &Polygon, b: &Polygon) -> Option<Vec2> {
             .partial_cmp(&b.length())
             .unwrap_or(std::cmp::Ordering::Equal)
     })
+}
+
+fn iter_separation_axes(poly: &Polygon) -> impl Iterator<Item = Vec2> + '_ {
+    poly.iter_edge_vectors().map(|v| v.perp().normalize())
 }
 
 /// Resolves axis projections

@@ -54,55 +54,56 @@ fn raycast_collider(
     collider_transform: &Transform,
     collider: &Collider,
 ) -> Option<Vec2> {
-    match collider {
-        Collider::Rect(_) => None, // TODO
-        Collider::Line(_) => None, // TODO
-        Collider::Circle(circle) => {
-            let raycast_origin = raycaster_transform
-                .compute_matrix()
-                .transform_point3(raycast.origin.extend(0.0).xzy())
-                .xz();
-            let raycast_direction = raycaster_transform
-                .compute_matrix()
-                .transform_vector3(raycast.direction.extend(0.0).xzy())
-                .xz();
-            let raycast_end = raycast_origin + raycast_direction;
+    let polygon = collider_to_polygon(collider_transform, collider);
+    let (origin, dir) = raycast
+        .transformed_origin_and_dir(&raycaster_transform.compute_matrix());
 
-            let collider_position = collider_transform.translation.xz();
-            let collider_radius = circle.radius;
-
-            let a = raycast_direction.length_squared();
-            let b = 2.0
-                * (raycast_end.x - raycast_origin.x)
-                * (raycast_origin.x - collider_position.x)
-                + 2.0
-                    * (raycast_end.y - raycast_origin.y)
-                    * (raycast_origin.y - collider_position.y);
-            let c = collider_position.distance_squared(raycast_origin)
-                - collider_radius.powf(2.0);
-
-            let discriminant = b.powf(2.0) - 4.0 * a * c;
-
-            if discriminant < 0.0 {
-                return None;
-            }
-
-            // TODO: Wasn't there something about solving the quadratic equation this way that made it numerically unstable?
-            let discriminant = discriminant.sqrt();
-            let t1 = (-b + discriminant) / (2.0 * a);
-            let t2 = (-b - discriminant) / (2.0 * a);
-
-            // We want to check the closer one first
-            let r1 = f32::min(t1, t2);
-            let r2 = f32::max(t1, t2);
-
-            if r1 >= 0.0 && r1 <= raycast_direction.length() {
-                Some(raycast_origin + raycast_direction * r1)
-            } else if r2 >= 0.0 && r2 <= raycast_direction.length() {
-                Some(raycast_origin + raycast_direction * r2)
+    polygon
+        .iter_edges()
+        .filter_map(|edge| raycast_edge(origin, dir, edge))
+        .reduce(|curr, next| {
+            if curr.distance(origin) < next.distance(origin) {
+                curr
             } else {
-                None
+                next
             }
+        })
+}
+
+// https://stackoverflow.com/a/565282
+fn raycast_edge(origin: Vec2, dir: Vec2, edge: (Vec2, Vec2)) -> Option<Vec2> {
+    fn cross(a: Vec2, b: Vec2) -> f32 {
+        a.x * b.y - a.y * b.x
+    }
+
+    let p = origin;
+    let r = dir;
+
+    let q = edge.0;
+    let s = edge.1 - edge.0;
+
+    let rs = cross(r, s);
+
+    if rs == 0.0 {
+        // The 2 vectors are collinear
+        // TODO: This could lead to some weird edge cases
+        // but I don't think it makes sense to return anyhing here
+        None
+    } else {
+        let qp = q - p;
+        let qp_cross_r = cross(qp, r);
+        let t = cross(qp, s) / rs;
+        let u = cross(qp, r) / rs;
+
+        if qp_cross_r != 0.0 {
+            // The lines are parallel
+            None
+        } else if t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0 {
+            // The vectors intersect
+            Some(p + r * t)
+        } else {
+            // Lines intersect, but vectors do not
+            None
         }
     }
 }

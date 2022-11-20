@@ -4,7 +4,7 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
 use doome_bevy::assets::{AssetHandle, Assets, Model};
 use doome_bevy::components::*;
-use doome_bevy::physics::{Collider, LineCollider};
+use doome_bevy::physics::Collider;
 use glam::{vec2, vec3};
 
 pub struct LevelBuilder<'p, 'w, 's> {
@@ -148,10 +148,7 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
                     .with_color(Color::hex(0xffffff))
                     .with_uv_divisor(scale as _, 1),
             )
-            .with_collider(Collider::Line(LineCollider {
-                start: vec2(-1.0, 0.0),
-                end: vec2(1.0, 0.0),
-            }))
+            .with_collider(Collider::line(vec2(-1.0, 0.0), vec2(1.0, 0.0)))
     }
 
     pub fn point_light<'a>(

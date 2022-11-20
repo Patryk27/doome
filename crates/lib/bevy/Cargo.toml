@@ -11,6 +11,7 @@ doome-raytracer = { path = "../raytracer" }
 doome-scaler = { path = "../scaler" }
 doome-text = { path = "../text" }
 doome-wgpu-ext = { path = "../wgpu-ext" }
+doome-geo = { path = "../geo" }
 
 # Crates.io
 anyhow = "1.0"
