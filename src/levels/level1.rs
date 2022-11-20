@@ -8,6 +8,7 @@ use glam::vec3;
 
 use super::utils::*;
 use crate::player::Player;
+use crate::ui_and_2d::Print;
 
 const MAIN_CENTER_Z: f32 = (21.0 + 37.0) / 2.0;
 const ELEPHANT_Z: f32 = MAIN_CENTER_Z + 3.0;
@@ -159,6 +160,7 @@ pub fn process(
     mut level: ResMut<Level>,
     mut player: Query<&mut Player>,
     camera: Query<&Camera>,
+    mut print_tx: EventWriter<Print>,
 ) {
     match &mut level.stage {
         LevelStage::CorridorIntro {
@@ -184,6 +186,15 @@ pub fn process(
                 sl_corr3: *sl_corr3,
                 sl_main0: *sl_main0,
             };
+
+            print_tx.send(Print::new(
+                "Hello, Neo.\n\
+                \n\
+                Move using WASD + mouse or comma / period.\n\
+                Shoot using space.\n\
+                \n\
+                The rest, find out you will.",
+            ));
         }
 
         LevelStage::Corridor {

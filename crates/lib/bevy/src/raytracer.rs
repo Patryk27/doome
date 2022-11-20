@@ -185,8 +185,6 @@ fn render(
     renderer_state: Res<RendererState>,
     mut raytracer_state: ResMut<DoomeRaytracerState>,
 ) {
-    // let tt = instant::Instant::now();
-
     let Ok(current_texture) = renderer_state.surface.get_current_texture() else { return };
     let device = &renderer_state.device;
     let queue = &renderer_state.queue;
@@ -236,8 +234,6 @@ fn render(
 
     renderer_state.queue.submit(vec![encoder.finish()]);
     current_texture.present();
-
-    // log::info!("raytracer-tt = {:?}", tt.elapsed());
 }
 
 fn sync_deleted_geometry(

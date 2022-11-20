@@ -19,13 +19,12 @@ futures-lite = "1.12"
 glam = { version = "0.22", default-features = false }
 image = "0.24"
 include_dir = "0.7"
-instant = "0.1"
 log = "0.4"
 maplit = "1.0"
 rectangle-pack = "0.4"
+rodio = "0.16"
 tobj = "3.2"
 wgpu = "0.14"
-rodio = "0.16"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wgpu = { version = "0.14", features = ["webgl"] }

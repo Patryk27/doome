@@ -17,6 +17,7 @@ impl Plugin for UiAnd2dPlugin {
         let assets = app.world.resource::<Assets>();
 
         let gun_idle = assets.load_image("gun_1");
+
         let gun_fire_sequence = vec![
             assets.load_image("gun_shoot_1"),
             assets.load_image("gun_shoot_2"),
@@ -27,10 +28,26 @@ impl Plugin for UiAnd2dPlugin {
             gun_idle,
             gun_fire_sequence,
         });
+        app.insert_resource(TextAnimation::None);
+        app.add_event::<Print>();
         app.add_startup_system(setup);
-        app.add_system(render_ui_and_2d);
         app.add_system(trigger_shoot);
         app.add_system(update_animation);
+        app.add_system(update_text);
+        app.add_system(render);
+    }
+}
+
+#[derive(Default)]
+pub struct Print {
+    text: String,
+}
+
+impl Print {
+    pub fn new(text: impl ToString) -> Self {
+        Self {
+            text: text.to_string(),
+        }
     }
 }
 
@@ -38,6 +55,17 @@ impl Plugin for UiAnd2dPlugin {
 struct Data {
     gun_idle: AssetHandle<RgbaImage>,
     gun_fire_sequence: Vec<AssetHandle<RgbaImage>>,
+}
+
+#[derive(Resource)]
+enum TextAnimation {
+    None,
+
+    Some {
+        text: String,
+        tt: f32,
+        completed_at: Option<f32>,
+    },
 }
 
 #[derive(Component)]
@@ -108,11 +136,39 @@ fn update_animation(
     }
 }
 
-fn render_ui_and_2d(
+fn update_text(
+    time: Res<Time>,
+    mut anim: ResMut<TextAnimation>,
+    mut print: EventReader<Print>,
+) {
+    if let TextAnimation::Some {
+        tt, completed_at, ..
+    } = &mut *anim
+    {
+        *tt += time.delta_seconds();
+
+        if let Some(completed_at) = completed_at {
+            if *tt > *completed_at + 2.0 {
+                *anim = TextAnimation::None;
+            }
+        }
+    }
+
+    for print in print.iter() {
+        *anim = TextAnimation::Some {
+            text: print.text.clone(),
+            tt: 0.0,
+            completed_at: None,
+        };
+    }
+}
+
+fn render(
     time: Res<Time>,
     assets: Res<Assets>,
     data: Res<Data>,
-    animation: Query<&ShootingAnimation>,
+    shooting_anim: Query<&ShootingAnimation>,
+    mut text_anim: ResMut<TextAnimation>,
     player: Query<&Player>,
     mut doome_renderer: ResMut<DoomeRenderer>,
     text: Res<Text>,
@@ -124,13 +180,76 @@ fn render_ui_and_2d(
 
     // -----
 
+    if let TextAnimation::Some {
+        text,
+        tt,
+        completed_at,
+    } = &mut *text_anim
+    {
+        const BASE_FUEL_PER_CHARACTER: f32 = 0.09;
+
+        let x = 5;
+        let mut y = 5;
+        let mut fuel = *tt;
+        let mut ran_out_of_fuel = false;
+
+        for line in text.lines() {
+            fuel -= 2.0 * BASE_FUEL_PER_CHARACTER;
+
+            if fuel < 0.0 {
+                ran_out_of_fuel = true;
+                break;
+            }
+
+            let mut actual_line = String::new();
+
+            for ch in line.bytes() {
+                let ch_required_fuel = {
+                    let mut f = BASE_FUEL_PER_CHARACTER;
+
+                    if ch % 2 == 0 {
+                        f += BASE_FUEL_PER_CHARACTER / 2.0;
+                    }
+
+                    f
+                };
+
+                let ch = ch as char;
+
+                if fuel < ch_required_fuel {
+                    ran_out_of_fuel = true;
+                    break;
+                }
+
+                actual_line.push(ch);
+                fuel -= ch_required_fuel;
+            }
+
+            canvas.text(x, y, actual_line);
+
+            y += 12;
+
+            if ran_out_of_fuel {
+                break;
+            }
+        }
+
+        if !ran_out_of_fuel {
+            if completed_at.is_none() {
+                *completed_at = Some(*tt);
+            }
+        }
+    }
+
+    // -----
+
     let (sway_x, sway_y) = if player.single().can_move {
         calc_sway(time.elapsed_seconds())
     } else {
         calc_sway(0.0)
     };
 
-    let shooting_anim = animation.single();
+    let shooting_anim = shooting_anim.single();
 
     let gun_image = if shooting_anim.is_firing {
         data.gun_fire_sequence[shooting_anim.current_frame]

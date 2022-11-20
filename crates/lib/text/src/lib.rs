@@ -8,7 +8,7 @@ pub struct TextEngine {
 impl TextEngine {
     pub fn draw(&self, surface: &mut dyn Surface, x: u16, y: u16, text: &str) {
         let font = &self.fonts.minecraft;
-        let scale = Scale::uniform(20.0);
+        let scale = Scale::uniform(14.0);
         let offset = point(0.0, font.v_metrics(scale).ascent);
 
         for glyph in font.layout(text, scale, offset) {

@@ -32,6 +32,7 @@ impl<'f> Canvas<'f> {
 
     pub fn blit(&mut self, x_offset: u16, y_offset: u16, image: &RgbaImage) {
         let (width, height) = image.dimensions();
+
         for x in 0..width {
             for y in 0..height {
                 let color = image.get_pixel(x, y).0;
