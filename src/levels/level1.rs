@@ -100,7 +100,7 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
         .with_translation(vec3(0.0, 0.0, 3.0))
         // .with_scale(Vec3::splat(0.4))
         .with_rotation(Quat::from_rotation_y(PI))
-        // .with_material(Material::default().with_uv_transparency())
+        .with_material(Material::default().with_uv_transparency())
         .dynamic()
         .spawn();
 

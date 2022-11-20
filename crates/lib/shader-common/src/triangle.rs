@@ -6,8 +6,8 @@ use crate::*;
 /// v0.x = vertex 0 (x; f32)
 /// v0.y = vertex 0 (y; f32)
 /// v0.z = vertex 0 (z; f32)
-/// v0.w (bit 15) = uv transparency enabled/disabled (bool)
-/// v0.w (bits 16..=31) = material id (u16)
+/// v0.w = if positive: material id (u16), uv transparency disabled
+///        if negative: -material id (u16), uv transparency enabled
 ///
 /// v1.x = vertex 1 (x; f32)
 /// v1.y = vertex 1 (y; f32)
@@ -29,8 +29,6 @@ pub struct Triangle {
 }
 
 impl Triangle {
-    const UV_TRANSPARENCY_MASK: u32 = 1 << 15;
-
     pub fn new(v0: Vec3, v1: Vec3, v2: Vec3, material_id: MaterialId) -> Self {
         Self {
             v0: v0.extend(material_id.get() as f32),
@@ -119,11 +117,11 @@ impl Triangle {
     }
 
     pub fn material_id(&self) -> MaterialId {
-        MaterialId::new(((self.v0.w as u32) & !(1 << 16)) as _)
+        MaterialId::new(self.v0.w.abs() as _)
     }
 
     pub fn has_uv_transparency(&self) -> bool {
-        (self.v0.w as u32) & Self::UV_TRANSPARENCY_MASK > 0
+        self.v0.w < 0.0
     }
 
     pub fn uv_divisor(&self) -> Vec2 {
@@ -150,15 +148,10 @@ impl Triangle {
     }
 
     pub fn with_uv_transparency(mut self, val: bool) -> Self {
-        let mut w = self.v0.w as u32;
-
         if val {
-            w |= Self::UV_TRANSPARENCY_MASK;
-        } else {
-            w &= !Self::UV_TRANSPARENCY_MASK;
+            self.v0.w *= -1.0;
         }
 
-        self.v0.w = w as _;
         self
     }
 
