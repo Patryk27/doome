@@ -1,6 +1,6 @@
 [alias]
 run-wasm = "run --release --target wasm32-unknown-unknown --features static-assets --target-dir target/wasm"
-watch-shaders = "run -p doome-shader-builder"
+watch-shaders = "run --release -p doome-shader-builder"
 
 [target.wasm32-unknown-unknown]
 runner = "wasm-server-runner"
