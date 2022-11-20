@@ -7,6 +7,7 @@ use doome_bevy::physics::{Body, BodyType, CircleCollider, Collider};
 use glam::vec3;
 
 use super::utils::*;
+use crate::billboard::Billboard;
 use crate::player::Player;
 use crate::ui_and_2d::Print;
 
@@ -98,11 +99,10 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
 
     lvl.model("moth_monster")
         .with_translation(vec3(0.0, 0.0, 3.0))
-        // .with_scale(Vec3::splat(0.4))
-        .with_rotation(Quat::from_rotation_y(PI))
         .with_material(Material::default().with_uv_transparency())
         .dynamic()
-        .spawn();
+        .spawn()
+        .insert(Billboard);
 
     lvl.point_light(0.0, 2.8, 1.8, 0xffffff);
 
