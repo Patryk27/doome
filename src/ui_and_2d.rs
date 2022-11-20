@@ -69,7 +69,7 @@ fn trigger_shoot(
     keyboard: Res<Input<KeyCode>>,
     mut audio: ResMut<Audio>,
 ) {
-    if player.single().can_move {
+    if !player.single().can_move {
         return;
     }
 
