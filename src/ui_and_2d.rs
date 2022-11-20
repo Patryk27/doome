@@ -8,6 +8,8 @@ use doome_bevy::text::Text;
 use doome_engine::Canvas;
 use image::RgbaImage;
 
+use crate::player::Player;
+
 pub struct UiAnd2dPlugin;
 
 impl Plugin for UiAnd2dPlugin {
@@ -61,11 +63,16 @@ fn setup(mut commands: Commands) {
 // TODO: Attach an event writer
 fn trigger_shoot(
     assets: Res<Assets>,
+    player: Query<&Player>,
     mut shooting_animation: Query<&mut ShootingAnimation>,
     mouse: Res<Input<MouseButton>>,
     keyboard: Res<Input<KeyCode>>,
     mut audio: ResMut<Audio>,
 ) {
+    if player.single().can_move {
+        return;
+    }
+
     let mut shooting_animation = shooting_animation.single_mut();
 
     if mouse.just_pressed(MouseButton::Left)
@@ -106,6 +113,7 @@ fn render_ui_and_2d(
     assets: Res<Assets>,
     data: Res<Data>,
     animation: Query<&ShootingAnimation>,
+    player: Query<&Player>,
     mut doome_renderer: ResMut<DoomeRenderer>,
     text: Res<Text>,
 ) {
@@ -114,11 +122,18 @@ fn render_ui_and_2d(
 
     canvas.clear();
 
-    let (sway_x, sway_y) = calc_sway(time.elapsed_seconds());
-    let anim = animation.single();
+    // -----
 
-    let gun_image = if anim.is_firing {
-        data.gun_fire_sequence[anim.current_frame]
+    let (sway_x, sway_y) = if player.single().can_move {
+        calc_sway(time.elapsed_seconds())
+    } else {
+        calc_sway(0.0)
+    };
+
+    let shooting_anim = animation.single();
+
+    let gun_image = if shooting_anim.is_firing {
+        data.gun_fire_sequence[shooting_anim.current_frame]
     } else {
         data.gun_idle
     };

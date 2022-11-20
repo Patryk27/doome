@@ -51,9 +51,6 @@ pub struct Health {
     pub val: f32,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Component)]
-pub struct Player;
-
 #[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Light {
     // I feel like for proper bevy-ness this should be a different component
@@ -70,18 +67,32 @@ pub enum LightKind {
 }
 
 #[derive(Copy, Clone, Component)]
-pub struct LightFadeIn {
+pub struct LightFade {
     pub tt: f32,
+    pub direction: f32,
     pub start_at: f32,
     pub complete_at: f32,
 }
 
-impl LightFadeIn {
-    pub fn new(start_at: f32, duration: f32) -> Self {
+impl LightFade {
+    pub fn out(duration: f32) -> Self {
+        Self::out_delayed(0.0, duration)
+    }
+
+    pub fn out_delayed(start_at: f32, duration: f32) -> Self {
+        Self::delayed(-1.0, start_at, duration)
+    }
+
+    pub fn in_delayed(start_at: f32, duration: f32) -> Self {
+        Self::delayed(1.0, start_at, duration)
+    }
+
+    fn delayed(direction: f32, start_at: f32, duration: f32) -> Self {
         assert!(duration > 0.0);
 
         Self {
             tt: 0.0,
+            direction,
             start_at,
             complete_at: start_at + duration,
         }
@@ -89,9 +100,10 @@ impl LightFadeIn {
 
     pub(crate) fn animate(
         time: Res<Time>,
-        mut lights: Query<(&mut Self, &mut Light)>,
+        mut commands: Commands,
+        mut lights: Query<(Entity, &mut Self, &mut Light)>,
     ) {
-        for (mut this, mut light) in lights.iter_mut() {
+        for (entity, mut this, mut light) in lights.iter_mut() {
             this.tt += time.delta_seconds();
 
             light.intensity = if this.tt < this.start_at {
@@ -101,6 +113,18 @@ impl LightFadeIn {
             } else {
                 (this.tt - this.start_at) / (this.complete_at - this.start_at)
             };
+
+            if this.direction < 0.0 {
+                light.intensity = 1.0 - light.intensity;
+            }
+
+            if this.tt > this.complete_at {
+                if this.direction > 0.0 {
+                    commands.entity(entity).remove::<Self>();
+                } else {
+                    commands.entity(entity).despawn();
+                }
+            }
         }
     }
 }

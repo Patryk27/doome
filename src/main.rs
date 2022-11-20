@@ -1,6 +1,7 @@
 mod interaction;
 mod levels;
 mod markers;
+mod player;
 mod ui_and_2d;
 
 use std::sync::{Arc, Mutex};
@@ -20,6 +21,8 @@ use doome_bevy::text::Text;
 use doome_engine::{HEIGHT, WIDTH};
 use glam::vec3;
 use ui_and_2d::UiAnd2dPlugin;
+
+use self::player::*;
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
@@ -78,6 +81,7 @@ fn main() {
         .add_system(process_camera)
         .add_startup_system(hide_cursor)
         .add_startup_system(levels::level1::init)
+        .add_system(levels::level1::process)
         .run();
 }
 
@@ -98,13 +102,13 @@ fn process_movement(
     time: Res<Time>,
     keys: Res<Input<KeyCode>>,
     mut mouse_motion: EventReader<MouseMotion>,
-    mut player: Query<(&mut Body, &mut Transform), With<Player>>,
+    mut player: Query<(&Player, &mut Body, &mut Transform)>,
 ) {
     const MOUSE_ROTATION_SENSITIVITY: f32 = 0.5;
     const PLANAR_MOVEMENT_SPEED: f32 = 10.0;
     const ROTATION_SPEED: f32 = 2.0;
 
-    let (mut body, mut transform) = player.single_mut();
+    let (player, mut body, mut transform) = player.single_mut();
     let delta = time.delta_seconds();
 
     // TODO a bit wonky
@@ -139,6 +143,10 @@ fn process_movement(
     }
 
     body.velocity = body.velocity.normalize_or_zero() * PLANAR_MOVEMENT_SPEED;
+
+    if !player.can_move {
+        body.velocity = Default::default();
+    }
 }
 
 fn process_camera(

@@ -102,7 +102,7 @@ impl Plugin for DoomePlugin {
 
         app.add_system(on_resize)
             .add_system(report_scale_factor_changes)
-            .add_system(LightFadeIn::animate)
+            .add_system(LightFade::animate)
             .add_plugin(DoomeRaytracerPlugin);
     }
 }

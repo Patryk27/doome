@@ -17,7 +17,13 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         Self { commands, assets }
     }
 
-    pub fn floor(&mut self, x1: i32, z1: i32, x2: i32, z2: i32) {
+    pub fn floor<'a>(
+        &'a mut self,
+        x1: i32,
+        z1: i32,
+        x2: i32,
+        z2: i32,
+    ) -> LevelModelBuilder<'w, 's, 'a> {
         let (x1, x2) = (x1.min(x2), x1.max(x2));
         let (z1, z2) = (z1.min(z2), z1.max(z2));
         let dx = x2 - x1 + 1;
@@ -49,10 +55,56 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
                     .with_reflection_color(Color::hex(0xffffff))
                     .with_uv_divisor(dx as _, dz as _),
             )
-            .spawn();
     }
 
-    pub fn wall(&mut self, x1: i32, z1: i32, x2: i32, z2: i32, rot: u8) {
+    pub fn ceiling<'a>(
+        &'a mut self,
+        x1: i32,
+        z1: i32,
+        x2: i32,
+        z2: i32,
+    ) -> LevelModelBuilder<'w, 's, 'a> {
+        let (x1, x2) = (x1.min(x2), x1.max(x2));
+        let (z1, z2) = (z1.min(z2), z1.max(z2));
+        let dx = x2 - x1 + 1;
+        let dz = z2 - z1 + 1;
+
+        log::debug!(
+            "ceiling({}, {}, {}, {}); dx={}, dz={}",
+            x1,
+            z1,
+            x2,
+            z2,
+            dx,
+            dz
+        );
+
+        assert!(dx > 0 && dz > 0, "Ceiling has no area");
+
+        self.model("ceiling")
+            .with_translation(vec3(
+                (x1 + x2) as f32 / 2.0,
+                2.99,
+                (z1 + z2) as f32 / 2.0,
+            ))
+            .with_scale(vec3((dx as f32) / 2.0, 1.0, (dz as f32) / 2.0))
+            .with_material(
+                Material::default()
+                    .with_color(Color::hex(0xffffff))
+                    .with_reflectivity(0.1)
+                    .with_reflection_color(Color::hex(0xffffff))
+                    .with_uv_divisor(dx as _, dz as _),
+            )
+    }
+
+    pub fn wall<'a>(
+        &'a mut self,
+        x1: i32,
+        z1: i32,
+        x2: i32,
+        z2: i32,
+        rot: u8,
+    ) -> LevelModelBuilder<'w, 's, 'a> {
         let (x1, x2) = (x1.min(x2), x1.max(x2));
         let (z1, z2) = (z1.min(z2), z1.max(z2));
         let dx = x2 - x1 + 1;
@@ -96,11 +148,10 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
                     .with_color(Color::hex(0xffffff))
                     .with_uv_divisor(scale as _, 1),
             )
-            .spawn()
-            .insert(Collider::Line(LineCollider {
+            .with_collider(Collider::Line(LineCollider {
                 start: vec2(-1.0, 0.0),
                 end: vec2(1.0, 0.0),
-            }));
+            }))
     }
 
     pub fn point_light<'a>(
@@ -127,11 +178,12 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         point_at: Vec3,
         angle: f32,
         color: Color,
+        intensity: f32,
     ) -> EntityCommands<'w, 's, 'a> {
         self.commands.spawn((
             Light {
                 enabled: true,
-                intensity: 1.0,
+                intensity,
                 kind: LightKind::Spot { point_at, angle },
             },
             Transform::from_translation(pos),
@@ -145,6 +197,13 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
     ) -> LevelModelBuilder<'w, 's, 'a> {
         LevelModelBuilder::new(self.commands, self.assets.load_model(name))
     }
+
+    pub fn complete<T>(self, level: T)
+    where
+        T: Resource,
+    {
+        self.commands.insert_resource(level);
+    }
 }
 
 pub struct LevelModelBuilder<'w, 's, 'a> {
@@ -153,6 +212,7 @@ pub struct LevelModelBuilder<'w, 's, 'a> {
     geo_type: GeometryType,
     transform: Transform,
     material: Option<Material>,
+    collider: Option<Collider>,
 }
 
 impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
@@ -166,6 +226,7 @@ impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
             geo_type: GeometryType::Static,
             transform: Default::default(),
             material: Default::default(),
+            collider: Default::default(),
         }
     }
 
@@ -194,15 +255,24 @@ impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
         self
     }
 
+    pub fn with_collider(mut self, val: Collider) -> Self {
+        self.collider = Some(val);
+        self
+    }
+
     pub fn spawn(self) -> EntityCommands<'w, 's, 'a> {
-        let mut ec =
+        let mut entity =
             self.commands
                 .spawn((self.handle, self.transform, self.geo_type));
 
         if let Some(material) = self.material {
-            ec.insert(material);
+            entity.insert(material);
         }
 
-        ec
+        if let Some(collider) = self.collider {
+            entity.insert(collider);
+        }
+
+        entity
     }
 }
