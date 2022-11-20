@@ -54,7 +54,7 @@ impl Ray {
 
             if hit.t < distance {
                 let got_hit = if triangle.has_uv_transparency() {
-                    world.atlas_sample(triangle_id.into_any(), hit).w == 1.0
+                    world.atlas_sample(triangle_id.into_any(), hit).w > 0.5
                 } else {
                     true
                 };
@@ -82,7 +82,7 @@ impl Ray {
 
                 if hit.t < distance {
                     let got_hit = if triangle.has_uv_transparency() {
-                        world.atlas_sample(triangle_id.into_any(), hit).w == 1.0
+                        world.atlas_sample(triangle_id.into_any(), hit).w > 0.5
                     } else {
                         true
                     };
@@ -122,8 +122,7 @@ impl Ray {
 
             if curr_hit.is_closer_than(hit) {
                 let got_hit = if triangle.has_uv_transparency() {
-                    world.atlas_sample(triangle_id.into_any(), curr_hit).w
-                        == 1.0
+                    world.atlas_sample(triangle_id.into_any(), curr_hit).w > 0.5
                 } else {
                     true
                 };
@@ -153,7 +152,7 @@ impl Ray {
                 if curr_hit.is_closer_than(hit) {
                     let got_hit = if triangle.has_uv_transparency() {
                         world.atlas_sample(triangle_id.into_any(), curr_hit).w
-                            == 1.0
+                            > 0.5
                     } else {
                         true
                     };

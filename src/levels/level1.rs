@@ -104,7 +104,7 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
         .dynamic()
         .spawn();
 
-    lvl.point_light(0.0, 1.2, 2.8, 0xffffff);
+    lvl.point_light(0.0, 2.8, 1.8, 0xffffff);
 
     let sl_main0 = lvl
         .spot_light(
