@@ -69,6 +69,42 @@ pub enum LightKind {
     Spot { point_at: Vec3, angle: f32 },
 }
 
+#[derive(Copy, Clone, Component)]
+pub struct LightFadeIn {
+    pub tt: f32,
+    pub start_at: f32,
+    pub complete_at: f32,
+}
+
+impl LightFadeIn {
+    pub fn new(start_at: f32, duration: f32) -> Self {
+        assert!(duration > 0.0);
+
+        Self {
+            tt: 0.0,
+            start_at,
+            complete_at: start_at + duration,
+        }
+    }
+
+    pub(crate) fn animate(
+        time: Res<Time>,
+        mut lights: Query<(&mut Self, &mut Light)>,
+    ) {
+        for (mut this, mut light) in lights.iter_mut() {
+            this.tt += time.delta_seconds();
+
+            light.intensity = if this.tt < this.start_at {
+                0.0
+            } else if this.tt > this.complete_at {
+                1.0
+            } else {
+                (this.tt - this.start_at) / (this.complete_at - this.start_at)
+            };
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, Default, PartialEq, Component)]
 pub struct Camera {
     pub origin: Vec3,

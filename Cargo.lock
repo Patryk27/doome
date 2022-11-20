@@ -1107,6 +1107,7 @@ dependencies = [
  "glam",
  "image",
  "include_dir",
+ "log",
 ]
 
 [[package]]

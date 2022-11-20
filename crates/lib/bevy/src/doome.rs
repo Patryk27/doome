@@ -11,6 +11,7 @@ use doome_wgpu_ext::AllocatedUniform;
 use rt::ShaderConstants;
 
 use crate::assets::Assets;
+use crate::components::*;
 use crate::raytracer::DoomeRaytracerPlugin;
 use crate::renderer::RendererState;
 
@@ -101,6 +102,7 @@ impl Plugin for DoomePlugin {
 
         app.add_system(on_resize)
             .add_system(report_scale_factor_changes)
+            .add_system(LightFadeIn::animate)
             .add_plugin(DoomeRaytracerPlugin);
     }
 }

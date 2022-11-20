@@ -19,13 +19,28 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
     pub fn floor(&mut self, x1: i32, z1: i32, x2: i32, z2: i32) {
         let (x1, x2) = (x1.min(x2), x1.max(x2));
         let (z1, z2) = (z1.min(z2), z1.max(z2));
-        let dx = x2 - x1;
-        let dz = z2 - z1;
+        let dx = x2 - x1 + 1;
+        let dz = z2 - z1 + 1;
 
-        // TODO add translation
-        // TODO add collider
+        log::debug!(
+            "floor({}, {}, {}, {}); dx={}, dz={}",
+            x1,
+            z1,
+            x2,
+            z2,
+            dx,
+            dz
+        );
+
+        assert!(dx > 0 && dz > 0, "Floor has no area");
+
         self.model("floor")
-            .with_scale(vec3(dx as f32, 1.0, dz as f32))
+            .with_translation(vec3(
+                (x1 + x2) as f32 / 2.0,
+                0.0,
+                (z1 + z2) as f32 / 2.0,
+            ))
+            .with_scale(vec3((dx as f32) / 2.0, 1.0, (dz as f32) / 2.0))
             .with_material(
                 Material::default()
                     .with_color(Color::hex(0xffffff))
@@ -39,23 +54,46 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
     pub fn wall(&mut self, x1: i32, z1: i32, x2: i32, z2: i32, rot: u8) {
         let (x1, x2) = (x1.min(x2), x1.max(x2));
         let (z1, z2) = (z1.min(z2), z1.max(z2));
-        let dx = x2 - x1;
-        let dz = z2 - z1;
+        let dx = x2 - x1 + 1;
+        let dz = z2 - z1 + 1;
 
-        assert!(dx == 0 || dz == 0);
+        log::debug!(
+            "wall({}, {}, {}, {}, {}); dx={}, dz={}",
+            x1,
+            z1,
+            x2,
+            z2,
+            rot,
+            dx,
+            dz
+        );
 
-        let scale = if dx == 0 { dz } else { dx };
+        assert!(
+            (dx == 1) ^ (dz == 1) || (dx == 1 && dz == 1),
+            "Wall is not axis-aligned"
+        );
 
-        // TODO something's off here in regards to the translation
+        let extrude = match rot {
+            0 => vec3(0.0, 0.0, 0.5),
+            1 => vec3(0.5, 0.0, 0.0),
+            2 => vec3(0.0, 0.0, -0.5),
+            3 => vec3(-0.5, 0.0, 0.0),
+            _ => Default::default(),
+        };
+
+        let scale = if dx == 1 { dz } else { dx };
+
         // TODO add collider
         self.model("wall")
-            .with_scale(vec3(scale as f32, 1.0, 1.0))
+            .with_translation(
+                vec3(
+                    (x1 as f32 + x2 as f32) / 2.0,
+                    0.0,
+                    (z1 as f32 + z2 as f32) / 2.0,
+                ) + extrude,
+            )
             .with_rotation(Quat::from_rotation_y(PI / 2.0 * (rot as f32)))
-            .with_translation(vec3(
-                (x1 as f32 + x2 as f32) / 2.0,
-                0.0,
-                (z1 as f32 + z2 as f32) / 2.0,
-            ))
+            .with_scale(vec3((scale as f32) / 2.0, 1.0, 1.0))
             .with_material(
                 Material::default()
                     .with_color(Color::hex(0xffffff))
@@ -87,7 +125,7 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         pos: Vec3,
         point_at: Vec3,
         angle: f32,
-        color: Vec3,
+        color: Color,
     ) -> EntityCommands<'w, 's, 'a> {
         self.commands.spawn((
             Light {
@@ -96,7 +134,7 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
                 kind: LightKind::Spot { point_at, angle },
             },
             Transform::from_translation(pos),
-            Color::from_vec3(color),
+            color,
         ))
     }
 
