@@ -75,13 +75,19 @@ fn are_colliding(
     match (collider_a, collider_b) {
         (Collider::Circle(a), Collider::Circle(b)) => {
             let a_pos = transform_a.translation.xz();
+            let a_scale = extract_circle_scale(transform_a);
+
             let b_pos = transform_b.translation.xz();
+            let b_scale = extract_circle_scale(transform_b);
 
             let axis = b_pos - a_pos;
             let distance = axis.length();
 
-            if distance < a.radius + b.radius {
-                let overlap = a.radius + b.radius - distance;
+            let a_radius = a.radius * a_scale;
+            let b_radius = b.radius * b_scale;
+
+            if distance < a_radius + b_radius {
+                let overlap = a_radius + b_radius - distance;
 
                 Some(axis.normalize() * overlap)
             } else {
@@ -109,6 +115,17 @@ fn are_colliding(
     }
 }
 
+fn extract_circle_scale(transform: &Transform) -> f32 {
+    let circle_scale = transform.scale;
+
+    assert!(
+        circle_scale.x == circle_scale.y && circle_scale.y == circle_scale.z,
+        "Non uniform scale is not supported for circle colliders"
+    );
+
+    circle_scale.x
+}
+
 fn are_polygon_and_circle_colliding(
     polygon_transform: &Transform,
     polygon: &Collider,
@@ -117,6 +134,7 @@ fn are_polygon_and_circle_colliding(
 ) -> Option<Vec2> {
     let polygon = collider_to_polygon(polygon_transform, polygon);
     let circle_center = circle_transform.translation.xz();
+    let circle_scale = extract_circle_scale(circle_transform);
 
     let vertex_closest_to_circle = polygon
         .vertices
@@ -149,8 +167,11 @@ fn are_polygon_and_circle_colliding(
             project_vertices_onto(&polygon.vertices, axis);
 
         // TODO: Account for circle scale
-        let circle_projections =
-            project_circle_onto_axis(circle_center, circle.radius, axis);
+        let circle_projections = project_circle_onto_axis(
+            circle_center,
+            circle.radius * circle_scale,
+            axis,
+        );
 
         mtvs.push(resolve_axis_projections(
             axis,
