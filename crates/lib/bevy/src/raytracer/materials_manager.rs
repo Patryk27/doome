@@ -2,7 +2,6 @@ use std::collections::HashSet;
 
 use bevy::prelude::Entity;
 use doome_raytracer as rt;
-use glam::vec3;
 
 pub struct MaterialsManager {
     materials: Box<rt::Materials>,
@@ -57,13 +56,6 @@ impl MaterialsManager {
         for id in 0..rt::MAX_MATERIALS {
             self.owners[id].remove(&entity);
         }
-    }
-
-    pub fn dummy(&mut self, entity: Entity) -> rt::MaterialId {
-        self.alloc(
-            entity,
-            rt::Material::default().with_color(vec3(1.0, 1.0, 1.0)),
-        )
     }
 
     pub fn inner(&self) -> &rt::Materials {

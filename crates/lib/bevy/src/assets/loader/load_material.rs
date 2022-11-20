@@ -2,13 +2,9 @@ use std::path::Path;
 
 use tobj::{LoadError, MTLLoadResult};
 
-use super::source::AssetsSource;
 use super::AssetsLoader;
 
-impl<S> AssetsLoader<S>
-where
-    S: AssetsSource,
-{
+impl AssetsLoader {
     pub fn load_material(&self, path: impl AsRef<Path>) -> MTLLoadResult {
         let path = path.as_ref();
 

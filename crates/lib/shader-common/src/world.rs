@@ -25,14 +25,29 @@ impl<'a> World<'a> {
 
     pub fn atlas_sample(
         &self,
-        triangle_id: TriangleId<AnyTriangle>,
-        hit_uv: Vec2,
+        tri_id: TriangleId<AnyTriangle>,
+        hit: Hit,
     ) -> Vec4 {
-        let mapping = self.mappings.get(triangle_id);
+        let tri_uv = self.mappings.get(tri_id);
 
-        let tex_uv = mapping.uv0
-            + (mapping.uv1 - mapping.uv0) * hit_uv.x
-            + (mapping.uv2 - mapping.uv0) * hit_uv.y;
+        let mut tex_uv = tri_uv.uv0
+            + (tri_uv.uv1 - tri_uv.uv0) * hit.uv.x
+            + (tri_uv.uv2 - tri_uv.uv0) * hit.uv.y;
+
+        // When `uv_scale` (aka `uv_divisor`) is set, we pretend that the
+        // backing texture is `1.0 / uv_scale` larger than in reality - this is
+        // pretty cursed and works only on rectangular textures, which happens
+        // to exactly match our needs
+        if hit.uv.z < 1.0 || hit.uv.w < 1.0 {
+            let tex_min = tri_uv.uv0.min(tri_uv.uv1).min(tri_uv.uv2);
+            let tex_max = tri_uv.uv0.max(tri_uv.uv1).max(tri_uv.uv2);
+
+            let tex_size = tex_max - tex_min;
+            let tex_hit = (tex_uv - tex_min) / tex_size;
+
+            tex_uv =
+                tex_min + (tex_hit % hit.uv.zw()) * (tex_size / hit.uv.zw());
+        }
 
         self.atlas_tex
             .sample_by_lod(*self.atlas_sampler, tex_uv, 0.0)

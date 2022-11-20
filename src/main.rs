@@ -12,14 +12,12 @@ use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
 use doome_bevy::assets::Assets;
 use doome_bevy::components::*;
-use doome_bevy::doome::{DoomePlugin, DoomeRenderer};
-use doome_bevy::physics::{Body, PhysicsPlugin, RayCast};
+use doome_bevy::doome::DoomePlugin;
+use doome_bevy::physics::{Body, PhysicsPlugin};
 use doome_bevy::renderer::RendererPlugin;
 use doome_bevy::text::Text;
-use doome_engine::{Canvas, HEIGHT, WIDTH};
+use doome_engine::{HEIGHT, WIDTH};
 use glam::vec3;
-use interaction::TextInteraction;
-use markers::{FollowPlayerAbove, InteractableHighlight};
 use ui_and_2d::UiAnd2dPlugin;
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
@@ -32,7 +30,7 @@ const WINDOW_SCALE: f32 = 4.0;
 
 // TODO
 #[cfg(target_arch = "wasm32")]
-const WINDOW_SCALE: f32 = 2.0;
+const WINDOW_SCALE: f32 = 3.5;
 
 fn main() {
     #[cfg(feature = "static-assets")]
@@ -76,11 +74,6 @@ fn main() {
         .add_system(quit_on_exit)
         .add_system(process_movement)
         .add_system(process_camera)
-        .add_system(highlight_interactable)
-        .add_system(follow_player)
-        .add_system(levels::level1::animate)
-        .add_system(levels::level1::sync_raycast_marker)
-        .add_system(levels::level1::log_player_position)
         .add_startup_system(hide_cursor)
         .add_startup_system(levels::level1::init)
         .run();
@@ -96,38 +89,6 @@ fn hide_cursor(mut windows: ResMut<Windows>) {
 fn quit_on_exit(keys: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
     if keys.just_pressed(KeyCode::Escape) {
         exit.send(AppExit);
-    }
-}
-
-fn highlight_interactable(
-    mut highlight: Query<
-        (&mut Transform, &mut Light),
-        With<InteractableHighlight>,
-    >,
-    raycaster: Query<(&Player, &RayCast)>,
-    interactables: Query<
-        (&TextInteraction, &Transform),
-        Without<InteractableHighlight>,
-    >,
-) {
-    let (_player, raycast) = raycaster.single();
-
-    let (mut highlight_transform, mut light) = highlight.single_mut();
-    light.enabled = false;
-
-    if let Some(hit) = raycast.hit.as_ref() {
-        if let Ok((_interactable, transform)) = interactables.get(hit.entity) {
-            let new_point_at = transform.translation;
-
-            highlight_transform.translation =
-                transform.translation + Vec3::Y * 5.0;
-
-            if let LightKind::Spot { point_at, .. } = &mut light.kind {
-                *point_at = new_point_at;
-            }
-
-            light.enabled = true;
-        }
     }
 }
 
@@ -188,17 +149,4 @@ fn process_camera(
 
     camera.origin = vec3(pos.x, 1.0, pos.z);
     camera.look_at = camera.origin + transform.forward() * 5.0;
-}
-
-fn follow_player(
-    player: Query<&Transform, With<Player>>,
-    mut followers: Query<(&mut Transform, &FollowPlayerAbove), Without<Player>>,
-) {
-    let player = player.single();
-
-    for (mut follower_transform, follower) in followers.iter_mut() {
-        let new_translation = player.translation + Vec3::Y * follower.offset;
-        let lerped = follower_transform.translation.lerp(new_translation, 0.1);
-        follower_transform.translation = lerped;
-    }
 }

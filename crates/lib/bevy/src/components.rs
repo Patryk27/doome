@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use doome_raytracer as rt;
 use glam::vec3;
 
+use crate::assets::{AssetHandle, Texture};
+
 #[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Color {
     pub r: f32,
@@ -10,7 +12,17 @@ pub struct Color {
 }
 
 impl Color {
-    // TODO rgb to srgb?
+    pub fn srgb(r: f32, g: f32, b: f32) -> Self {
+        Self { r, g, b }
+    }
+
+    pub fn hex(rgb: u32) -> Self {
+        let [_, r, g, b] = rgb.to_be_bytes();
+        let convert = |c: u8| (((c as f32) / 255.0 + 0.055) / 1.055).powf(2.4);
+
+        Self::srgb(convert(r), convert(g), convert(b))
+    }
+
     pub fn into_vec3(self) -> Vec3 {
         vec3(self.r, self.g, self.b)
     }
@@ -63,38 +75,16 @@ pub struct Camera {
     pub look_at: Vec3,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Component)]
-pub struct Floor {
-    pub x1: i32,
-    pub z1: i32,
-    pub x2: i32,
-    pub z2: i32,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Component)]
-pub struct Ceiling {
-    pub x1: i32,
-    pub z1: i32,
-    pub x2: i32,
-    pub z2: i32,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Component)]
-pub struct Wall {
-    pub x1: i32,
-    pub z1: i32,
-    pub x2: i32,
-    pub z2: i32,
-    pub rot: u8,
-}
-
 #[derive(Copy, Clone, Debug, Default, PartialEq, Component)]
 pub struct Material {
     pub alpha: Option<f32>,
     pub color: Option<Color>,
     pub reflectivity: Option<f32>,
     pub reflection_color: Option<Color>,
-    pub is_textured: Option<bool>,
+    pub texture: Option<AssetHandle<Texture>>,
+    pub texture_enabled: Option<bool>,
+    pub uv_divisor: Option<(u8, u8)>,
+    pub uv_transparency: Option<bool>,
 }
 
 impl Material {
@@ -118,13 +108,18 @@ impl Material {
         self
     }
 
-    pub fn with_texture(mut self) -> Self {
-        self.is_textured = Some(true);
+    pub fn without_texture(mut self) -> Self {
+        self.texture_enabled = Some(false);
         self
     }
 
-    pub fn without_texture(mut self) -> Self {
-        self.is_textured = Some(false);
+    pub fn with_uv_divisor(mut self, u_div: u8, v_div: u8) -> Self {
+        self.uv_divisor = Some((u_div, v_div));
+        self
+    }
+
+    pub fn with_uv_transparency(mut self) -> Self {
+        self.uv_transparency = Some(true);
         self
     }
 
@@ -134,13 +129,16 @@ impl Material {
             color: self.color.or(other.color),
             reflectivity: self.reflectivity.or(other.reflectivity),
             reflection_color: self.reflection_color.or(other.reflection_color),
-            is_textured: self.is_textured.or(other.is_textured),
+            texture: self.texture.or(other.texture),
+            texture_enabled: self.texture_enabled.or(other.texture_enabled),
+            uv_divisor: self.uv_divisor.or(other.uv_divisor),
+            uv_transparency: self.uv_transparency.or(other.uv_transparency),
         }
     }
 
     pub(crate) fn materialize(self) -> rt::Material {
         let color = self.color.unwrap_or_default().into_vec3();
-        let texture = self.is_textured.unwrap_or_default();
+        let texture = self.texture_enabled == Some(true);
         let reflectivity = self.reflectivity.unwrap_or_default();
         let reflection_color =
             self.reflection_color.unwrap_or_default().into_vec3();
@@ -158,5 +156,11 @@ pub enum GeometryType {
     Dynamic,
 }
 
+/// Marker-component determing whether the raytracer already knows of given
+/// entity or not; it's used to allocate and release entity's geometry and
+/// materials in the raytracer's internal data structures.
+///
+/// This component is added and removed by the raytracer's syncing systems and
+/// shouldn't be added / removed manually.
 #[derive(Component)]
 pub(crate) struct Synced;

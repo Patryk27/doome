@@ -1,23 +1,17 @@
 use std::path::Path;
 
-use anyhow::Context;
+use anyhow::{Context, Result};
 
-use super::source::AssetsSource;
 use super::AssetsLoader;
 
-impl<S> AssetsLoader<S>
-where
-    S: AssetsSource,
-{
-    pub fn load_image(
-        &mut self,
-        name: &str,
-        path: impl AsRef<Path>,
-    ) -> anyhow::Result<()> {
-        let image_data = self.source.read_file(path)?;
+impl AssetsLoader {
+    pub fn load_image(&mut self, name: &str, path: &Path) -> Result<()> {
+        log::info!("Loading image: {}", path.display());
 
-        let image = image::load_from_memory(&image_data)
-            .context("Couldn't load image")?
+        let image = self.source.read_file(path)?;
+
+        let image = image::load_from_memory(&image)
+            .with_context(|| format!("Image is invalid: {}", path.display()))?
             .to_rgba8();
 
         self.images.push(name, image);

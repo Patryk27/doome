@@ -2,119 +2,94 @@ use std::f32::consts::PI;
 
 use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
-use doome_bevy::assets::model::Model;
-use doome_bevy::assets::AssetHandle;
+use doome_bevy::assets::{AssetHandle, Assets, Model};
 use doome_bevy::components::*;
-use doome_bevy::physics::{Collider, LineCollider};
-use glam::{vec2, vec3};
+use glam::vec3;
 
-pub trait LevelBuilderExt<'w, 's> {
-    fn floor(&mut self, x1: i32, z1: i32, x2: i32, z2: i32);
-    fn ceiling(&mut self, x1: i32, z1: i32, x2: i32, z2: i32);
-    fn wall(&mut self, x1: i32, z1: i32, x2: i32, z2: i32, rot: u8);
-
-    fn point_light<'a>(
-        &'a mut self,
-        x: f32,
-        y: f32,
-        z: f32,
-        r: f32,
-        g: f32,
-        b: f32,
-    ) -> EntityCommands<'w, 's, 'a>;
-
-    fn spot_light<'a>(
-        &'a mut self,
-        pos: Vec3,
-        orientation: Vec3,
-        angle: f32,
-        color: Vec3,
-    ) -> EntityCommands<'w, 's, 'a>;
-
-    fn model<'a>(
-        &'a mut self,
-        handle: AssetHandle<Model>,
-    ) -> ModelBuilder<'w, 's, 'a>;
+pub struct LevelBuilder<'p, 'w, 's> {
+    commands: &'p mut Commands<'w, 's>,
+    assets: &'p Assets,
 }
 
-impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
-    fn floor(&mut self, x1: i32, z1: i32, x2: i32, z2: i32) {
-        self.spawn((GeometryType::Static, Floor { x1, z1, x2, z2 }));
+impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
+    pub fn new(commands: &'p mut Commands<'w, 's>, assets: &'p Assets) -> Self {
+        Self { commands, assets }
     }
 
-    fn ceiling(&mut self, x1: i32, z1: i32, x2: i32, z2: i32) {
-        self.spawn((GeometryType::Static, Ceiling { x1, z1, x2, z2 }));
+    pub fn floor(&mut self, x1: i32, z1: i32, x2: i32, z2: i32) {
+        let (x1, x2) = (x1.min(x2), x1.max(x2));
+        let (z1, z2) = (z1.min(z2), z1.max(z2));
+        let dx = x2 - x1;
+        let dz = z2 - z1;
+
+        // TODO add translation
+        // TODO add collider
+        self.model("floor")
+            .with_scale(vec3(dx as f32, 1.0, dz as f32))
+            .with_material(
+                Material::default()
+                    .with_color(Color::hex(0xffffff))
+                    .with_reflectivity(0.1)
+                    .with_reflection_color(Color::hex(0xffffff))
+                    .with_uv_divisor(dx as _, dz as _),
+            )
+            .spawn();
     }
 
-    fn wall(&mut self, x1: i32, z1: i32, x2: i32, z2: i32, rot: u8) {
-        const HEIGHT: f32 = 4.0;
+    pub fn wall(&mut self, x1: i32, z1: i32, x2: i32, z2: i32, rot: u8) {
+        let (x1, x2) = (x1.min(x2), x1.max(x2));
+        let (z1, z2) = (z1.min(z2), z1.max(z2));
+        let dx = x2 - x1;
+        let dz = z2 - z1;
 
-        let angle = (rot as f32) * (PI / 2.0);
+        assert!(dx == 0 || dz == 0);
 
-        let center = {
-            let (x1, x2) = (x1.min(x2), x1.max(x2));
-            let (z1, z2) = (z1.min(z2), z1.max(z2));
-            let (x1, z1) = (x1 as f32, z1 as f32);
-            let (x2, z2) = (x2 as f32, z2 as f32);
-            let center = vec3((x1 + x2) / 2.0, HEIGHT / 2.0, (z1 + z2) / 2.0);
+        let scale = if dx == 0 { dz } else { dx };
 
-            center
-        };
-
-        let collider_start = vec2(x1 as f32, z1 as f32);
-        let collider_end = vec2(x2 as f32, z2 as f32);
-
-        // TODO: Walls are weird right now, because we're giving the geometry and colliders here and absolute coordinates
-        //       as opposed to coordinates in relation to the transform. As such, walls right now have the identity transform.
-        let transform = Transform::IDENTITY;
-        // Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, angle))
-        //     .with_translation(center);
-
-        self.spawn((
-            GeometryType::Static,
-            Wall {
-                x1,
-                z1,
-                x2,
-                z2,
-                rot,
-            },
-            Collider::Line(LineCollider {
-                start: collider_start,
-                end: collider_end,
-            }),
-            transform,
-        ));
+        // TODO something's off here in regards to the translation
+        // TODO add collider
+        self.model("wall")
+            .with_scale(vec3(scale as f32, 1.0, 1.0))
+            .with_rotation(Quat::from_rotation_y(PI / 2.0 * (rot as f32)))
+            .with_translation(vec3(
+                (x1 as f32 + x2 as f32) / 2.0,
+                0.0,
+                (z1 as f32 + z2 as f32) / 2.0,
+            ))
+            .with_material(
+                Material::default()
+                    .with_color(Color::hex(0xffffff))
+                    .with_uv_divisor(scale as _, 1),
+            )
+            .spawn();
     }
 
-    fn point_light<'a>(
+    pub fn point_light<'a>(
         &'a mut self,
         x: f32,
         y: f32,
         z: f32,
-        r: f32,
-        g: f32,
-        b: f32,
+        c: u32,
     ) -> EntityCommands<'w, 's, 'a> {
-        self.spawn((
+        self.commands.spawn((
             Light {
                 enabled: true,
                 intensity: 1.0,
                 kind: LightKind::Point,
             },
             Transform::from_xyz(x, y, z),
-            Color { r, g, b },
+            Color::hex(c),
         ))
     }
 
-    fn spot_light<'a>(
+    pub fn spot_light<'a>(
         &'a mut self,
         pos: Vec3,
         point_at: Vec3,
         angle: f32,
         color: Vec3,
     ) -> EntityCommands<'w, 's, 'a> {
-        self.spawn((
+        self.commands.spawn((
             Light {
                 enabled: true,
                 intensity: 1.0,
@@ -125,15 +100,15 @@ impl<'w, 's> LevelBuilderExt<'w, 's> for Commands<'w, 's> {
         ))
     }
 
-    fn model<'a>(
+    pub fn model<'a>(
         &'a mut self,
-        handle: AssetHandle<Model>,
-    ) -> ModelBuilder<'w, 's, 'a> {
-        ModelBuilder::new(self, handle)
+        name: &'static str,
+    ) -> LevelModelBuilder<'w, 's, 'a> {
+        LevelModelBuilder::new(&mut self.commands, self.assets.load_model(name))
     }
 }
 
-pub struct ModelBuilder<'w, 's, 'a> {
+pub struct LevelModelBuilder<'w, 's, 'a> {
     commands: &'a mut Commands<'w, 's>,
     handle: AssetHandle<Model>,
     geo_type: GeometryType,
@@ -141,7 +116,7 @@ pub struct ModelBuilder<'w, 's, 'a> {
     material: Option<Material>,
 }
 
-impl<'w, 's, 'a> ModelBuilder<'w, 's, 'a> {
+impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
     fn new(
         commands: &'a mut Commands<'w, 's>,
         handle: AssetHandle<Model>,

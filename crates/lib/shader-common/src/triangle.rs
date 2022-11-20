@@ -1,21 +1,36 @@
 use crate::*;
 
+/// # Memory model
+///
+/// ```
+/// v0.x = vertex 0 (x; f32)
+/// v0.y = vertex 0 (y; f32)
+/// v0.z = vertex 0 (z; f32)
+/// v0.w (bit 15) = uv transparency enabled/disabled (bool)
+/// v0.w (bits 16..=31) = material id (u16)
+///
+/// v1.x = vertex 1 (x; f32)
+/// v1.y = vertex 1 (y; f32)
+/// v1.z = vertex 1 (z; f32)
+/// v1.w = alpha channel (0..=1.0; f32)
+///
+/// v2.x = vertex 2 (x; f32)
+/// v2.y = vertex 2 (y; f32)
+/// v2.z = vertex 3 (z; f32)
+/// v2.w (bits 15..=31) = uv divisor (u16)
+/// ```
 #[repr(C)]
 #[derive(Copy, Clone, Default, PartialEq, Pod, Zeroable)]
 #[cfg_attr(not(target_arch = "spirv"), derive(Debug))]
 pub struct Triangle {
-    // X, Y, Z - vertex 0; W - material id (as u16)
     v0: Vec4,
-
-    // X, Y, Z - vertex 1; W - alpha channel (as f32, 0.0..=1.0)
     v1: Vec4,
-
-    // X, Y, Z - vertex 2; W - whether UV transparency is enabled or not
-    //                         (as bool, 0.0/1.0)
     v2: Vec4,
 }
 
 impl Triangle {
+    const UV_TRANSPARENCY_MASK: u32 = 1 << 15;
+
     pub fn new(v0: Vec3, v1: Vec3, v2: Vec3, material_id: MaterialId) -> Self {
         Self {
             v0: v0.extend(material_id.get() as f32),
@@ -67,8 +82,8 @@ impl Triangle {
         let tvec = ray.origin() - self.v0.truncate();
         let mut u = tvec.dot(pvec) * inv_det;
 
-        // HACK prevents funky artifacts that happen when camera is aligned in
-        //      the same direction as the triangle
+        // Prevents funky black spots that appear when camera is aligned in the
+        // same direction as the triangle
         if u > -0.0001 && u < 0.0 {
             u = f32::EPSILON;
         }
@@ -90,9 +105,11 @@ impl Triangle {
             return Hit::none();
         }
 
+        let uv_divisor = self.uv_divisor();
+
         Hit {
             t,
-            uv: vec2(u, v),
+            uv: vec2(u, v).extend(uv_divisor.x).extend(uv_divisor.y),
             ray,
             point: ray.origin() + ray.direction() * (t - 0.01),
             normal: v0v1.cross(v0v2).normalize(),
@@ -102,34 +119,51 @@ impl Triangle {
     }
 
     pub fn material_id(&self) -> MaterialId {
-        MaterialId::new(self.v0.w as _)
+        MaterialId::new(((self.v0.w as u32) & !(1 << 16)) as _)
     }
 
     pub fn has_uv_transparency(&self) -> bool {
-        self.v2.w == 1.0
+        (self.v0.w as u32) & Self::UV_TRANSPARENCY_MASK > 0
+    }
+
+    pub fn uv_divisor(&self) -> Vec2 {
+        let w = self.v2.w as u32;
+        let u = w >> 8;
+        let v = w & ((1 << 8) - 1);
+
+        vec2(1.0 / (u as f32), 1.0 / (v as f32))
     }
 }
 
 #[cfg(not(target_arch = "spirv"))]
 impl Triangle {
-    pub fn with_alpha(mut self, a: f32) -> Self {
-        self.v1.w = a;
+    pub fn with_alpha(mut self, val: f32) -> Self {
+        self.v1.w = val;
         self
     }
 
-    pub fn with_uv_transparency(self) -> Self {
-        self.with_uv_transparency_of(true)
-    }
-
-    pub fn with_uv_transparency_of(mut self, val: bool) -> Self {
-        self.v2.w = if val { 1.0 } else { 0.0 };
+    pub fn with_transform(mut self, val: Mat4) -> Self {
+        self.v0 = math::transform(self.v0.xyz(), val).extend(self.v0.w);
+        self.v1 = math::transform(self.v1.xyz(), val).extend(self.v1.w);
+        self.v2 = math::transform(self.v2.xyz(), val).extend(self.v2.w);
         self
     }
 
-    pub fn with_transform(mut self, xform: Mat4) -> Self {
-        self.v0 = math::transform(self.v0.xyz(), xform).extend(self.v0.w);
-        self.v1 = math::transform(self.v1.xyz(), xform).extend(self.v1.w);
-        self.v2 = math::transform(self.v2.xyz(), xform).extend(self.v2.w);
+    pub fn with_uv_transparency(mut self, val: bool) -> Self {
+        let mut w = self.v0.w as u32;
+
+        if val {
+            w |= Self::UV_TRANSPARENCY_MASK;
+        } else {
+            w &= !Self::UV_TRANSPARENCY_MASK;
+        }
+
+        self.v0.w = w as _;
+        self
+    }
+
+    pub fn with_uv_divisor(mut self, u: u8, v: u8) -> Self {
+        self.v2.w = (((u as u32) << 8) + (v as u32)) as _;
         self
     }
 

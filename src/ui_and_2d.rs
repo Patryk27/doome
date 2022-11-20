@@ -1,16 +1,11 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
-use bevy::time::Stopwatch;
 use doome_bevy::assets::{AssetHandle, Assets};
-use doome_bevy::components::Player;
 use doome_bevy::doome::DoomeRenderer;
-use doome_bevy::physics::RayCast;
 use doome_bevy::text::Text;
-use doome_engine::{Canvas, HEIGHT};
+use doome_engine::Canvas;
 use image::RgbaImage;
-
-use crate::interaction::TextInteraction;
 
 pub struct UiAnd2dPlugin;
 
@@ -110,8 +105,6 @@ fn render_ui_and_2d(
     animation: Query<&ShootingAnimation>,
     mut doome_renderer: ResMut<DoomeRenderer>,
     text: Res<Text>,
-    raycaster: Query<(&Player, &RayCast)>,
-    interactables: Query<&TextInteraction>,
 ) {
     let frame = &mut doome_renderer.pixels.image_data;
     let mut canvas = Canvas::new(&text.text_engine, frame);
@@ -119,8 +112,8 @@ fn render_ui_and_2d(
     canvas.clear();
 
     let (sway_x, sway_y) = calc_sway(time.elapsed_seconds());
-
     let anim = animation.single();
+
     let gun_image = if anim.is_firing {
         data.gun_fire_sequence[anim.current_frame]
     } else {
@@ -128,14 +121,6 @@ fn render_ui_and_2d(
     };
 
     canvas.blit(sway_x, sway_y, assets.image(gun_image));
-
-    let (_player, raycast) = raycaster.single();
-
-    if let Some(hit) = raycast.hit.as_ref() {
-        if let Ok(interactable) = interactables.get(hit.entity) {
-            canvas.text(10, HEIGHT - 30, &interactable.content);
-        }
-    }
 }
 
 fn calc_sway(t: f32) -> (u16, u16) {

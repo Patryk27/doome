@@ -30,7 +30,7 @@ impl Camera {
             let pos = pos / self.viewport_size.xy(); // map to 0..1
             let pos = 2.0 * pos - 1.0; // map to -1..1
             let pos = vec2(pos.x / viewport_ratio, pos.y); // adjust for aspect ratio
-            let pos = pos * (viewport_fov / 2.0).tan(); //
+            let pos = pos * (viewport_fov / 2.0).tan(); // adjust for the field of view
 
             OrthonormalBasis::trace(
                 self.onb_u,

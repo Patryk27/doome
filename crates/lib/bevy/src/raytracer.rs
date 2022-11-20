@@ -61,9 +61,6 @@ fn sync_created_geometry(
     mut commands: Commands,
     mut ctxt: ResMut<DoomeRaytracerState>,
     assets: Res<Assets>,
-    floors: Query<(Entity, &GeometryType, &Floor), Added<Floor>>,
-    ceilings: Query<(Entity, &GeometryType, &Ceiling), Added<Ceiling>>,
-    walls: Query<(Entity, &GeometryType, &Wall), Added<Wall>>,
     models: Query<
         (
             Entity,
@@ -76,48 +73,24 @@ fn sync_created_geometry(
     >,
 ) {
     let ctxt = &mut *ctxt;
-    let mut geo = ctxt.geometry.builder();
 
-    for (entity, &geo_type, data) in floors.iter() {
-        // TODO
-        let mat = ctxt.materials.dummy(entity);
-
-        geo.add_floor(
-            entity, geo_type, data.x1, data.z1, data.x2, data.z2, mat,
-        );
-        commands.entity(entity).insert(Synced);
-    }
-
-    for (entity, &geo_type, data) in ceilings.iter() {
-        // TODO
-        let mat = ctxt.materials.dummy(entity);
-
-        geo.ceiling(entity, geo_type, data.x1, data.z1, data.x2, data.z2, mat);
-        commands.entity(entity).insert(Synced);
-    }
-
-    for (entity, &geo_type, data) in walls.iter() {
-        // TODO
-        let mat = ctxt.materials.dummy(entity);
-
-        geo.add_wall(
-            entity, geo_type, data.x1, data.z1, data.x2, data.z2, data.rot, mat,
-        );
-        commands.entity(entity).insert(Synced);
-    }
-
-    for (entity, &geo_type, name, &xform, mat) in models.iter() {
-        let model = assets.model(name.clone());
+    for (entity, &geo_type, model, &xform, mat) in models.iter() {
+        let model = assets.model(*model);
         let xform = xform.compute_matrix();
 
-        let mat = mat
-            .cloned()
-            .unwrap_or_default()
-            .merge_with(model.material.materialize());
+        let mat = {
+            let base_mat = model.material.materialize();
+
+            mat.map(|mat| mat.merge_with(base_mat)).unwrap_or(base_mat)
+        };
 
         let mat_id = ctxt.materials.alloc(entity, mat.materialize());
+        let tex = mat.texture.map(|tex_id| assets.texture(tex_id));
 
-        geo.add_model(entity, geo_type, model, xform, mat, mat_id);
+        ctxt.geometry
+            .builder()
+            .add_model(entity, geo_type, model, xform, mat, mat_id, tex);
+
         commands.entity(entity).insert(Synced);
     }
 }
@@ -139,23 +112,26 @@ fn sync_updated_geometry(
     let ctxt = &mut *ctxt;
     let mut geo = ctxt.geometry.updater();
 
-    for (entity, &geo_type, name, &xform, mat) in models.iter() {
+    for (entity, &geo_type, model, &xform, mat) in models.iter() {
         if geo_type == GeometryType::Static {
-            // TODO it's fine to overwrite geometry for them
+            // TODO it's fine to overwrite materials for them
             continue;
         }
 
-        let model = assets.model(name.clone());
+        let model = assets.model(*model);
         let xform = xform.compute_matrix();
 
-        let mat = mat
-            .cloned()
-            .unwrap_or_default()
-            .merge_with(model.material.materialize());
+        let mat = {
+            let base_mat = model.material.materialize();
 
+            mat.map(|mat| mat.merge_with(base_mat)).unwrap_or(base_mat)
+        };
+
+        // TODO wasteful
         let mat_id = ctxt.materials.alloc(entity, mat.materialize());
+        let tex = mat.texture.map(|tex_id| assets.texture(tex_id));
 
-        geo.update_model(entity, model, xform, mat, mat_id);
+        geo.update_model(entity, model, xform, mat, mat_id, tex);
     }
 }
 
