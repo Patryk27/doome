@@ -2,6 +2,7 @@ mod manifest;
 
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::mpsc::TryRecvError;
 
 use clap::Parser;
 use manifest::{Manifest, ShaderConfig};
@@ -45,6 +46,15 @@ fn main() -> anyhow::Result<()> {
     tx.send(()).unwrap();
 
     while let Ok(()) = rx.recv() {
+        // Debounce
+        loop {
+            match rx.try_recv() {
+                Ok(_) => (),
+                Err(TryRecvError::Empty) => break,
+                Err(TryRecvError::Disconnected) => panic!("Disconnected"),
+            }
+        }
+
         for shader in &manifest.shaders {
             build_shader(shader)?;
         }
