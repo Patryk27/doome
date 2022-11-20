@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
 use bevy::prelude::*;
-use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink, Source};
+use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink};
 
 use crate::assets::{AssetHandle, Assets};
 
@@ -35,7 +35,7 @@ struct AudioOutput {
 }
 
 impl FromWorld for AudioOutput {
-    fn from_world(world: &mut World) -> Self {
+    fn from_world(_world: &mut World) -> Self {
         let (stream, stream_handle) = OutputStream::try_default()
             .expect("Failed to initialize audio state");
 
@@ -59,7 +59,7 @@ impl Plugin for AudioPlugin {
 }
 
 fn play_audio(
-    mut assets: ResMut<Assets>,
+    assets: Res<Assets>,
     mut audio: ResMut<Audio>,
     state: NonSend<AudioOutput>,
 ) {

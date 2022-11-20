@@ -51,7 +51,7 @@ pub struct Health {
     pub val: f32,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Component)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Component)]
 pub struct Player;
 
 #[derive(Copy, Clone, Debug, PartialEq, Component)]

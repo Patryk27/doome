@@ -35,6 +35,7 @@ impl<'a> GeometryBuilder<'a> {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn add_model(
         &mut self,
         entity: Entity,

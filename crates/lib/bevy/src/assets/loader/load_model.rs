@@ -101,12 +101,13 @@ impl AssetsLoader {
         &mut self,
         raw_mat: &tobj::Material,
     ) -> Result<ModelMaterial> {
-        let mut mat = ModelMaterial::default();
-
-        mat.color = Color {
-            r: raw_mat.diffuse[0],
-            g: raw_mat.diffuse[1],
-            b: raw_mat.diffuse[2],
+        let mut mat = ModelMaterial {
+            color: Color {
+                r: raw_mat.diffuse[0],
+                g: raw_mat.diffuse[1],
+                b: raw_mat.diffuse[2],
+            },
+            ..ModelMaterial::default()
         };
 
         if !raw_mat.diffuse.is_empty() {

@@ -15,6 +15,7 @@ pub fn vs_main(
     *output = full_screen_triangle(vert_idx);
 }
 
+#[allow(clippy::too_many_arguments)]
 #[spirv(fragment)]
 pub fn fs_main(
     #[spirv(frag_coord)] pos: Vec4,

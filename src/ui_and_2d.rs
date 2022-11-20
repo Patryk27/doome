@@ -86,18 +86,17 @@ fn update_animation(
     let mut shooting_animation = shooting_animation.single_mut();
     shooting_animation.timer.tick(time.delta());
 
-    if shooting_animation.is_firing {
-        if shooting_animation.timer.just_finished() {
-            shooting_animation.current_frame += 1;
+    if shooting_animation.is_firing && shooting_animation.timer.just_finished()
+    {
+        shooting_animation.current_frame += 1;
 
-            // TODO: No magic number
-            if shooting_animation.current_frame == 3 {
-                shooting_animation.current_frame = 0;
-                shooting_animation.is_firing = false;
-                shooting_animation.timer.pause();
-            } else {
-                shooting_animation.timer.reset();
-            }
+        // TODO: No magic number
+        if shooting_animation.current_frame == 3 {
+            shooting_animation.current_frame = 0;
+            shooting_animation.is_firing = false;
+            shooting_animation.timer.pause();
+        } else {
+            shooting_animation.timer.reset();
         }
     }
 }

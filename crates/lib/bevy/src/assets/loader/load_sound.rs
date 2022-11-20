@@ -15,5 +15,4 @@ impl AssetsLoader {
 
         Ok(())
     }
-
 }

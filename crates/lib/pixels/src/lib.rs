@@ -23,8 +23,8 @@ impl Pixels {
             device.create_shader_module(wgpu::include_spirv!("./shader.spv"));
 
         let extent = wgpu::Extent3d {
-            width: width,
-            height: height,
+            width,
+            height,
             depth_or_array_layers: 1,
         };
 

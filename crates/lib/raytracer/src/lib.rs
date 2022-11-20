@@ -192,6 +192,7 @@ impl Raytracer {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn render(
         &self,
         queue: &wgpu::Queue,
@@ -230,9 +231,9 @@ impl Raytracer {
         rpass.set_scissor_rect(0, 0, self.width as _, self.height as _);
         rpass.set_pipeline(&self.pipeline);
 
-        rpass.set_bind_group(0, &self.ds0.bind_group(), &[]);
-        rpass.set_bind_group(1, &self.ds1.bind_group(), &[]);
-        rpass.set_bind_group(2, &self.ds2.bind_group(), &[]);
+        rpass.set_bind_group(0, self.ds0.bind_group(), &[]);
+        rpass.set_bind_group(1, self.ds1.bind_group(), &[]);
+        rpass.set_bind_group(2, self.ds2.bind_group(), &[]);
         rpass.set_bind_group(3, &self.ds3, &[]);
 
         rpass.draw(0..3, 0..1);

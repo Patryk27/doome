@@ -143,7 +143,7 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         &'a mut self,
         name: &'static str,
     ) -> LevelModelBuilder<'w, 's, 'a> {
-        LevelModelBuilder::new(&mut self.commands, self.assets.load_model(name))
+        LevelModelBuilder::new(self.commands, self.assets.load_model(name))
     }
 }
 
