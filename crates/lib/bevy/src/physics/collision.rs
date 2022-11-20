@@ -148,6 +148,7 @@ fn are_polygon_and_circle_colliding(
         let polygon_projections =
             project_vertices_onto(&polygon.vertices, axis);
 
+        // TODO: Account for circle scale
         let circle_projections =
             project_circle_onto_axis(circle_center, circle.radius, axis);
 
@@ -203,18 +204,17 @@ fn collider_to_polygon(
 }
 
 fn offsets_to_points(transform: &Transform, offsets: &[Vec2]) -> Vec<Vec2> {
-    // We map the 3D position to the XZ plane
-    let origin = transform.translation.xz();
-    // We're only interested in Y-axis rotation so the order doesn't really matter
-    let y_rotation = transform.rotation.to_euler(EulerRot::XYZ).1;
-
     // rotate offsets
     let points = offsets
         .iter()
         .map(|offset| {
-            let rotated_offset = offset.rotate(Vec2::from_angle(y_rotation));
+            // Remap into the 3D world
+            let offset = vec3(offset.x, 0.0, offset.y);
 
-            rotated_offset + origin
+            let transformed_offset =
+                transform.compute_matrix().transform_point3(offset);
+
+            transformed_offset.xz()
         })
         .collect();
 

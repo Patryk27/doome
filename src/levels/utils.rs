@@ -4,7 +4,8 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
 use doome_bevy::assets::{AssetHandle, Assets, Model};
 use doome_bevy::components::*;
-use glam::vec3;
+use doome_bevy::physics::{Collider, LineCollider};
+use glam::{vec2, vec3};
 
 pub struct LevelBuilder<'p, 'w, 's> {
     commands: &'p mut Commands<'w, 's>,
@@ -68,10 +69,7 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
             dz
         );
 
-        assert!(
-            (dx == 1) ^ (dz == 1) || (dx == 1 && dz == 1),
-            "Wall is not axis-aligned"
-        );
+        assert!(dx == 1 || dz == 1, "Wall is not axis-aligned");
 
         let extrude = match rot {
             0 => vec3(0.0, 0.0, 0.5),
@@ -83,7 +81,6 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
 
         let scale = if dx == 1 { dz } else { dx };
 
-        // TODO add collider
         self.model("wall")
             .with_translation(
                 vec3(
@@ -99,7 +96,11 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
                     .with_color(Color::hex(0xffffff))
                     .with_uv_divisor(scale as _, 1),
             )
-            .spawn();
+            .spawn()
+            .insert(Collider::Line(LineCollider {
+                start: vec2(-1.0, 0.0),
+                end: vec2(1.0, 0.0),
+            }));
     }
 
     pub fn point_light<'a>(
