@@ -76,6 +76,8 @@ fn main() {
         .add_plugin(PhysicsPlugin::default())
         .add_plugin(UiAnd2dPlugin)
         .add_plugin(AudioPlugin)
+        // Game plugins
+        .add_plugin(billboard::BillboardPlugin)
         // Misc systems
         .add_system(quit_on_exit)
         .add_system(process_movement)
