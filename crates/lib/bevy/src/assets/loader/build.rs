@@ -65,6 +65,7 @@ impl AssetsLoader {
             models: self.models.build(),
             images: self.images.build(),
             textures: textures.build(),
+            sounds: self.sounds.build(),
             atlas,
         }
     }

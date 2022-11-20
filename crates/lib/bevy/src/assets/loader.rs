@@ -2,6 +2,7 @@ mod build;
 mod load_image;
 mod load_material;
 mod load_model;
+mod load_sound;
 mod load_texture;
 mod source;
 
@@ -15,11 +16,13 @@ use super::{
     AssetHandle, AssetStorageBuilder, Assets, Model, ModelMaterial,
     ModelTriangle, Texture,
 };
+use crate::audio::Sound;
 
 pub struct AssetsLoader {
     source: Box<dyn AssetsSource>,
     models: AssetStorageBuilder<Model>,
     images: AssetStorageBuilder<RgbaImage>,
+    sounds: AssetStorageBuilder<Sound>,
     textures: AssetStorageBuilder<RgbaImage>,
 }
 
@@ -29,6 +32,7 @@ impl AssetsLoader {
             source: Box::new(source),
             models: Default::default(),
             images: Default::default(),
+            sounds: Default::default(),
             textures: Default::default(),
         }
     }

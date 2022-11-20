@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 use doome_bevy::assets::{AssetHandle, Assets};
+use doome_bevy::audio::Audio;
 use doome_bevy::doome::DoomeRenderer;
 use doome_bevy::text::Text;
 use doome_engine::Canvas;
@@ -59,15 +60,18 @@ fn setup(mut commands: Commands) {
 
 // TODO: Attach an event writer
 fn trigger_shoot(
+    assets: Res<Assets>,
     mut shooting_animation: Query<&mut ShootingAnimation>,
     mouse: Res<Input<MouseButton>>,
     keyboard: Res<Input<KeyCode>>,
+    mut audio: ResMut<Audio>,
 ) {
     let mut shooting_animation = shooting_animation.single_mut();
 
     if mouse.just_pressed(MouseButton::Left)
         || keyboard.just_pressed(KeyCode::Space)
     {
+        audio.play(assets.load_sound("gun_shoot"));
         shooting_animation.is_firing = true;
         shooting_animation.current_frame = 0;
         shooting_animation.timer.unpause();

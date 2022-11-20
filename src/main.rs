@@ -11,6 +11,7 @@ use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
 use doome_bevy::assets::Assets;
+use doome_bevy::audio::AudioPlugin;
 use doome_bevy::components::*;
 use doome_bevy::doome::DoomePlugin;
 use doome_bevy::physics::{Body, PhysicsPlugin};
@@ -70,6 +71,7 @@ fn main() {
         .add_plugin(DoomePlugin { shader })
         .add_plugin(PhysicsPlugin::default())
         .add_plugin(UiAnd2dPlugin)
+        .add_plugin(AudioPlugin)
         // Misc systems
         .add_system(quit_on_exit)
         .add_system(process_movement)

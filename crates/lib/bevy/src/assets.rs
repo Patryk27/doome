@@ -13,12 +13,14 @@ use self::loader::*;
 pub use self::model::*;
 pub use self::storage::AssetHandle;
 use self::storage::{AssetStorage, AssetStorageBuilder};
+use crate::audio::Sound;
 
 #[derive(Resource)]
 pub struct Assets {
     atlas: image::RgbaImage,
     models: AssetStorage<Model>,
     images: AssetStorage<RgbaImage>,
+    sounds: AssetStorage<Sound>,
     textures: AssetStorage<Texture>,
 }
 
@@ -55,6 +57,12 @@ impl Assets {
             })?;
         }
 
+        for (name, path) in loader.find("audio", "wav")? {
+            loader.load_sound(&name, &path).with_context(|| {
+                format!("Couldn't load image: {}", path.display())
+            })?;
+        }
+
         Ok(loader.build())
     }
 
@@ -74,6 +82,10 @@ impl Assets {
         self.images.by_handle(handle)
     }
 
+    pub(crate) fn sound(&self, handle: AssetHandle<Sound>) -> &Sound {
+        self.sounds.by_handle(handle)
+    }
+
     pub fn load_model(&self, name: &str) -> AssetHandle<Model> {
         self.models
             .by_name(name)
@@ -84,5 +96,11 @@ impl Assets {
         self.images
             .by_name(name)
             .unwrap_or_else(|| panic!("Unknown image: {}", name))
+    }
+
+    pub fn load_sound(&self, name: &str) -> AssetHandle<Sound> {
+        self.sounds
+            .by_name(name)
+            .unwrap_or_else(|| panic!("Unknown sound: {}", name))
     }
 }
