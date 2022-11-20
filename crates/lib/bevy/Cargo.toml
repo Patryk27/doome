@@ -22,7 +22,7 @@ include_dir = "0.7"
 log = "0.4"
 maplit = "1.0"
 rectangle-pack = "0.4"
-rodio = "0.16"
+rodio = { version = "0.16", default-features = false, features = [ "wav", "wasm-bindgen" ] }
 tobj = "3.2"
 wgpu = "0.14"
 
