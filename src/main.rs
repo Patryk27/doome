@@ -6,8 +6,6 @@ mod markers;
 mod player;
 mod ui;
 
-use std::sync::{Arc, Mutex};
-
 use bevy::app::AppExit;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::input::mouse::MouseMotion;
@@ -45,9 +43,6 @@ fn main() {
     #[cfg(not(feature = "static-assets"))]
     let assets = Assets::init("assets").unwrap();
 
-    let shader =
-        Arc::new(Mutex::new(Some(doome_raytracer::Raytracer::shader())));
-
     App::new()
         .insert_resource(assets)
         .insert_resource(TextEngine::default())
@@ -73,7 +68,7 @@ fn main() {
         .add_plugin(bevy::winit::WinitPlugin::default())
         // Internal plugins
         .add_plugin(RendererPlugin)
-        .add_plugin(DoomePlugin { shader })
+        .add_plugin(DoomePlugin)
         .add_plugin(PhysicsPlugin::default())
         .add_plugin(UiPlugin)
         .add_plugin(AudioPlugin)

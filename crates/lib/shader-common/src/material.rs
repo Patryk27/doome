@@ -11,49 +11,22 @@ pub struct Material {
 }
 
 impl Material {
-    pub fn shade(&self, world: &World, hit: Hit) -> Vec3 {
-        let mut color = self.radiance(world, hit);
+    pub fn shade(&self, world: &World, hit: Hit) -> (Vec3, Vec4, Ray) {
+        let color = self.radiance(world, hit);
 
-        // ------------ //
-        // Reflectivity //
-        let reflectivity = self.reflectivity.w;
-
-        if reflectivity > 0.0 {
-            let reflection_color = self.reflectivity.xyz();
-
+        if self.reflectivity.w > 0.0 {
             let reflection_dir = {
                 let camera_dir = -hit.ray.direction();
 
                 hit.normal * hit.normal.dot(camera_dir) * 2.0 - camera_dir
             };
 
-            let ray_color =
-                Ray::new(hit.point, reflection_dir).shade_basic(world);
+            let ray = Ray::new(hit.point, reflection_dir);
 
-            color += ray_color * reflection_color * reflectivity;
+            (color, self.reflectivity, ray)
+        } else {
+            (color, Default::default(), Ray::none())
         }
-
-        // ------------ //
-        // Transparency //
-        let triangle = world.geometry(hit.tri_id);
-
-        if triangle.alpha() < 1.0 {
-            let ray_color = Ray::new(
-                hit.point + 0.1 * hit.ray.direction(),
-                hit.ray.direction(),
-            )
-            .shade_basic(world);
-
-            color =
-                color * triangle.alpha() + ray_color * (1.0 - triangle.alpha());
-        }
-
-        color
-    }
-
-    /// See: [`Ray::shade_basic()`].
-    pub fn shade_basic(&self, world: &World, hit: Hit) -> Vec3 {
-        self.radiance(world, hit)
     }
 
     fn radiance(&self, world: &World, hit: Hit) -> Vec3 {

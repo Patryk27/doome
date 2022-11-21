@@ -14,6 +14,10 @@ impl Ray {
         }
     }
 
+    pub fn none() -> Self {
+        Self::new(Default::default(), Default::default())
+    }
+
     pub fn origin(&self) -> Vec3 {
         self.origin
     }
@@ -181,31 +185,13 @@ impl Ray {
         hit
     }
 
-    pub fn shade(self, world: &World) -> Vec3 {
+    pub fn shade(self, world: &World) -> (Vec3, Vec4, Ray) {
         let hit = self.trace(world);
 
         if hit.is_some() {
             world.materials.get(hit.mat_id).shade(world, hit)
         } else {
-            vec3(0.0, 0.0, 0.0)
-        }
-    }
-
-    /// Shaders can't have recursive functions, so if we're processing a
-    /// reflective surface, our code will call _this_ function instead of
-    /// [`Self::shade()`] to break the recursion-chain.
-    ///
-    /// There exist other techniques, too¹, but in our case they are (probably)
-    /// not worth it.
-    ///
-    /// ¹ e.g. https://www.cs.uaf.edu/2012/spring/cs481/section/0/lecture/02_07_recursion_reflection.html
-    pub fn shade_basic(self, world: &World) -> Vec3 {
-        let hit = self.trace(world);
-
-        if hit.is_some() {
-            world.materials.get(hit.mat_id).shade_basic(world, hit)
-        } else {
-            vec3(0.0, 0.0, 0.0)
+            (Default::default(), Default::default(), Ray::none())
         }
     }
 }

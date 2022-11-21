@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use bevy::log;
 use bevy::prelude::*;
 use bevy::window::{WindowResized, WindowScaleFactorChanged};
@@ -16,9 +14,7 @@ use crate::raytracer::DoomeRaytracerPlugin;
 use crate::renderer::RendererState;
 use crate::text::TextEngine;
 
-pub struct DoomePlugin {
-    pub shader: Arc<Mutex<Option<wgpu::ShaderModuleDescriptor<'static>>>>,
-}
+pub struct DoomePlugin;
 
 #[derive(Resource)]
 pub struct DoomeRenderer {
@@ -60,7 +56,6 @@ impl Plugin for DoomePlugin {
             WIDTH as _,
             HEIGHT as _,
             assets.atlas().as_raw(),
-            self.shader.lock().unwrap().take().unwrap(),
         );
 
         let pixels =

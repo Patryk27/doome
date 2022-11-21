@@ -115,5 +115,13 @@ fn transpile_to_naga(
 
     fs::write(naga_module_path, bson::to_vec(&module).unwrap()).unwrap();
 
+    // let wgsl_module = naga::back::glsl::write_string(
+    //     &module,
+    //     &info,
+    //     wgsl::WriterFlags::empty(),
+    // )?;
+
+    // std::fs::write(format!("{}.wgsl", naga_module_path), wgsl_module)?;
+
     Ok(())
 }
