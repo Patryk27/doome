@@ -7,6 +7,8 @@ use doome_bevy::components::*;
 use doome_bevy::physics::Collider;
 use glam::{vec2, vec3};
 
+use crate::nav::NavObstacle;
+
 pub struct LevelBuilder<'p, 'w, 's> {
     commands: &'p mut Commands<'w, 's>,
     assets: &'p Assets,
@@ -134,6 +136,7 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         let scale = if dx == 1 { dz } else { dx };
 
         self.model("wall")
+            .obstacle()
             .with_translation(
                 vec3(
                     (x1 as f32 + x2 as f32) / 2.0,
@@ -210,6 +213,7 @@ pub struct LevelModelBuilder<'w, 's, 'a> {
     transform: Transform,
     material: Option<Material>,
     collider: Option<Collider>,
+    is_obstacle: bool,
 }
 
 impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
@@ -224,7 +228,13 @@ impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
             transform: Default::default(),
             material: Default::default(),
             collider: Default::default(),
+            is_obstacle: false,
         }
+    }
+
+    pub fn obstacle(mut self) -> Self {
+        self.is_obstacle = true;
+        self
     }
 
     pub fn dynamic(mut self) -> Self {
@@ -268,6 +278,10 @@ impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
 
         if let Some(collider) = self.collider {
             entity.insert(collider);
+        }
+
+        if self.is_obstacle {
+            entity.insert(NavObstacle);
         }
 
         entity

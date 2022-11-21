@@ -8,6 +8,8 @@ use glam::vec3;
 use indoc::indoc;
 
 use super::utils::*;
+use crate::billboard::Billboard;
+use crate::enemies::{Enemy, RecalculateNavData};
 use crate::player::Player;
 use crate::ui::{Text, TypewriterPrint};
 
@@ -77,7 +79,11 @@ const OUTRO_TEXT: &str = indoc! {r#"
 const MAIN_CENTER_Z: f32 = (21.0 + 37.0) / 2.0;
 const ELEPHANT_Z: f32 = MAIN_CENTER_Z + 3.0;
 
-pub fn init(mut commands: Commands, assets: Res<Assets>) {
+pub fn init(
+    mut commands: Commands,
+    assets: Res<Assets>,
+    mut recalc_nav_data: EventWriter<RecalculateNavData>,
+) {
     commands.spawn((
         Player { can_move: false },
         Transform::from_rotation(Quat::from_rotation_x(PI)),
@@ -86,6 +92,18 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
             body_type: BodyType::Kinematic,
         },
         Collider::circle(0.5),
+    ));
+
+    let moth_model = assets.load_model("moth_monster");
+
+    commands.spawn((
+        Enemy::default(),
+        moth_model,
+        Material::default().with_uv_transparency(),
+        GeometryType::Dynamic,
+        Transform::from_translation(vec3(0.0, 0.0, ELEPHANT_Z + 1.0)),
+        Billboard,
+        // Collider::circle(0.5),
     ));
 
     let mut lvl = LevelBuilder::new(&mut commands, &assets);
@@ -170,6 +188,8 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
         )
         .insert(LightFade::in_delayed(4.5, 0.1))
         .id();
+
+    recalc_nav_data.send(RecalculateNavData);
 
     lvl.complete(Level {
         stage: LevelStage::CorridorIntro {

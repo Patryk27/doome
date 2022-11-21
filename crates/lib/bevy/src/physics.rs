@@ -1,13 +1,10 @@
 use bevy::prelude::*;
-use doome_geo::Polygon;
-use glam::Vec3Swizzles;
-
-use self::collision::resolve_collisions;
 
 mod collision;
 mod components;
 mod raycasting;
 
+use self::collision::resolve_collisions;
 pub use self::components::*;
 use self::raycasting::resolve_raycasts;
 

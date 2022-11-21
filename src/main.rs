@@ -1,11 +1,13 @@
+#![allow(clippy::type_complexity, clippy::too_many_arguments)]
+
 mod billboard;
 mod enemies;
 mod interaction;
 mod levels;
 mod markers;
+mod nav;
 mod player;
 mod ui;
-mod nav;
 
 use std::sync::{Arc, Mutex};
 

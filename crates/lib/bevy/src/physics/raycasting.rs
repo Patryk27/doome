@@ -71,6 +71,7 @@ fn raycast_collider(
 }
 
 // https://stackoverflow.com/a/565282
+#[allow(clippy::manual_range_contains)]
 fn raycast_edge(origin: Vec2, dir: Vec2, edge: (Vec2, Vec2)) -> Option<Vec2> {
     fn cross(a: Vec2, b: Vec2) -> f32 {
         a.x * b.y - a.y * b.x

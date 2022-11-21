@@ -211,8 +211,8 @@ impl NavDataBuilder {
         }
 
         NavData {
-            area_start: area_start,
-            area_end: area_end,
+            area_start,
+            area_end,
             raster_unit: self.raster_unit,
             width: width as isize,
             height: height as isize,
