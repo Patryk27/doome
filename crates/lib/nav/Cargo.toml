@@ -1,0 +1,10 @@
+[package]
+name = "doome-nav"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+doome-geo = { path = "../geo" }
+
+glam = "0.22"
+pathfinding = "3.0"

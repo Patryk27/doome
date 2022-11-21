@@ -1,4 +1,5 @@
 mod billboard;
+mod enemies;
 mod interaction;
 mod levels;
 mod markers;
@@ -77,6 +78,7 @@ fn main() {
         .add_plugin(UiAnd2dPlugin)
         .add_plugin(AudioPlugin)
         // Game plugins
+        .add_plugin(enemies::EnemiesPlugin)
         .add_plugin(billboard::BillboardPlugin)
         // Misc systems
         .add_system(quit_on_exit)

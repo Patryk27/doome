@@ -1,7 +1,7 @@
 use bevy::prelude::*;
+use doome_geo::sat;
 use glam::{vec3, Vec3Swizzles};
 
-use super::sat::{self};
 use super::{collider_to_polygon, Body, Collider};
 
 const MIN_VELOCITY: f32 = 0.1;

@@ -7,7 +7,6 @@ use self::collision::resolve_collisions;
 mod collision;
 mod components;
 mod raycasting;
-mod sat;
 
 pub use self::components::*;
 use self::raycasting::resolve_raycasts;
