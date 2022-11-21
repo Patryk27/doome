@@ -29,25 +29,15 @@ pub struct Raytracer {
 }
 
 impl Raytracer {
-    pub fn shader() -> wgpu::ShaderModuleDescriptor<'static> {
-        let shader = include_bytes!("./shader.naga");
-        let shader = bson::from_slice(shader).unwrap();
-
-        wgpu::ShaderModuleDescriptor {
-            label: Some("raytracer"),
-            source: wgpu::ShaderSource::Naga(std::borrow::Cow::Owned(shader)),
-        }
-    }
-
     pub fn new(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         width: u32,
         height: u32,
         atlas_data: &[u8],
-        shader: wgpu::ShaderModuleDescriptor<'static>,
     ) -> Self {
-        let shader = device.create_shader_module(shader);
+        let shader =
+            device.create_shader_module(wgpu::include_spirv!("./shader.spv"));
 
         let ds0 = AllocatedUniform::create(device, "ds0");
         let ds1 = AllocatedUniform::create(device, "ds1");

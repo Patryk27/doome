@@ -14,6 +14,10 @@ impl Ray {
         }
     }
 
+    pub fn none() -> Self {
+        Self::new(Default::default(), Default::default())
+    }
+
     pub fn origin(&self) -> Vec3 {
         self.origin
     }
@@ -22,7 +26,7 @@ impl Ray {
         self.direction
     }
 
-    pub fn hits_box_at(&self, bb_min: Vec3, bb_max: Vec3) -> f32 {
+    pub fn hits_box_at(self, bb_min: Vec3, bb_max: Vec3) -> f32 {
         let hit_min = (bb_min - self.origin) / self.direction;
         let hit_max = (bb_max - self.origin) / self.direction;
 
@@ -81,15 +85,7 @@ impl Ray {
                 let hit = tri.hit(self);
 
                 if hit.t < distance {
-                    let got_hit = if tri.has_uv_transparency() {
-                        world.atlas_sample(tri_id.into_any(), hit).w > 0.5
-                    } else {
-                        true
-                    };
-
-                    if got_hit {
-                        return true;
-                    }
+                    return true;
                 }
 
                 ptr = v2.w as _;
@@ -150,16 +146,8 @@ impl Ray {
                 let curr_hit = tri.hit(self);
 
                 if curr_hit.is_closer_than(hit) {
-                    let got_hit = if tri.has_uv_transparency() {
-                        world.atlas_sample(tri_id.into_any(), curr_hit).w > 0.5
-                    } else {
-                        true
-                    };
-
-                    if got_hit {
-                        hit = curr_hit;
-                        hit.tri_id = tri_id.into_any();
-                    }
+                    hit = curr_hit;
+                    hit.tri_id = tri_id.into_any();
                 }
 
                 ptr = v2.w as _;
@@ -187,25 +175,20 @@ impl Ray {
         if hit.is_some() {
             world.materials.get(hit.mat_id).shade(world, hit)
         } else {
-            vec3(0.0, 0.0, 0.0)
+            Default::default()
         }
     }
 
     /// Shaders can't have recursive functions, so if we're processing a
-    /// reflective surface, our code will call _this_ function instead of
+    /// reflective surface, our code will call this function instead of
     /// [`Self::shade()`] to break the recursion-chain.
-    ///
-    /// There exist other techniques, too¹, but in our case they are (probably)
-    /// not worth it.
-    ///
-    /// ¹ e.g. https://www.cs.uaf.edu/2012/spring/cs481/section/0/lecture/02_07_recursion_reflection.html
     pub fn shade_basic(self, world: &World) -> Vec3 {
         let hit = self.trace(world);
 
         if hit.is_some() {
             world.materials.get(hit.mat_id).shade_basic(world, hit)
         } else {
-            vec3(0.0, 0.0, 0.0)
+            Default::default()
         }
     }
 }

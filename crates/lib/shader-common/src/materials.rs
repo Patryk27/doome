@@ -8,7 +8,7 @@ pub struct Materials {
 
 impl Materials {
     pub fn get(&self, id: MaterialId) -> Material {
-        self.items[id.get()]
+        unsafe { *self.items.get_unchecked(id.get()) }
     }
 }
 

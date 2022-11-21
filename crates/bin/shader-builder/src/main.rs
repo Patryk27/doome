@@ -85,7 +85,6 @@ fn build_shader(shader_config: &ShaderConfig) -> anyhow::Result<()> {
     }
 
     let spirv_module_path = shader_config.path_to_copy_to.with_extension("spv");
-    let naga_module_path = shader_config.path_to_copy_to.with_extension("naga");
 
     fs_extra::file::copy(
         build_result.module.unwrap_single(),
@@ -96,24 +95,6 @@ fn build_shader(shader_config: &ShaderConfig) -> anyhow::Result<()> {
             ..fs_extra::file::CopyOptions::default()
         },
     )?;
-
-    transpile_to_naga(&spirv_module_path, &naga_module_path)?;
-
-    Ok(())
-}
-
-fn transpile_to_naga(
-    spirv_module_path: impl AsRef<Path>,
-    naga_module_path: impl AsRef<Path>,
-) -> anyhow::Result<()> {
-    let spirv_module_path = spirv_module_path.as_ref();
-    let naga_module_path = naga_module_path.as_ref();
-    let module = fs::read(spirv_module_path)?;
-
-    let module =
-        naga::front::spv::parse_u8_slice(&module, &Default::default())?;
-
-    fs::write(naga_module_path, bson::to_vec(&module).unwrap()).unwrap();
 
     Ok(())
 }

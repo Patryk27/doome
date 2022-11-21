@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use doome_nav::{NavData, NavDataBuilder};
+use instant::Instant;
 
 use crate::convert::{graphical_to_physical, physical_to_graphical};
 use crate::nav::NavObstacle;
@@ -138,7 +139,7 @@ fn recalculate_nav_data(
 
     let mut hivemind = hivemind.single_mut();
 
-    let build_time_start = std::time::Instant::now();
+    let build_time_start = Instant::now();
     let mut nav_data_builder = NavDataBuilder::new(0.6);
 
     for (transform, collider) in walls.iter() {

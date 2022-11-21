@@ -159,12 +159,12 @@ pub fn init(
         .id();
 
     // Main
-    lvl.floor(-8, 21, 8, 37).dynamic().spawn();
-    lvl.wall(-8, 37, 8, 37, 0).dynamic().spawn();
-    lvl.wall(8, 37, 8, 21, 1).dynamic().spawn();
-    lvl.wall(-8, 21, -2, 21, 2).dynamic().spawn();
-    lvl.wall(8, 21, 2, 21, 2).dynamic().spawn();
-    lvl.wall(-8, 37, -8, 21, 3).dynamic().spawn();
+    lvl.floor(-8, 21, 8, 37).spawn();
+    lvl.wall(-8, 37, 8, 37, 0).spawn();
+    lvl.wall(8, 37, 8, 21, 1).spawn();
+    lvl.wall(-8, 21, -2, 21, 2).spawn();
+    lvl.wall(8, 21, 2, 21, 2).spawn();
+    lvl.wall(-8, 37, -8, 21, 3).spawn();
 
     lvl.model("elephant")
         .with_translation(vec3(0.0, 1.0, ELEPHANT_Z))

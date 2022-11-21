@@ -9,7 +9,7 @@ pub struct DynamicGeometry {
 
 impl DynamicGeometry {
     pub fn get(&self, id: TriangleId<DynamicTriangle>) -> Triangle {
-        self.items[id.get()]
+        unsafe { *self.items.get_unchecked(id.get()) }
     }
 
     pub fn len(&self) -> usize {

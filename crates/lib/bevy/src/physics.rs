@@ -5,11 +5,10 @@ pub mod components;
 pub mod events;
 mod raycasting;
 
-use crate::convert::physical_to_graphical;
-
 use self::collision::resolve_collisions;
 use self::components::Body;
 use self::raycasting::resolve_raycasts;
+use crate::convert::physical_to_graphical;
 
 #[derive(Default)]
 pub struct PhysicsPlugin;

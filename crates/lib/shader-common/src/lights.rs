@@ -9,7 +9,7 @@ pub struct Lights {
 
 impl Lights {
     pub fn get(&self, id: usize) -> Light {
-        self.items[id]
+        unsafe { *self.items.get_unchecked(id) }
     }
 
     pub fn len(&self) -> usize {

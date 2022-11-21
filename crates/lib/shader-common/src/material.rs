@@ -20,20 +20,18 @@ impl Material {
 
     fn reflectivity(&self) -> f32 {
         let w = self.reflectivity.w.to_bits();
-        let reflectivity = (w & 0x000000ff) as f32 / 255.0;
-        reflectivity
+
+        (w & 0x000000ff) as f32 / 255.0
     }
 
     pub fn is_emissive(&self) -> bool {
         let w = self.reflectivity.w.to_bits();
+
         (w & 0x0000ff00) == 0x0000ff00
     }
 
     pub fn shade(&self, world: &World, hit: Hit) -> Vec3 {
         let mut color = self.radiance(world, hit);
-
-        // ------------ //
-        // Reflectivity //
         let reflectivity = self.reflectivity();
 
         if reflectivity > 0.0 {
@@ -53,18 +51,19 @@ impl Material {
 
         // ------------ //
         // Transparency //
-        let triangle = world.geometry(hit.tri_id);
+        // TODO
+        // let triangle = world.geometry(hit.tri_id);
 
-        if triangle.alpha() < 1.0 {
-            let ray_color = Ray::new(
-                hit.point + 0.1 * hit.ray.direction(),
-                hit.ray.direction(),
-            )
-            .shade_basic(world);
+        // if triangle.alpha() < 1.0 {
+        //     let ray_color = Ray::new(
+        //         hit.point + 0.1 * hit.ray.direction(),
+        //         hit.ray.direction(),
+        //     )
+        //     .shade_basic(world);
 
-            color =
-                color * triangle.alpha() + ray_color * (1.0 - triangle.alpha());
-        }
+        //     color =
+        //         color * triangle.alpha() + ray_color * (1.0 - triangle.alpha());
+        // }
 
         color
     }
@@ -81,8 +80,6 @@ impl Material {
             self.color.truncate()
         };
 
-        // ------------ //
-        // Emission     //
         if self.is_emissive() {
             return color;
         }
@@ -95,21 +92,19 @@ impl Material {
             let ray = Ray::new(hit.point, light.pos() - hit.point);
             let distance = light.pos().distance(hit.point);
 
+            let diffuse_factor = if ray.hits_anything_up_to(world, distance) {
+                0.0
+            } else {
+                ray.direction().dot(hit.normal).max(0.0)
+            };
+
             if light.is_spot() {
                 let dir_light_to_hit = hit.point - light.pos();
                 let dir_light_to_point = light.point_at() - light.pos();
-
                 let angle = dir_light_to_point.angle_between(dir_light_to_hit);
 
                 let cone_factor =
                     map_quadratic_clamped(angle, light.cone_angle());
-
-                let diffuse_factor = if ray.hits_anything_up_to(world, distance)
-                {
-                    0.0
-                } else {
-                    ray.direction().dot(hit.normal).max(0.0)
-                };
 
                 radiance += cone_factor
                     * diffuse_factor
@@ -117,13 +112,6 @@ impl Material {
                     * light.intensity()
                     * color;
             } else {
-                let diffuse_factor = if ray.hits_anything_up_to(world, distance)
-                {
-                    0.0
-                } else {
-                    ray.direction().dot(hit.normal).max(0.0)
-                };
-
                 radiance +=
                     diffuse_factor * light.color() * light.intensity() * color;
             }

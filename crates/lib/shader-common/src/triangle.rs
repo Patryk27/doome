@@ -65,7 +65,7 @@ impl Triangle {
         self.v1.w
     }
 
-    pub fn hit(&self, ray: Ray) -> Hit {
+    pub fn hit(self, ray: Ray) -> Hit {
         // Following the Möller-Trumbore algorithm
 
         let v0v1 = (self.v1 - self.v0).truncate();
@@ -180,11 +180,11 @@ impl Triangle {
 pub struct TriangleId<T>(T, usize);
 
 impl<T> TriangleId<T> {
-    pub fn new(provenance: T, id: usize) -> Self {
+    pub(crate) fn new(provenance: T, id: usize) -> Self {
         Self(provenance, id)
     }
 
-    pub fn unpack(self) -> (T, usize) {
+    pub(crate) fn unpack(self) -> (T, usize) {
         (self.0, self.1)
     }
 }
@@ -199,7 +199,7 @@ impl TriangleId<StaticTriangle> {
     }
 
     pub fn into_any(self) -> TriangleId<AnyTriangle> {
-        TriangleId::new(AnyTriangle::Static, self.1)
+        TriangleId::new(AnyTriangle, self.1)
     }
 }
 
@@ -213,7 +213,7 @@ impl TriangleId<DynamicTriangle> {
     }
 
     pub fn into_any(self) -> TriangleId<AnyTriangle> {
-        TriangleId::new(AnyTriangle::Dynamic, self.1)
+        TriangleId::new(AnyTriangle, MAX_STATIC_TRIANGLES + self.1)
     }
 }
 
@@ -231,7 +231,4 @@ pub struct StaticTriangle;
 pub struct DynamicTriangle;
 
 #[derive(Copy, Clone, Debug)]
-pub enum AnyTriangle {
-    Static = 0,
-    Dynamic = 1,
-}
+pub struct AnyTriangle;
