@@ -11,7 +11,7 @@ use doome_bevy::bullets::Bullet;
 use doome_bevy::components::*;
 use doome_bevy::convert::graphical_to_physical;
 use doome_bevy::doome::DoomeRenderer;
-use doome_bevy::physics::components::{Body, BodyType};
+use doome_bevy::physics::components::{Body, BodyType, Collider};
 use doome_bevy::player::Player;
 use doome_bevy::text::TextEngine;
 use doome_engine::{Canvas, HEIGHT, WIDTH};
@@ -122,6 +122,7 @@ fn trigger_shoot(
             Bullet::new(10.0),
             Billboard,
             bullet_transform,
+            Collider::circle(0.25),
             Body {
                 velocity: forward.normalize() * 20.0,
                 body_type: BodyType::Kinematic,

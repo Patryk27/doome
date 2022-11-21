@@ -16,7 +16,9 @@ impl Bullet {
 pub struct BulletsPlugin;
 
 impl Plugin for BulletsPlugin {
-    fn build(&self, app: &mut bevy::prelude::App) {}
+    fn build(&self, app: &mut bevy::prelude::App) {
+        app.add_system(listen_to_bullet_collisions);
+    }
 }
 
 fn listen_to_bullet_collisions(

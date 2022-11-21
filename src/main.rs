@@ -81,6 +81,7 @@ fn main() {
         // Game plugins
         .add_plugin(doome_bevy::enemies::EnemiesPlugin)
         .add_plugin(doome_bevy::billboard::BillboardPlugin)
+        .add_plugin(doome_bevy::bullets::BulletsPlugin)
         // Misc systems
         .add_system(quit_on_exit)
         .add_system(process_movement)
