@@ -17,6 +17,8 @@ doome-bevy = { path = "crates/lib/bevy" }
 doome-engine = { path = "crates/lib/engine" }
 doome-raytracer = { path = "crates/lib/raytracer" }
 doome-surface = { path = "crates/lib/surface" }
+doome-nav = { path = "crates/lib/nav" }
+doome-geo = { path = "crates/lib/geo" }
 
 # Crates.io
 bevy = { version = "0.9", default-features = false, features = [ "bevy_winit" ] }

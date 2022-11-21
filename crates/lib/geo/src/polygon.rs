@@ -26,9 +26,9 @@ impl Polygon {
         Self {
             points: vec![
                 Vec2::new(start.x, start.y),
-                Vec2::new(end.x, start.y),
-                Vec2::new(end.x, end.y),
                 Vec2::new(start.x, end.y),
+                Vec2::new(end.x, end.y),
+                Vec2::new(end.x, start.y),
             ],
         }
     }

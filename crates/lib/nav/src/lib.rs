@@ -1,6 +1,7 @@
 use doome_geo::sat::resolve_sat;
 use doome_geo::Polygon;
 use glam::{vec2, Vec2};
+use image::RgbaImage;
 
 pub struct NavData {
     area_start: Vec2,
@@ -73,7 +74,7 @@ impl NavData {
         let x = x as usize;
         let y = y as usize;
 
-        self.data[y + x * self.width as usize] == 1
+        self.data[y * self.width as usize + x] == 1
     }
 
     fn global_to_local(&self, global: Vec2) -> Option<Local> {
@@ -104,36 +105,68 @@ impl NavData {
                 + (self.raster_unit / 2.0),
         )
     }
+
+    pub fn rasterize(&self) -> RgbaImage {
+        let mut img = RgbaImage::new(self.width as u32, self.height as u32);
+
+        for (x, y, pixel) in img.enumerate_pixels_mut() {
+            let x = x as isize;
+            let y = y as isize;
+
+            let is_passable = self.is_passable((x, y));
+
+            *pixel = if is_passable {
+                image::Rgba([255, 255, 255, 255])
+            } else {
+                image::Rgba([0, 0, 0, 255])
+            };
+        }
+
+        img
+    }
 }
 
-pub struct NavDataBuilder<'a> {
-    area_start: Vec2,
-    area_end: Vec2,
+pub struct NavDataBuilder {
+    area_start: Option<Vec2>,
+    area_end: Option<Vec2>,
 
     raster_unit: f32,
 
-    polygons: Vec<&'a Polygon>,
+    polygons: Vec<Polygon>,
 }
 
-impl<'a> NavDataBuilder<'a> {
+impl NavDataBuilder {
+    pub fn new(raster_unit: f32) -> Self {
+        Self {
+            area_start: None,
+            area_end: None,
+
+            raster_unit,
+
+            polygons: Vec::new(),
+        }
+    }
+
     /// Pushes a polygon to the builder
     /// NOTE: the polygon must be transformed into global coordinate space
-    pub fn push_polygon(&mut self, polygon: &'a Polygon) {
+    pub fn push_polygon(&mut self, polygon: Polygon) {
         for point in polygon.points() {
-            if point.x < self.area_start.x {
-                self.area_start.x = point.x;
+            if let Some(area_start) = self.area_start {
+                self.area_start = Some(vec2(
+                    area_start.x.min(point.x),
+                    area_start.y.min(point.y),
+                ));
+            } else {
+                self.area_start = Some(*point);
             }
 
-            if point.y < self.area_start.y {
-                self.area_start.y = point.y;
-            }
-
-            if point.x > self.area_end.x {
-                self.area_end.x = point.x;
-            }
-
-            if point.y > self.area_end.y {
-                self.area_end.y = point.y;
+            if let Some(area_end) = self.area_end {
+                self.area_end = Some(vec2(
+                    area_end.x.max(point.x),
+                    area_end.y.max(point.y),
+                ));
+            } else {
+                self.area_end = Some(*point);
             }
         }
 
@@ -141,26 +174,29 @@ impl<'a> NavDataBuilder<'a> {
     }
 
     pub fn build(self) -> NavData {
+        let area_start = self.area_start.unwrap();
+        let area_end = self.area_end.unwrap();
+
         let width =
-            ((self.area_end.x - self.area_start.x) / self.raster_unit) as usize;
+            ((area_end.x - area_start.x) / self.raster_unit).ceil() as usize;
         let height =
-            ((self.area_end.y - self.area_start.y) / self.raster_unit) as usize;
+            ((area_end.y - area_start.y) / self.raster_unit).ceil() as usize;
 
         let mut data = vec![0; width * height];
 
         for x in 0..width {
             for y in 0..height {
                 let rect_start = vec2(
-                    self.area_start.x + x as f32 * self.raster_unit,
-                    self.area_start.y + y as f32 * self.raster_unit,
+                    area_start.x + (x as f32 * self.raster_unit),
+                    area_start.y + (y as f32 * self.raster_unit),
                 );
 
-                let rect_end = vec2(self.raster_unit, self.raster_unit);
+                let rect_end =
+                    rect_start + vec2(self.raster_unit, self.raster_unit);
 
                 let rect = Polygon::rect_start_end(rect_start, rect_end);
 
                 let mut collides_with_any_polygon = false;
-
                 for polygon in self.polygons.iter() {
                     if resolve_sat(polygon, &rect).is_some() {
                         collides_with_any_polygon = true;
@@ -168,15 +204,15 @@ impl<'a> NavDataBuilder<'a> {
                     }
                 }
 
-                if collides_with_any_polygon {
+                if !collides_with_any_polygon {
                     data[y * width + x] = 1;
                 }
             }
         }
 
         NavData {
-            area_start: self.area_start,
-            area_end: self.area_end,
+            area_start: area_start,
+            area_end: area_end,
             raster_unit: self.raster_unit,
             width: width as isize,
             height: height as isize,

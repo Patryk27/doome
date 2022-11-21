@@ -54,7 +54,7 @@ fn raycast_collider(
     collider_transform: &Transform,
     collider: &Collider,
 ) -> Option<Vec2> {
-    let polygon = collider_to_polygon(collider_transform, collider);
+    let polygon = collider.to_polygon(collider_transform);
     let (origin, dir) = raycast
         .transformed_origin_and_dir(&raycaster_transform.compute_matrix());
 

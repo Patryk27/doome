@@ -1242,6 +1242,8 @@ dependencies = [
  "bevy",
  "doome-bevy",
  "doome-engine",
+ "doome-geo",
+ "doome-nav",
  "doome-raytracer",
  "doome-surface",
  "glam",
@@ -1300,6 +1302,8 @@ version = "0.1.0"
 dependencies = [
  "doome-geo",
  "glam",
+ "image",
+ "log",
  "pathfinding",
 ]
 

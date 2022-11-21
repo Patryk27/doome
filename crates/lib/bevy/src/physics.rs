@@ -44,11 +44,3 @@ fn update_physics(time: Res<Time>, mut bodies: Query<(&Body, &mut Transform)>) {
         transform.translation += body.velocity * delta;
     }
 }
-
-fn collider_to_polygon(transform: &Transform, collider: &Collider) -> Polygon {
-    let matrix = transform.compute_matrix();
-    collider
-        .polygon
-        .clone()
-        .map_points(|p| matrix.transform_point3(p.extend(0.0).xzy()).xz())
-}

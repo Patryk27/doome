@@ -8,3 +8,5 @@ doome-geo = { path = "../geo" }
 
 glam = "0.22"
 pathfinding = "3.0"
+log = "0.4"
+image = "0.24"

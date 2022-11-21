@@ -5,6 +5,7 @@ mod levels;
 mod markers;
 mod player;
 mod ui;
+mod nav;
 
 use std::sync::{Arc, Mutex};
 

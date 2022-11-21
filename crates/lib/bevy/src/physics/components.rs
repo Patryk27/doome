@@ -52,6 +52,13 @@ impl Collider {
             polygon: Polygon::new(vec![start, end]),
         }
     }
+
+    pub fn to_polygon(&self, transform: &Transform) -> Polygon {
+        let matrix = transform.compute_matrix();
+        self.polygon
+            .clone()
+            .map_points(|p| matrix.transform_point3(p.extend(0.0).xzy()).xz())
+    }
 }
 
 #[derive(Component)]
