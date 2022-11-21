@@ -97,14 +97,14 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
         )
         .spawn();
 
-    lvl.model("moth_monster")
-        .with_translation(vec3(0.0, 0.0, 3.0))
-        .with_material(Material::default().with_uv_transparency())
-        .dynamic()
-        .spawn()
-        .insert(Billboard);
+    // lvl.model("moth_monster")
+    //     .with_translation(vec3(0.0, 0.0, 3.0))
+    //     .with_material(Material::default().with_uv_transparency())
+    //     .dynamic()
+    //     .spawn()
+    //     .insert(Billboard);
 
-    lvl.point_light(0.0, 2.8, 1.8, 0xffffff);
+    // lvl.point_light(0.0, 2.8, 1.8, 0xffffff);
 
     let sl_main0 = lvl
         .spot_light(

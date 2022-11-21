@@ -25,8 +25,7 @@ pub fn fs_main(
     static_geo_index: &StaticGeometryIndex,
     #[spirv(uniform, descriptor_set = 1, binding = 1)]
     dynamic_geo: &DynamicGeometry,
-    #[spirv(uniform, descriptor_set = 1, binding = 2)]
-    mappings: &TriangleMappings,
+    #[spirv(uniform, descriptor_set = 1, binding = 2)] uvs: &TriangleUvs,
     #[spirv(uniform, descriptor_set = 2, binding = 0)] camera: &Camera,
     #[spirv(uniform, descriptor_set = 2, binding = 1)] lights: &Lights,
     #[spirv(uniform, descriptor_set = 2, binding = 2)] materials: &Materials,
@@ -38,7 +37,7 @@ pub fn fs_main(
         static_geo,
         static_geo_index,
         dynamic_geo,
-        mappings,
+        uvs,
         lights,
         materials,
         atlas_tex,

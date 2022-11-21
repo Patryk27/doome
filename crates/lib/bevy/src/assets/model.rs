@@ -38,8 +38,8 @@ impl ModelTriangle {
         .with_uv_divisor(u_div, v_div)
     }
 
-    pub fn materialize_uvs(&self) -> rt::TriangleMapping {
-        rt::TriangleMapping::new(self.uvs[0], self.uvs[1], self.uvs[2])
+    pub fn materialize_uvs(&self) -> rt::TriangleUv {
+        rt::TriangleUv::new(self.uvs[0], self.uvs[1], self.uvs[2])
     }
 }
 
@@ -69,8 +69,8 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub fn map_uvs(&self, uvs: rt::TriangleMapping) -> rt::TriangleMapping {
-        rt::TriangleMapping {
+    pub fn map_uvs(&self, uvs: rt::TriangleUv) -> rt::TriangleUv {
+        rt::TriangleUv {
             uv0: self.map_uv(uvs.uv0),
             uv1: self.map_uv(uvs.uv1),
             uv2: self.map_uv(uvs.uv2),

@@ -129,9 +129,8 @@ fn sync_updated_geometry(
 
         // TODO wasteful
         let mat_id = ctxt.materials.alloc(entity, mat.materialize());
-        let tex = mat.texture.map(|tex_id| assets.texture(tex_id));
 
-        geo.update_model(entity, model, xform, mat, mat_id, tex);
+        geo.update_model(entity, model, xform, mat, mat_id);
     }
 }
 
@@ -204,7 +203,7 @@ fn render(
         static_geo,
         static_geo_index,
         dynamic_geo,
-        mappings
+        uvs
     )) = raytracer_state.geometry.inner() else { return };
 
     let texture_view = current_texture
@@ -222,7 +221,7 @@ fn render(
         static_geo,
         static_geo_index,
         dynamic_geo,
-        mappings,
+        uvs,
         &raytracer_state.camera,
         &raytracer_state.lights,
         raytracer_state.materials.inner(),

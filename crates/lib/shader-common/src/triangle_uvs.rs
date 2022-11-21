@@ -21,24 +21,24 @@ use crate::*;
 /// (`uvs` here standing for either `static_uvs` or `dynamic_uvs`.)
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
-pub struct TriangleMappings {
+pub struct TriangleUvs {
     static_uvs: [Vec4; 3 * MAX_STATIC_TRIANGLES / 2],
     dynamic_uvs: [Vec4; 3 * MAX_DYNAMIC_TRIANGLES / 2],
 }
 
-impl TriangleMappings {
-    pub fn get(&self, id: TriangleId<AnyTriangle>) -> TriangleMapping {
+impl TriangleUvs {
+    pub fn get(&self, id: TriangleId<AnyTriangle>) -> TriangleUv {
         match id.unpack() {
             (AnyTriangle::Static, id) => Self::get_ex(&self.static_uvs, id),
             (AnyTriangle::Dynamic, id) => Self::get_ex(&self.dynamic_uvs, id),
         }
     }
 
-    fn get_ex<const N: usize>(uvs: &[Vec4; N], id: usize) -> TriangleMapping {
+    fn get_ex<const N: usize>(uvs: &[Vec4; N], id: usize) -> TriangleUv {
         if id % 2 == 0 {
             let ptr = 3 * (id / 2);
 
-            TriangleMapping {
+            TriangleUv {
                 uv0: uvs[ptr].xy(),
                 uv1: uvs[ptr].zw(),
                 uv2: uvs[ptr + 1].xy(),
@@ -46,7 +46,7 @@ impl TriangleMappings {
         } else {
             let ptr = 3 * ((id - 1) / 2) + 1;
 
-            TriangleMapping {
+            TriangleUv {
                 uv0: uvs[ptr].zw(),
                 uv1: uvs[ptr + 1].xy(),
                 uv2: uvs[ptr + 1].zw(),
@@ -56,8 +56,8 @@ impl TriangleMappings {
 }
 
 #[cfg(not(target_arch = "spirv"))]
-impl TriangleMappings {
-    pub fn set(&mut self, id: TriangleId<AnyTriangle>, item: TriangleMapping) {
+impl TriangleUvs {
+    pub fn set(&mut self, id: TriangleId<AnyTriangle>, item: TriangleUv) {
         match id.unpack() {
             (AnyTriangle::Static, id) => {
                 Self::set_ex(&mut self.static_uvs, id, item)
@@ -71,7 +71,7 @@ impl TriangleMappings {
     fn set_ex(
         uvs: &mut [Vec4],
         id: usize,
-        TriangleMapping { uv0, uv1, uv2 }: TriangleMapping,
+        TriangleUv { uv0, uv1, uv2 }: TriangleUv,
     ) {
         if id % 2 == 0 {
             let ptr = &mut uvs[3 * (id / 2)..][..2];
@@ -105,7 +105,7 @@ impl TriangleMappings {
 }
 
 #[cfg(not(target_arch = "spirv"))]
-impl Default for TriangleMappings {
+impl Default for TriangleUvs {
     fn default() -> Self {
         Self::zeroed()
     }

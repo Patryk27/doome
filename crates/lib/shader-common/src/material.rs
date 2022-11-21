@@ -35,7 +35,7 @@ impl Material {
 
         // ------------ //
         // Transparency //
-        let triangle = world.geometry(hit.triangle_id);
+        let triangle = world.geometry(hit.tri_id);
 
         if triangle.alpha() < 1.0 {
             let ray_color = Ray::new(
@@ -58,7 +58,7 @@ impl Material {
 
     fn radiance(&self, world: &World, hit: Hit) -> Vec3 {
         let color = if self.has_texture() {
-            (world.atlas_sample(hit.triangle_id, hit) * self.color).truncate()
+            (world.atlas_sample(hit.tri_id, hit) * self.color).truncate()
         } else {
             self.color.truncate()
         };

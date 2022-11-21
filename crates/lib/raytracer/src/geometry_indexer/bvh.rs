@@ -9,8 +9,8 @@ impl Bvh {
     pub fn build(geometry: &StaticGeometry) -> Self {
         let mut root = BvhNode::default();
 
-        for (triangle_id, triangle) in geometry.iter() {
-            root.add(triangle_id, triangle);
+        for (tri_id, tri) in geometry.iter() {
+            root.add(tri_id, tri);
         }
 
         root.balance();
@@ -31,12 +31,12 @@ pub struct BvhNode {
 }
 
 impl BvhNode {
-    fn add(&mut self, triangle_id: TriangleId, triangle: Triangle) {
-        for vertex in triangle.vertices() {
+    fn add(&mut self, tri_id: TriangleId, tri: Triangle) {
+        for vertex in tri.vertices() {
             self.bb.grow(vertex);
         }
 
-        self.triangles.push((triangle_id, triangle));
+        self.triangles.push((tri_id, tri));
     }
 
     fn balance(&mut self) {
@@ -97,14 +97,14 @@ impl BvhNode {
         let mut left = Self::default();
         let mut right = Self::default();
 
-        for (triangle_id, triangle) in self.triangles.drain(..) {
-            let side = if triangle.center()[axis] < pos[axis] {
+        for (tri_id, tri) in self.triangles.drain(..) {
+            let side = if tri.center()[axis] < pos[axis] {
                 &mut left
             } else {
                 &mut right
             };
 
-            side.add(triangle_id, triangle);
+            side.add(tri_id, tri);
         }
 
         left.balance();
@@ -151,19 +151,17 @@ impl fmt::Display for BvhNode {
         } else {
             write!(f, ", {} triangles: ", self.triangles.len())?;
 
-            for (triangle_idx, (triangle_id, _)) in
-                self.triangles.iter().enumerate()
-            {
-                if triangle_idx > 0 {
+            for (tri_idx, (tri_id, _)) in self.triangles.iter().enumerate() {
+                if tri_idx > 0 {
                     write!(f, ", ")?;
                 }
 
-                if triangle_idx > 5 {
+                if tri_idx > 5 {
                     write!(f, "...")?;
                     break;
                 }
 
-                write!(f, "{}", triangle_id)?;
+                write!(f, "{}", tri_id)?;
             }
 
             writeln!(f)?;

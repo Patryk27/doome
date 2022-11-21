@@ -7,4 +7,3 @@ impl Plugin for NavigationPlugin {
         // do nothing
     }
 }
-

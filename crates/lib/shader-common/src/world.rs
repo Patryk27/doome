@@ -4,7 +4,7 @@ pub struct World<'a> {
     pub static_geo: &'a StaticGeometry,
     pub static_geo_index: &'a StaticGeometryIndex,
     pub dynamic_geo: &'a DynamicGeometry,
-    pub mappings: &'a TriangleMappings,
+    pub uvs: &'a TriangleUvs,
     pub lights: &'a Lights,
     pub materials: &'a Materials,
     pub atlas_tex: &'a Image!(2D, type=f32, sampled),
@@ -12,8 +12,8 @@ pub struct World<'a> {
 }
 
 impl<'a> World<'a> {
-    pub fn geometry(&self, triangle_id: TriangleId<AnyTriangle>) -> Triangle {
-        match triangle_id.unpack() {
+    pub fn geometry(&self, id: TriangleId<AnyTriangle>) -> Triangle {
+        match id.unpack() {
             (AnyTriangle::Static, id) => {
                 self.static_geo.get(TriangleId::new_static(id))
             }
@@ -28,7 +28,7 @@ impl<'a> World<'a> {
         tri_id: TriangleId<AnyTriangle>,
         hit: Hit,
     ) -> Vec4 {
-        let tri_uv = self.mappings.get(tri_id);
+        let tri_uv = self.uvs.get(tri_id);
 
         let mut tex_uv = tri_uv.uv0
             + (tri_uv.uv1 - tri_uv.uv0) * hit.uv.x

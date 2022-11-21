@@ -31,9 +31,9 @@ pub struct Triangle {
 impl Triangle {
     const UV_TRANSPARENCY_MASK: u32 = 1 << 16;
 
-    pub fn new(v0: Vec3, v1: Vec3, v2: Vec3, material_id: MaterialId) -> Self {
+    pub fn new(v0: Vec3, v1: Vec3, v2: Vec3, mat_id: MaterialId) -> Self {
         Self {
-            v0: v0.extend(material_id.get() as f32),
+            v0: v0.extend(mat_id.get() as f32),
             v1: v1.extend(1.0),
             v2: v2.extend(0.0),
         }
@@ -113,8 +113,8 @@ impl Triangle {
             ray,
             point: ray.origin() + ray.direction() * (t - 0.01),
             normal: v0v1.cross(v0v2).normalize(),
-            triangle_id: TriangleId::new_static(0).into_any(),
-            material_id: self.material_id(),
+            tri_id: TriangleId::new_static(0).into_any(),
+            mat_id: self.material_id(),
         }
     }
 

@@ -45,16 +45,16 @@ impl Ray {
 
     pub fn hits_anything_up_to(self, world: &World, distance: f32) -> bool {
         // Check dynamic geometry
-        let mut triangle_idx = 0;
+        let mut tri_idx = 0;
 
-        while triangle_idx < world.dynamic_geo.len() {
-            let triangle_id = TriangleId::new_dynamic(triangle_idx);
-            let triangle = world.dynamic_geo.get(triangle_id);
-            let hit = triangle.hit(self);
+        while tri_idx < world.dynamic_geo.len() {
+            let tri_id = TriangleId::new_dynamic(tri_idx);
+            let tri = world.dynamic_geo.get(tri_id);
+            let hit = tri.hit(self);
 
             if hit.t < distance {
-                let got_hit = if triangle.has_uv_transparency() {
-                    world.atlas_sample(triangle_id.into_any(), hit).w > 0.5
+                let got_hit = if tri.has_uv_transparency() {
+                    world.atlas_sample(tri_id.into_any(), hit).w > 0.5
                 } else {
                     true
                 };
@@ -64,7 +64,7 @@ impl Ray {
                 }
             }
 
-            triangle_idx += 1;
+            tri_idx += 1;
         }
 
         // Check static geometry
@@ -76,13 +76,13 @@ impl Ray {
             let is_leaf = v1.xyz() == v2.xyz();
 
             if is_leaf {
-                let triangle_id = TriangleId::new_static(v1.w as _);
-                let triangle = world.static_geo.get(triangle_id);
-                let hit = triangle.hit(self);
+                let tri_id = TriangleId::new_static(v1.w as _);
+                let tri = world.static_geo.get(tri_id);
+                let hit = tri.hit(self);
 
                 if hit.t < distance {
-                    let got_hit = if triangle.has_uv_transparency() {
-                        world.atlas_sample(triangle_id.into_any(), hit).w > 0.5
+                    let got_hit = if tri.has_uv_transparency() {
+                        world.atlas_sample(tri_id.into_any(), hit).w > 0.5
                     } else {
                         true
                     };
@@ -113,27 +113,27 @@ impl Ray {
         let mut hit = Hit::none();
 
         // Check dynamic geometry
-        let mut triangle_idx = 0;
+        let mut tri_idx = 0;
 
-        while triangle_idx < world.dynamic_geo.len() {
-            let triangle_id = TriangleId::new_dynamic(triangle_idx);
-            let triangle = world.dynamic_geo.get(triangle_id);
-            let curr_hit = triangle.hit(self);
+        while tri_idx < world.dynamic_geo.len() {
+            let tri_id = TriangleId::new_dynamic(tri_idx);
+            let tri = world.dynamic_geo.get(tri_id);
+            let curr_hit = tri.hit(self);
 
             if curr_hit.is_closer_than(hit) {
-                let got_hit = if triangle.has_uv_transparency() {
-                    world.atlas_sample(triangle_id.into_any(), curr_hit).w > 0.5
+                let got_hit = if tri.has_uv_transparency() {
+                    world.atlas_sample(tri_id.into_any(), curr_hit).w > 0.5
                 } else {
                     true
                 };
 
                 if got_hit {
                     hit = curr_hit;
-                    hit.triangle_id = triangle_id.into_any();
+                    hit.tri_id = tri_id.into_any();
                 }
             }
 
-            triangle_idx += 1;
+            tri_idx += 1;
         }
 
         // Check static geometry
@@ -145,21 +145,20 @@ impl Ray {
             let is_leaf = v1.xyz() == v2.xyz();
 
             if is_leaf {
-                let triangle_id = TriangleId::new_static(v1.w as _);
-                let triangle = world.static_geo.get(triangle_id);
-                let curr_hit = triangle.hit(self);
+                let tri_id = TriangleId::new_static(v1.w as _);
+                let tri = world.static_geo.get(tri_id);
+                let curr_hit = tri.hit(self);
 
                 if curr_hit.is_closer_than(hit) {
-                    let got_hit = if triangle.has_uv_transparency() {
-                        world.atlas_sample(triangle_id.into_any(), curr_hit).w
-                            > 0.5
+                    let got_hit = if tri.has_uv_transparency() {
+                        world.atlas_sample(tri_id.into_any(), curr_hit).w > 0.5
                     } else {
                         true
                     };
 
                     if got_hit {
                         hit = curr_hit;
-                        hit.triangle_id = triangle_id.into_any();
+                        hit.tri_id = tri_id.into_any();
                     }
                 }
 
@@ -186,7 +185,7 @@ impl Ray {
         let hit = self.trace(world);
 
         if hit.is_some() {
-            world.materials.get(hit.material_id).shade(world, hit)
+            world.materials.get(hit.mat_id).shade(world, hit)
         } else {
             vec3(0.0, 0.0, 0.0)
         }
@@ -204,7 +203,7 @@ impl Ray {
         let hit = self.trace(world);
 
         if hit.is_some() {
-            world.materials.get(hit.material_id).shade_basic(world, hit)
+            world.materials.get(hit.mat_id).shade_basic(world, hit)
         } else {
             vec3(0.0, 0.0, 0.0)
         }

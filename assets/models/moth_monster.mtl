@@ -10,5 +10,5 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd  ..\assets\models\moth_monster_shooting.png
-map_d  ..\assets\models\moth_monster_shooting.png
+map_Kd  moth_monster_shooting.png
+map_d  moth_monster_shooting.png

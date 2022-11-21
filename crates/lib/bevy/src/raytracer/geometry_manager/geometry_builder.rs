@@ -21,7 +21,7 @@ impl<'a> GeometryBuilder<'a> {
         geo_type: GeometryType,
         tex: Option<Texture>,
         tri: rt::Triangle,
-        tri_uv: rt::TriangleMapping,
+        tri_uv: rt::TriangleUv,
     ) {
         let tri_uv = tex.map(|tex| tex.map_uvs(tri_uv)).unwrap_or(tri_uv);
 

@@ -19,6 +19,13 @@ impl DynamicGeometry {
 
 #[cfg(not(target_arch = "spirv"))]
 impl DynamicGeometry {
+    pub fn get_mut(
+        &mut self,
+        id: TriangleId<DynamicTriangle>,
+    ) -> &mut Triangle {
+        &mut self.items[id.get()]
+    }
+
     pub fn push(
         &mut self,
         item: Triangle,
