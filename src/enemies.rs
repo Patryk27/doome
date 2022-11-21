@@ -21,32 +21,47 @@ impl Plugin for EnemiesPlugin {
         app.add_startup_system(setup);
         app.add_event::<RecalculateNavData>();
         app.add_system(recalculate_nav_data);
+        app.add_system(update_hivemind);
         app.add_system(follow_player);
         app.add_system(follow_path);
     }
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn(Hivemind { nav_data: None });
+    commands.spawn(Hivemind {
+        nav_data: None,
+        known_player_position: Vec2::ZERO,
+    });
 }
 
 #[derive(Component)]
 struct Hivemind {
     nav_data: Option<NavData>,
+    known_player_position: Vec2,
 }
 
 const MAX_DISTANCE_FOR_NEW_PATH: f32 = 1.0;
 
+fn update_hivemind(
+    mut hivemind: Query<&mut Hivemind>,
+    player: Query<(&Player, &Transform)>,
+) {
+    let mut hivemind = hivemind.single_mut();
+
+    let (_player, player_transform) = player.single();
+    let player_pos = graphical_to_physical(player_transform.translation);
+
+    hivemind.known_player_position = player_pos;
+}
+
 fn follow_player(
     hivemind: Query<&Hivemind>,
-    player: Query<(&Player, &Transform)>,
     mut enemies: Query<(&mut Enemy, &Transform)>,
 ) {
     let hivemind = hivemind.single();
     let Some(nav_data) = hivemind.nav_data.as_ref() else { return };
 
-    let (_player, player_transform) = player.single();
-    let player_pos = graphical_to_physical(player_transform.translation);
+    let player_pos = hivemind.known_player_position;
 
     for (mut enemy, transform) in enemies.iter_mut() {
         let mut needs_new_path = false;
@@ -72,7 +87,6 @@ fn follow_player(
         let enemy_pos = graphical_to_physical(transform.translation);
         let Some(path) = nav_data.find_path(enemy_pos, player_pos) else { continue };
 
-        log::info!("Assigning new path to enemy");
         enemy.path = Some(path);
     }
 }
@@ -82,9 +96,14 @@ const NEXT_PATH_NODE_PICK_DISTANCE: f32 = 0.5;
 
 fn follow_path(
     time: Res<Time>,
+    hivemind: Query<&Hivemind>,
     mut enemies: Query<(&mut Enemy, &mut Transform)>,
 ) {
     let delta = time.delta_seconds();
+
+    let hivemind = hivemind.single();
+
+    let player_pos = hivemind.known_player_position;
 
     for (mut enemy, mut transform) in enemies.iter_mut() {
         if let Some(path) = &mut enemy.path {
