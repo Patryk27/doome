@@ -12,17 +12,6 @@ pub struct World<'a> {
 }
 
 impl<'a> World<'a> {
-    pub fn geometry(&self, id: TriangleId<AnyTriangle>) -> Triangle {
-        match id.unpack() {
-            (AnyTriangle::Static, id) => {
-                self.static_geo.get(TriangleId::new_static(id))
-            }
-            (AnyTriangle::Dynamic, id) => {
-                self.dynamic_geo.get(TriangleId::new_dynamic(id))
-            }
-        }
-    }
-
     pub fn atlas_sample(
         &self,
         tri_id: TriangleId<AnyTriangle>,

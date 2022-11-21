@@ -8,7 +8,7 @@ pub struct StaticGeometry {
 
 impl StaticGeometry {
     pub fn get(&self, id: TriangleId<StaticTriangle>) -> Triangle {
-        self.items[id.get()]
+        unsafe { *self.items.get_unchecked(id.get()) }
     }
 }
 

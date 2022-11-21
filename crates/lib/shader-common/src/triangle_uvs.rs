@@ -22,34 +22,28 @@ use crate::*;
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct TriangleUvs {
-    static_uvs: [Vec4; 3 * MAX_STATIC_TRIANGLES / 2],
-    dynamic_uvs: [Vec4; 3 * MAX_DYNAMIC_TRIANGLES / 2],
+    uvs: [Vec4; 3 * (MAX_STATIC_TRIANGLES + MAX_DYNAMIC_TRIANGLES) / 2],
 }
 
 impl TriangleUvs {
     pub fn get(&self, id: TriangleId<AnyTriangle>) -> TriangleUv {
-        match id.unpack() {
-            (AnyTriangle::Static, id) => Self::get_ex(&self.static_uvs, id),
-            (AnyTriangle::Dynamic, id) => Self::get_ex(&self.dynamic_uvs, id),
-        }
-    }
+        let (_, id) = id.unpack();
 
-    fn get_ex<const N: usize>(uvs: &[Vec4; N], id: usize) -> TriangleUv {
         if id % 2 == 0 {
             let ptr = 3 * (id / 2);
 
             TriangleUv {
-                uv0: uvs[ptr].xy(),
-                uv1: uvs[ptr].zw(),
-                uv2: uvs[ptr + 1].xy(),
+                uv0: unsafe { self.uvs.get_unchecked(ptr).xy() },
+                uv1: unsafe { self.uvs.get_unchecked(ptr).zw() },
+                uv2: unsafe { self.uvs.get_unchecked(ptr + 1).xy() },
             }
         } else {
             let ptr = 3 * ((id - 1) / 2) + 1;
 
             TriangleUv {
-                uv0: uvs[ptr].zw(),
-                uv1: uvs[ptr + 1].xy(),
-                uv2: uvs[ptr + 1].zw(),
+                uv0: unsafe { self.uvs.get_unchecked(ptr).zw() },
+                uv1: unsafe { self.uvs.get_unchecked(ptr + 1).xy() },
+                uv2: unsafe { self.uvs.get_unchecked(ptr + 1).zw() },
             }
         }
     }
@@ -57,24 +51,15 @@ impl TriangleUvs {
 
 #[cfg(not(target_arch = "spirv"))]
 impl TriangleUvs {
-    pub fn set(&mut self, id: TriangleId<AnyTriangle>, item: TriangleUv) {
-        match id.unpack() {
-            (AnyTriangle::Static, id) => {
-                Self::set_ex(&mut self.static_uvs, id, item)
-            }
-            (AnyTriangle::Dynamic, id) => {
-                Self::set_ex(&mut self.dynamic_uvs, id, item)
-            }
-        }
-    }
-
-    fn set_ex(
-        uvs: &mut [Vec4],
-        id: usize,
+    pub fn set(
+        &mut self,
+        id: TriangleId<AnyTriangle>,
         TriangleUv { uv0, uv1, uv2 }: TriangleUv,
     ) {
+        let (_, id) = id.unpack();
+
         if id % 2 == 0 {
-            let ptr = &mut uvs[3 * (id / 2)..][..2];
+            let ptr = &mut self.uvs[3 * (id / 2)..][..2];
 
             ptr[0].x = uv0.x;
             ptr[0].y = uv0.y;
@@ -83,7 +68,7 @@ impl TriangleUvs {
             ptr[1].x = uv2.x;
             ptr[1].y = uv2.y;
         } else {
-            let ptr = &mut uvs[3 * ((id - 1) / 2) + 1..][..2];
+            let ptr = &mut self.uvs[3 * ((id - 1) / 2) + 1..][..2];
 
             ptr[0].z = uv0.x;
             ptr[0].w = uv0.y;

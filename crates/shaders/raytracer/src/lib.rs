@@ -44,33 +44,33 @@ pub fn fs_main(
         atlas_sampler,
     };
 
-    // *color = camera.ray(pos.xy()).shade(&world).0.extend(1.0);
+    *color = camera.ray(pos.xy()).shade(&world).0.extend(1.0);
 
-    let mut ray = camera.ray(pos.xy());
-    let mut bounced = false;
-    let mut bounced_color = vec3(0.0, 0.0, 0.0);
-    let mut bounced_reflectivity = vec4(0.0, 0.0, 0.0, 0.0);
+    // let mut ray = camera.ray(pos.xy());
+    // let mut bounced = false;
+    // let mut bounced_color = vec3(0.0, 0.0, 0.0);
+    // let mut bounced_reflectivity = vec4(0.0, 0.0, 0.0, 0.0);
 
-    *color = loop {
-        let (rt_color, rt_reflectivity, rt_ray) = ray.shade(&world);
+    // *color = loop {
+    //     let (rt_color, rt_reflectivity, rt_ray) = ray.shade(&world);
 
-        if bounced {
-            break (bounced_color
-                + rt_color
-                    * bounced_reflectivity.xyz()
-                    * bounced_reflectivity.w)
-                .extend(1.0);
-        }
+    //     if bounced {
+    //         break (bounced_color
+    //             + rt_color
+    //                 * bounced_reflectivity.xyz()
+    //                 * bounced_reflectivity.w)
+    //             .extend(1.0);
+    //     }
 
-        if rt_reflectivity.w > 0.0 {
-            ray = rt_ray;
-            bounced = true;
-            bounced_color = rt_color;
-            bounced_reflectivity = rt_reflectivity;
+    //     if rt_reflectivity.w > 0.0 {
+    //         ray = rt_ray;
+    //         bounced = true;
+    //         bounced_color = rt_color;
+    //         bounced_reflectivity = rt_reflectivity;
 
-            continue;
-        } else {
-            break rt_color.extend(1.0);
-        }
-    };
+    //         continue;
+    //     } else {
+    //         break rt_color.extend(1.0);
+    //     }
+    // };
 }

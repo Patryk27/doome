@@ -21,7 +21,7 @@ impl Hit {
             ray: Default::default(),
             point: Default::default(),
             normal: Default::default(),
-            tri_id: TriangleId::new(AnyTriangle::Static, 0),
+            tri_id: TriangleId::new(AnyTriangle, 0),
             mat_id: MaterialId::new(0),
         }
     }

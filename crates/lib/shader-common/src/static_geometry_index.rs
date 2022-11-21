@@ -8,7 +8,7 @@ pub struct StaticGeometryIndex {
 
 impl StaticGeometryIndex {
     pub fn read(&self, ptr: usize) -> Vec4 {
-        self.data[ptr]
+        unsafe { *self.data.get_unchecked(ptr) }
     }
 }
 
