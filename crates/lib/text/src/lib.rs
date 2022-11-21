@@ -6,10 +6,30 @@ pub struct TextEngine {
 }
 
 impl TextEngine {
-    pub fn draw(&self, surface: &mut dyn Surface, x: u16, y: u16, text: &str) {
+    pub fn draw(
+        &self,
+        surface: &mut dyn Surface,
+        x: u16,
+        y: u16,
+        text: &str,
+        centered: bool,
+    ) {
         let font = &self.fonts.minecraft;
         let scale = Scale::uniform(14.0);
         let offset = point(0.0, font.v_metrics(scale).ascent);
+
+        let x = if centered {
+            let width = font
+                .layout(text, scale, offset)
+                .flat_map(|glyph| glyph.pixel_bounding_box())
+                .last()
+                .map(|bb| bb.max.x as u16)
+                .unwrap_or(0);
+
+            x - width / 2
+        } else {
+            x
+        };
 
         for glyph in font.layout(text, scale, offset) {
             let bb = if let Some(bb) = glyph.pixel_bounding_box() {

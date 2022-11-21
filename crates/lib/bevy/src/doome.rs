@@ -14,6 +14,7 @@ use crate::assets::Assets;
 use crate::components::*;
 use crate::raytracer::DoomeRaytracerPlugin;
 use crate::renderer::RendererState;
+use crate::text::TextEngine;
 
 pub struct DoomePlugin {
     pub shader: Arc<Mutex<Option<wgpu::ShaderModuleDescriptor<'static>>>>,
@@ -99,6 +100,9 @@ impl Plugin for DoomePlugin {
             shader_constants,
             intermediate_output_texture_view,
         });
+
+        // TODO
+        app.insert_resource(TextEngine::new());
 
         app.add_system(on_resize)
             .add_system(report_scale_factor_changes)

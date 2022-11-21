@@ -1,21 +1,27 @@
+mod text;
+mod typewriter;
+
 use std::time::Duration;
 
 use bevy::prelude::*;
 use doome_bevy::assets::{AssetHandle, Assets};
 use doome_bevy::audio::Audio;
+use doome_bevy::components::*;
 use doome_bevy::doome::DoomeRenderer;
-use doome_bevy::text::Text;
-use doome_engine::Canvas;
+use doome_bevy::text::TextEngine;
+use doome_engine::{Canvas, HEIGHT, WIDTH};
+use glam::{vec2, Vec3Swizzles};
 use image::RgbaImage;
 
+pub use self::text::*;
+pub use self::typewriter::*;
 use crate::player::Player;
 
-pub struct UiAnd2dPlugin;
+pub struct UiPlugin;
 
-impl Plugin for UiAnd2dPlugin {
+impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         let assets = app.world.resource::<Assets>();
-
         let gun_idle = assets.load_image("gun_1");
 
         let gun_fire_sequence = vec![
@@ -24,48 +30,28 @@ impl Plugin for UiAnd2dPlugin {
             assets.load_image("gun_shoot_3"),
         ];
 
-        app.insert_resource(Data {
+        // Typewriter
+        app.insert_resource(Typewriter::Idle)
+            .add_event::<TypewriterPrint>()
+            .add_system(typewriter::update);
+
+        // Gun
+        app.insert_resource(Gun {
             gun_idle,
             gun_fire_sequence,
-        });
-        app.insert_resource(TextAnimation::None);
-        app.add_event::<Print>();
-        app.add_startup_system(setup);
-        app.add_system(trigger_shoot);
-        app.add_system(update_animation);
-        app.add_system(update_text);
-        app.add_system(render);
-    }
-}
+        })
+        .add_system(trigger_shoot)
+        .add_system(update_gun);
 
-#[derive(Default)]
-pub struct Print {
-    text: String,
-}
-
-impl Print {
-    pub fn new(text: impl ToString) -> Self {
-        Self {
-            text: text.to_string(),
-        }
+        // UI
+        app.add_startup_system(setup).add_system(render);
     }
 }
 
 #[derive(Resource)]
-struct Data {
+struct Gun {
     gun_idle: AssetHandle<RgbaImage>,
     gun_fire_sequence: Vec<AssetHandle<RgbaImage>>,
-}
-
-#[derive(Resource)]
-enum TextAnimation {
-    None,
-
-    Some {
-        text: String,
-        tt: f32,
-        completed_at: Option<f32>,
-    },
 }
 
 #[derive(Component)]
@@ -114,7 +100,7 @@ fn trigger_shoot(
     }
 }
 
-fn update_animation(
+fn update_gun(
     time: Res<Time>,
     mut shooting_animation: Query<&mut ShootingAnimation>,
 ) {
@@ -136,112 +122,24 @@ fn update_animation(
     }
 }
 
-fn update_text(
-    time: Res<Time>,
-    mut anim: ResMut<TextAnimation>,
-    mut print: EventReader<Print>,
-) {
-    if let TextAnimation::Some {
-        tt, completed_at, ..
-    } = &mut *anim
-    {
-        *tt += time.delta_seconds();
-
-        if let Some(completed_at) = completed_at {
-            if *tt > *completed_at + 2.0 {
-                *anim = TextAnimation::None;
-            }
-        }
-    }
-
-    for print in print.iter() {
-        *anim = TextAnimation::Some {
-            text: print.text.clone(),
-            tt: 0.0,
-            completed_at: None,
-        };
-    }
-}
-
 fn render(
     time: Res<Time>,
     assets: Res<Assets>,
-    data: Res<Data>,
+    mut renderer: ResMut<DoomeRenderer>,
+    text_engine: Res<TextEngine>,
+    data: Res<Gun>,
     shooting_anim: Query<&ShootingAnimation>,
-    mut text_anim: ResMut<TextAnimation>,
+    typewriter: Res<Typewriter>,
     player: Query<&Player>,
-    mut doome_renderer: ResMut<DoomeRenderer>,
-    text: Res<Text>,
+    texts: Query<(&Text, &Transform, Option<&Visibility>)>,
 ) {
-    let frame = &mut doome_renderer.pixels.image_data;
-    let mut canvas = Canvas::new(&text.text_engine, frame);
+    let frame = &mut renderer.pixels.image_data;
+    let mut canvas = Canvas::new(&text_engine, frame);
 
     canvas.clear();
 
-    // -----
-
-    if let TextAnimation::Some {
-        text,
-        tt,
-        completed_at,
-    } = &mut *text_anim
-    {
-        const BASE_FUEL_PER_CHARACTER: f32 = 0.09;
-
-        let x = 5;
-        let mut y = 5;
-        let mut fuel = *tt;
-        let mut ran_out_of_fuel = false;
-
-        for line in text.lines() {
-            fuel -= 2.0 * BASE_FUEL_PER_CHARACTER;
-
-            if fuel < 0.0 {
-                ran_out_of_fuel = true;
-                break;
-            }
-
-            let mut actual_line = String::new();
-
-            for ch in line.bytes() {
-                let ch_required_fuel = {
-                    let mut f = BASE_FUEL_PER_CHARACTER;
-
-                    if ch % 2 == 0 {
-                        f += BASE_FUEL_PER_CHARACTER / 2.0;
-                    }
-
-                    f
-                };
-
-                let ch = ch as char;
-
-                if fuel < ch_required_fuel {
-                    ran_out_of_fuel = true;
-                    break;
-                }
-
-                actual_line.push(ch);
-                fuel -= ch_required_fuel;
-            }
-
-            canvas.text(x, y, actual_line);
-
-            y += 12;
-
-            if ran_out_of_fuel {
-                break;
-            }
-        }
-
-        if !ran_out_of_fuel {
-            if completed_at.is_none() {
-                *completed_at = Some(*tt);
-            }
-        }
-    }
-
-    // -----
+    // --- //
+    // Gun //
 
     let (sway_x, sway_y) = if player.single().can_move {
         calc_sway(time.elapsed_seconds())
@@ -258,6 +156,32 @@ fn render(
     };
 
     canvas.blit(sway_x, sway_y, assets.image(gun_image));
+
+    // ---------- //
+    // Typewriter //
+
+    typewriter.render(&mut canvas);
+
+    // ------//
+    // Texts //
+
+    for (text, transform, visibility) in texts.iter() {
+        let is_visible = visibility.map_or(true, |vis| vis.is_visible);
+
+        if !is_visible {
+            continue;
+        }
+
+        let translation =
+            transform.translation.xy() * vec2(WIDTH as _, HEIGHT as _);
+
+        canvas.text(
+            translation.x as _,
+            translation.y as _,
+            &text.text,
+            text.centered,
+        );
+    }
 }
 
 fn calc_sway(t: f32) -> (u16, u16) {

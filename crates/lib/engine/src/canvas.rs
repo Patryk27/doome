@@ -48,10 +48,17 @@ impl<'f> Canvas<'f> {
         }
     }
 
-    pub fn text(&mut self, x: u16, y: u16, text: impl AsRef<str>) {
+    pub fn text(
+        &mut self,
+        x: u16,
+        y: u16,
+        text: impl AsRef<str>,
+        centered: bool,
+    ) {
         let mut surface = Surface { frame: self.frame };
 
-        self.text_engine.draw(&mut surface, x, y, text.as_ref());
+        self.text_engine
+            .draw(&mut surface, x, y, text.as_ref(), centered);
     }
 }
 

@@ -4,7 +4,7 @@ mod interaction;
 mod levels;
 mod markers;
 mod player;
-mod ui_and_2d;
+mod ui;
 
 use std::sync::{Arc, Mutex};
 
@@ -19,12 +19,12 @@ use doome_bevy::components::*;
 use doome_bevy::doome::DoomePlugin;
 use doome_bevy::physics::{Body, PhysicsPlugin};
 use doome_bevy::renderer::RendererPlugin;
-use doome_bevy::text::Text;
+use doome_bevy::text::TextEngine;
 use doome_engine::{HEIGHT, WIDTH};
 use glam::vec3;
-use ui_and_2d::UiAnd2dPlugin;
 
 use self::player::*;
+use self::ui::*;
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
@@ -50,7 +50,7 @@ fn main() {
 
     App::new()
         .insert_resource(assets)
-        .insert_resource(Text::default())
+        .insert_resource(TextEngine::default())
         // Bevy plugins
         .add_plugin(bevy::log::LogPlugin::default())
         .add_plugin(bevy::core::CorePlugin::default())
@@ -75,7 +75,7 @@ fn main() {
         .add_plugin(RendererPlugin)
         .add_plugin(DoomePlugin { shader })
         .add_plugin(PhysicsPlugin::default())
-        .add_plugin(UiAnd2dPlugin)
+        .add_plugin(UiPlugin)
         .add_plugin(AudioPlugin)
         // Game plugins
         .add_plugin(enemies::EnemiesPlugin)

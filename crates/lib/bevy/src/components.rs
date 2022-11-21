@@ -216,6 +216,21 @@ pub enum GeometryType {
     Dynamic,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Component)]
+pub struct Visibility {
+    pub is_visible: bool,
+}
+
+impl Visibility {
+    pub fn visible() -> Self {
+        Self { is_visible: true }
+    }
+
+    pub fn invisible() -> Self {
+        Self { is_visible: false }
+    }
+}
+
 /// Marker-component determing whether the raytracer already knows of given
 /// entity or not; it's used to allocate and release entity's geometry and
 /// materials in the raytracer's internal data structures.
