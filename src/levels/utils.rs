@@ -4,10 +4,9 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
 use doome_bevy::assets::{AssetHandle, Assets, Model};
 use doome_bevy::components::*;
+use doome_bevy::nav::NavObstacle;
 use doome_bevy::physics::Collider;
 use glam::{vec2, vec3};
-
-use crate::nav::NavObstacle;
 
 pub struct LevelBuilder<'p, 'w, 's> {
     commands: &'p mut Commands<'w, 's>,

@@ -1,12 +1,8 @@
 #![allow(clippy::type_complexity, clippy::too_many_arguments)]
 
-mod billboard;
-mod enemies;
 mod interaction;
 mod levels;
 mod markers;
-mod nav;
-mod player;
 mod ui;
 
 use std::sync::{Arc, Mutex};
@@ -21,12 +17,12 @@ use doome_bevy::audio::AudioPlugin;
 use doome_bevy::components::*;
 use doome_bevy::doome::DoomePlugin;
 use doome_bevy::physics::{Body, PhysicsPlugin};
+use doome_bevy::player::Player;
 use doome_bevy::renderer::RendererPlugin;
 use doome_bevy::text::TextEngine;
 use doome_engine::{HEIGHT, WIDTH};
 use glam::vec3;
 
-use self::player::*;
 use self::ui::*;
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
@@ -81,8 +77,8 @@ fn main() {
         .add_plugin(UiPlugin)
         .add_plugin(AudioPlugin)
         // Game plugins
-        .add_plugin(enemies::EnemiesPlugin)
-        .add_plugin(billboard::BillboardPlugin)
+        .add_plugin(doome_bevy::enemies::EnemiesPlugin)
+        .add_plugin(doome_bevy::billboard::BillboardPlugin)
         // Misc systems
         .add_system(quit_on_exit)
         .add_system(process_movement)

@@ -2,15 +2,15 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 use doome_bevy::assets::Assets;
+use doome_bevy::billboard::Billboard;
 use doome_bevy::components::*;
+use doome_bevy::enemies::{Enemy, RecalculateNavData};
 use doome_bevy::physics::{Body, BodyType, Collider};
+use doome_bevy::player::Player;
 use glam::vec3;
 use indoc::indoc;
 
 use super::utils::*;
-use crate::billboard::Billboard;
-use crate::enemies::{Enemy, RecalculateNavData};
-use crate::player::Player;
 use crate::ui::{Text, TypewriterPrint};
 
 const INTRO_TEXT: &str = indoc! {r#"

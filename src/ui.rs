@@ -15,7 +15,7 @@ use image::RgbaImage;
 
 pub use self::text::*;
 pub use self::typewriter::*;
-use crate::player::Player;
+use doome_bevy::player::Player;
 
 pub struct UiPlugin;
 

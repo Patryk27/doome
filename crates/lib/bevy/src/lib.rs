@@ -2,11 +2,15 @@
 
 pub mod assets;
 pub mod audio;
+pub mod billboard;
+pub mod bullets;
 pub mod components;
 pub mod convert;
 pub mod doome;
-pub mod navigation;
+pub mod enemies;
+pub mod nav;
 pub mod physics;
+pub mod player;
 pub mod renderer;
 pub mod text;
 

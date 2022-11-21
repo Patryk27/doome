@@ -1,9 +1,9 @@
 use bevy::prelude::*;
-use doome_bevy::convert::{graphical_to_physical, physical_to_graphical};
-use doome_bevy::physics::Collider;
 use doome_nav::{NavData, NavDataBuilder};
 
+use crate::convert::{graphical_to_physical, physical_to_graphical};
 use crate::nav::NavObstacle;
+use crate::physics::Collider;
 use crate::player::Player;
 
 pub struct EnemiesPlugin;

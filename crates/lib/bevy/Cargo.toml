@@ -12,6 +12,7 @@ doome-scaler = { path = "../scaler" }
 doome-text = { path = "../text" }
 doome-wgpu-ext = { path = "../wgpu-ext" }
 doome-geo = { path = "../geo" }
+doome-nav = { path = "../nav" }
 
 # Crates.io
 anyhow = "1.0"
@@ -23,7 +24,10 @@ include_dir = "0.7"
 log = "0.4"
 maplit = "1.0"
 rectangle-pack = "0.4"
-rodio = { version = "0.16", default-features = false, features = [ "wav", "wasm-bindgen" ] }
+rodio = { version = "0.16", default-features = false, features = [
+    "wav",
+    "wasm-bindgen",
+] }
 tobj = "3.2"
 wgpu = "0.14"
 

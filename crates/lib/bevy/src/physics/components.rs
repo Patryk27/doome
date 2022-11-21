@@ -29,27 +29,38 @@ pub struct RayCastHit {
     pub position: Vec2,
 }
 
+/// The collider component for physics
+///
+/// Contains a polygon shape of the collider
+///
+/// also contains 2 masks:
+///     - collision_mask: the mask of the collider
+///     - collides_with_mask: the mask of the colliders that this collider can collide with
 #[derive(Component, Debug)]
 pub struct Collider {
     pub(super) polygon: Polygon,
+    pub(super) collision_mask: u32,
 }
 
 impl Collider {
     pub fn circle(radius: f32) -> Self {
         Self {
             polygon: Polygon::circle(radius, CIRCLE_POINTS),
+            collision_mask: u32::MAX,
         }
     }
 
     pub fn rect(width: f32, height: f32) -> Self {
         Self {
             polygon: Polygon::rect(Vec2::new(width, height)),
+            collision_mask: u32::MAX,
         }
     }
 
     pub fn line(start: Vec2, end: Vec2) -> Self {
         Self {
             polygon: Polygon::new(vec![start, end]),
+            collision_mask: u32::MAX,
         }
     }
 
