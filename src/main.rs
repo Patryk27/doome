@@ -3,20 +3,22 @@
 mod interaction;
 mod levels;
 mod markers;
+mod shooting;
 mod ui;
 
 use std::sync::{Arc, Mutex};
 
 use bevy::app::AppExit;
-use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
 use doome_bevy::assets::Assets;
 use doome_bevy::audio::AudioPlugin;
 use doome_bevy::components::*;
+use doome_bevy::convert::graphical_to_physical;
 use doome_bevy::doome::DoomePlugin;
-use doome_bevy::physics::{Body, PhysicsPlugin};
+use doome_bevy::physics::components::Body;
+use doome_bevy::physics::PhysicsPlugin;
 use doome_bevy::player::Player;
 use doome_bevy::renderer::RendererPlugin;
 use doome_bevy::text::TextEngine;
@@ -67,8 +69,8 @@ fn main() {
             },
             ..bevy::window::WindowPlugin::default()
         })
-        .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+        .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
         .add_plugin(bevy::winit::WinitPlugin::default())
         // Internal plugins
         .add_plugin(RendererPlugin)
@@ -124,11 +126,11 @@ fn process_movement(
         );
     }
 
-    body.velocity = Vec3::ZERO;
+    body.velocity = Vec2::ZERO;
 
     if keys.pressed(KeyCode::W) || keys.pressed(KeyCode::S) {
         let sign = if keys.pressed(KeyCode::W) { 1.0 } else { -1.0 };
-        body.velocity += transform.forward() * sign;
+        body.velocity += graphical_to_physical(transform.forward() * sign);
     }
 
     if keys.pressed(KeyCode::Comma) || keys.pressed(KeyCode::Period) {
@@ -143,7 +145,7 @@ fn process_movement(
 
     if keys.pressed(KeyCode::A) || keys.pressed(KeyCode::D) {
         let sign = if keys.pressed(KeyCode::A) { 1.0 } else { -1.0 };
-        body.velocity += transform.left() * sign;
+        body.velocity += graphical_to_physical(transform.left() * sign);
     }
 
     body.velocity = body.velocity.normalize_or_zero() * PLANAR_MOVEMENT_SPEED;

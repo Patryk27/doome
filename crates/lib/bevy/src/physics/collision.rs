@@ -2,12 +2,15 @@ use bevy::prelude::*;
 use doome_geo::sat;
 use glam::{vec3, Vec3Swizzles};
 
-use super::{Body, Collider};
+use super::components::{Body, Collider};
+use super::events::Collision;
+use crate::convert::{graphical_to_physical, physical_to_graphical};
 
 const MIN_VELOCITY: f32 = 0.1;
 
 pub fn resolve_collisions(
     time: Res<Time>,
+    mut collisions: EventWriter<Collision>,
     mut bodies_with_colliders: Query<(
         Entity,
         &mut Body,
@@ -40,8 +43,9 @@ pub fn resolve_collisions(
             }
 
             let v = body.velocity * delta;
-            let new_transform = active_entity_transform
-                .with_translation(active_entity_transform.translation + v);
+            let new_transform = active_entity_transform.with_translation(
+                active_entity_transform.translation + physical_to_graphical(v),
+            );
 
             if let Some(mtv) = are_colliding(
                 &new_transform,
@@ -49,12 +53,17 @@ pub fn resolve_collisions(
                 passive_entity_transform,
                 passive_entity_collider,
             ) {
-                let mtv_component = vector_decompose(body.velocity.xz(), mtv);
-                let mtv = vec3(mtv.x, 0.0, mtv.y);
+                collisions.send(Collision {
+                    entity_a: active_entity,
+                    entity_b: passive_entity,
+                });
+
+                let mtv_component = vector_decompose(body.velocity, mtv);
+
                 body.velocity -= mtv * mtv_component;
 
                 if body.velocity.length() < MIN_VELOCITY {
-                    body.velocity = Vec3::ZERO;
+                    body.velocity = Vec2::ZERO;
                 }
             }
         }

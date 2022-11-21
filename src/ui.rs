@@ -6,8 +6,13 @@ use std::time::Duration;
 use bevy::prelude::*;
 use doome_bevy::assets::{AssetHandle, Assets};
 use doome_bevy::audio::Audio;
+use doome_bevy::billboard::Billboard;
+use doome_bevy::bullets::Bullet;
 use doome_bevy::components::*;
+use doome_bevy::convert::graphical_to_physical;
 use doome_bevy::doome::DoomeRenderer;
+use doome_bevy::physics::components::{Body, BodyType};
+use doome_bevy::player::Player;
 use doome_bevy::text::TextEngine;
 use doome_engine::{Canvas, HEIGHT, WIDTH};
 use glam::{vec2, Vec3Swizzles};
@@ -15,7 +20,6 @@ use image::RgbaImage;
 
 pub use self::text::*;
 pub use self::typewriter::*;
-use doome_bevy::player::Player;
 
 pub struct UiPlugin;
 
@@ -76,14 +80,17 @@ fn setup(mut commands: Commands) {
 
 // TODO: Attach an event writer
 fn trigger_shoot(
+    mut commands: Commands,
     assets: Res<Assets>,
-    player: Query<&Player>,
+    player: Query<(&Player, &Transform)>,
     mut shooting_animation: Query<&mut ShootingAnimation>,
     mouse: Res<Input<MouseButton>>,
     keyboard: Res<Input<KeyCode>>,
     mut audio: ResMut<Audio>,
 ) {
-    if !player.single().can_move {
+    let (player, player_transform) = player.single();
+
+    if !player.can_move {
         return;
     }
 
@@ -97,6 +104,29 @@ fn trigger_shoot(
         shooting_animation.current_frame = 0;
         shooting_animation.timer.unpause();
         shooting_animation.timer.reset();
+
+        let forward = player_transform.forward();
+        let position_offset = forward * 1.0;
+        let forward = graphical_to_physical(forward);
+
+        let mut bullet_transform = player_transform.clone();
+        bullet_transform.translation += position_offset;
+        bullet_transform.translation += Vec3::Y * 1.0; // from the camera
+
+        let bullet_model = assets.load_model("bullet");
+
+        commands.spawn((
+            bullet_model,
+            Material::default().with_uv_transparency(),
+            GeometryType::Dynamic,
+            Bullet::new(10.0),
+            Billboard,
+            bullet_transform,
+            Body {
+                velocity: forward.normalize() * 20.0,
+                body_type: BodyType::Kinematic,
+            },
+        ));
     }
 }
 

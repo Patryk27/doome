@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use doome_geo::Polygon;
 use glam::Vec3Swizzles;
 
+use crate::convert::{graphical_to_physical, physical_to_graphical};
+
 const CIRCLE_POINTS: usize = 16;
 
 #[derive(Component)]
@@ -66,15 +68,17 @@ impl Collider {
 
     pub fn to_polygon(&self, transform: &Transform) -> Polygon {
         let matrix = transform.compute_matrix();
-        self.polygon
-            .clone()
-            .map_points(|p| matrix.transform_point3(p.extend(0.0).xzy()).xz())
+        self.polygon.clone().map_points(|p| {
+            graphical_to_physical(
+                matrix.transform_point3(physical_to_graphical(p)),
+            )
+        })
     }
 }
 
 #[derive(Component)]
 pub struct Body {
-    pub velocity: Vec3,
+    pub velocity: Vec2,
     pub body_type: BodyType,
 }
 

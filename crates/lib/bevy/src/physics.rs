@@ -1,11 +1,14 @@
 use bevy::prelude::*;
 
 mod collision;
-mod components;
+pub mod components;
+pub mod events;
 mod raycasting;
 
+use crate::convert::physical_to_graphical;
+
 use self::collision::resolve_collisions;
-pub use self::components::*;
+use self::components::Body;
 use self::raycasting::resolve_raycasts;
 
 #[derive(Default)]
@@ -22,15 +25,17 @@ impl Plugin for PhysicsPlugin {
             SystemStage::single_threaded(),
         );
 
-        app.add_system_to_stage(PhysicsStage, update_physics)
-            .add_system_to_stage(
-                PhysicsStage,
-                resolve_collisions.before(update_physics),
-            )
-            .add_system_to_stage(
-                PhysicsStage,
-                resolve_raycasts.after(update_physics),
-            );
+        app.add_event::<events::Collision>();
+
+        app.add_system_to_stage(PhysicsStage, update_physics);
+        app.add_system_to_stage(
+            PhysicsStage,
+            resolve_collisions.before(update_physics),
+        );
+        app.add_system_to_stage(
+            PhysicsStage,
+            resolve_raycasts.after(update_physics),
+        );
     }
 }
 
@@ -38,6 +43,6 @@ fn update_physics(time: Res<Time>, mut bodies: Query<(&Body, &mut Transform)>) {
     let delta = time.delta_seconds();
 
     for (body, mut transform) in bodies.iter_mut() {
-        transform.translation += body.velocity * delta;
+        transform.translation += physical_to_graphical(body.velocity) * delta;
     }
 }

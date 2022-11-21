@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use doome_bevy::assets::{AssetHandle, Assets, Model};
 use doome_bevy::components::*;
 use doome_bevy::nav::NavObstacle;
-use doome_bevy::physics::Collider;
+use doome_bevy::physics::components::Collider;
 use glam::{vec2, vec3};
 
 pub struct LevelBuilder<'p, 'w, 's> {

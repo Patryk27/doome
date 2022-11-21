@@ -5,7 +5,7 @@ use doome_bevy::assets::Assets;
 use doome_bevy::billboard::Billboard;
 use doome_bevy::components::*;
 use doome_bevy::enemies::{Enemy, RecalculateNavData};
-use doome_bevy::physics::{Body, BodyType, Collider};
+use doome_bevy::physics::components::{Body, BodyType, Collider};
 use doome_bevy::player::Player;
 use glam::vec3;
 use indoc::indoc;
@@ -88,7 +88,7 @@ pub fn init(
         Player { can_move: false },
         Transform::from_rotation(Quat::from_rotation_x(PI)),
         Body {
-            velocity: vec3(0.0, 0.0, 0.0),
+            velocity: Vec2::ZERO,
             body_type: BodyType::Kinematic,
         },
         Collider::circle(0.5),
