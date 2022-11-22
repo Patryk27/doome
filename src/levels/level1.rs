@@ -145,7 +145,7 @@ pub fn init(
         GeometryType::Dynamic,
         Material::default()
             .with_reflectivity(1.0)
-            .with_color(Color::hex(0xf12421))
+            .with_color(Color::hex(0x000000))
             .with_reflection_color(Color::hex(0xf12421)),
     ));
 
