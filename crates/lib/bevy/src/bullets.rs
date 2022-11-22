@@ -9,7 +9,7 @@ pub struct BulletsPlugin;
 
 impl Plugin for BulletsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_system(listen_to_bullet_collisions);
+        app.add_system_to_stage(CoreStage::PreUpdate, listen_to_bullet_collisions);
     }
 }
 
@@ -20,11 +20,9 @@ fn listen_to_bullet_collisions(
 ) {
     for collision in collision_events.iter() {
         if bullets.get(collision.entity_a).is_ok() {
-            commands.entity(collision.entity_a).despawn();
-        }
-
-        if bullets.get(collision.entity_b).is_ok() {
-            commands.entity(collision.entity_b).despawn();
+            if let Some(mut entity) = commands.get_entity(collision.entity_a) {
+                entity.despawn();
+            }
         }
     }
 }
