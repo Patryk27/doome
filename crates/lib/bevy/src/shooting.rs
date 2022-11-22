@@ -14,12 +14,14 @@ pub struct Shooter {
     cooldown_timer: f32,
     bullet_speed: f32,
     bullet_model: AssetHandle<Model>,
+    bullet_damage: f32,
 }
 
 impl Shooter {
     pub fn new(
         cooldown: f32,
         bullet_speed: f32,
+        bullet_damage: f32,
         bullet_model: AssetHandle<Model>,
     ) -> Self {
         Self {
@@ -27,6 +29,7 @@ impl Shooter {
             cooldown_timer: 0.0,
             bullet_speed,
             bullet_model,
+            bullet_damage,
         }
     }
 
@@ -57,7 +60,9 @@ impl Shooter {
                 body_type: BodyType::Kinematic,
             },
             GeometryType::Dynamic,
-            Bullet,
+            Bullet {
+                damage: self.bullet_damage,
+            },
             Billboard,
         ));
     }

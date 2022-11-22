@@ -11,6 +11,7 @@ use doome_bevy::bullets::Bullet;
 use doome_bevy::components::*;
 use doome_bevy::convert::graphical_to_physical;
 use doome_bevy::doome::DoomeRenderer;
+use doome_bevy::health::Health;
 use doome_bevy::physics::components::{Body, BodyType, Collider};
 use doome_bevy::player::Player;
 use doome_bevy::text::TextEngine;
@@ -140,6 +141,8 @@ fn update_gun(
     }
 }
 
+const GUN_OFFSET_Y: u16 = 16;
+
 fn render(
     time: Res<Time>,
     assets: Res<Assets>,
@@ -148,7 +151,7 @@ fn render(
     data: Res<Gun>,
     shooting_anim: Query<&ShootingAnimation>,
     typewriter: Res<Typewriter>,
-    player: Query<&Player>,
+    player: Query<(&Player, &Health)>,
     texts: Query<(&Text, &Transform, Option<&Visibility>)>,
 ) {
     let frame = &mut renderer.pixels.image_data;
@@ -156,10 +159,12 @@ fn render(
 
     canvas.clear();
 
+    let (player, player_health) = player.single();
+
     // --- //
     // Gun //
 
-    let (sway_x, sway_y) = if player.single().can_move {
+    let (sway_x, sway_y) = if player.can_move {
         calc_sway(time.elapsed_seconds())
     } else {
         calc_sway(0.0)
@@ -173,7 +178,33 @@ fn render(
         data.gun_idle
     };
 
-    canvas.blit(sway_x, sway_y, assets.image(gun_image));
+    canvas.blit(sway_x, sway_y - GUN_OFFSET_Y, assets.image(gun_image));
+
+    // --- //
+    // Ui  //
+
+    let ui_image = assets.load_image("ui_static");
+    let angrey_face = assets.load_image("angrey");
+    canvas.blit(0, 0, assets.image(ui_image));
+    canvas.blit(0, 0, assets.image(angrey_face));
+
+    // ------ //
+    // Health //
+
+    const HEALTH_WIDTH: u16 = 100;
+    const HEALTH_HEIGHT: u16 = 12;
+    const HEALTH_X: u16 = 200;
+    const HEALTH_Y: u16 = HEIGHT - 9 - HEALTH_HEIGHT;
+
+    let actual_width = (player_health.val * HEALTH_WIDTH as f32 / 100.0).floor() as u16;
+
+    canvas.rect(
+        HEALTH_X,
+        HEALTH_Y,
+        HEALTH_X + actual_width,
+        HEALTH_Y + HEALTH_HEIGHT - 1,
+        doome_surface::Color::RED,
+    );
 
     // ---------- //
     // Typewriter //

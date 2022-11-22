@@ -47,11 +47,6 @@ impl Default for Color {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Component)]
-pub struct Health {
-    pub val: f32,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Light {
     // I feel like for proper bevy-ness this should be a different component
     // but I like the brevity and simplicity of this solution

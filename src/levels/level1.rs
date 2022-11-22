@@ -5,6 +5,7 @@ use doome_bevy::assets::Assets;
 use doome_bevy::billboard::Billboard;
 use doome_bevy::components::*;
 use doome_bevy::enemies::{Enemy, RecalculateNavData};
+use doome_bevy::health::Health;
 use doome_bevy::physics::components::{Body, BodyType, Collider, RayCast};
 use doome_bevy::player::Player;
 use doome_bevy::shooting::Shooter;
@@ -85,7 +86,8 @@ pub fn init(
     assets: Res<Assets>,
     mut recalc_nav_data: EventWriter<RecalculateNavData>,
 ) {
-    let player_shooter = Shooter::new(0.5, 20.0, assets.load_model("bullet"));
+    let player_shooter =
+        Shooter::new(0.5, 20.0, 10.0, assets.load_model("bullet"));
     commands.spawn((
         Player::new(player_shooter),
         Transform::from_rotation(Quat::from_rotation_x(PI)),
@@ -94,17 +96,24 @@ pub fn init(
             body_type: BodyType::Kinematic,
         },
         Collider::circle(0.5),
+        Health { val: 100.0 },
     ));
 
     let moth_model = assets.load_model("moth_monster");
 
     commands.spawn((
-        Enemy::new(Shooter::new(1.0, 10.0, assets.load_model("fireball"))),
+        Enemy::new(Shooter::new(
+            1.0,
+            10.0,
+            10.0,
+            assets.load_model("fireball"),
+        )),
         moth_model,
         Material::default().with_uv_transparency(),
         GeometryType::Dynamic,
         Transform::from_translation(vec3(0.0, 0.0, ELEPHANT_Z + 1.0)),
         Billboard,
+        Health { val: 100.0 },
         RayCast {
             origin: Vec2::ZERO,
             direction: Vec2::NEG_Y * 20.0,

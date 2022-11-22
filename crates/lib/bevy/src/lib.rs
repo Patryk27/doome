@@ -8,6 +8,7 @@ pub mod components;
 pub mod convert;
 pub mod doome;
 pub mod enemies;
+pub mod health;
 pub mod nav;
 pub mod physics;
 pub mod player;
