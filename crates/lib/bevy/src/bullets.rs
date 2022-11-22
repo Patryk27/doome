@@ -3,15 +3,7 @@ use bevy::prelude::*;
 use crate::physics::events::Collision;
 
 #[derive(Component)]
-pub struct Bullet {
-    speed: f32,
-}
-
-impl Bullet {
-    pub fn new(speed: f32) -> Self {
-        Self { speed }
-    }
-}
+pub struct Bullet;
 
 pub struct BulletsPlugin;
 

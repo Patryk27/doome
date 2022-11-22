@@ -3,7 +3,6 @@
 mod interaction;
 mod levels;
 mod markers;
-mod shooting;
 mod ui;
 
 use bevy::app::AppExit;

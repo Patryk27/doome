@@ -4,14 +4,25 @@ use instant::Instant;
 
 use crate::convert::{graphical_to_physical, physical_to_graphical};
 use crate::nav::NavObstacle;
-use crate::physics::components::{Collider, RayCast};
+use crate::physics::components::{Collider, RayCast, RayCastHit};
 use crate::player::Player;
+use crate::shooting::Shooter;
 
 pub struct EnemiesPlugin;
 
-#[derive(Default, Component)]
+#[derive(Component)]
 pub struct Enemy {
     path: Option<Vec<Vec2>>,
+    shooter: Shooter,
+}
+
+impl Enemy {
+    pub fn new(shooter: Shooter) -> Self {
+        Self {
+            path: None,
+            shooter,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -23,9 +34,9 @@ impl Plugin for EnemiesPlugin {
         app.add_event::<RecalculateNavData>();
         app.add_system(recalculate_nav_data);
         app.add_system(update_hivemind);
-        app.add_system(follow_player);
-        app.add_system(follow_path);
-        app.add_system(i_see_the_player);
+        app.add_system(update_shooting);
+        app.add_system(assign_paths_to_enemies);
+        app.add_system(enemy_movement);
     }
 }
 
@@ -59,23 +70,33 @@ fn update_hivemind(
     hivemind.player_entity = Some(player_entity);
 }
 
-fn i_see_the_player(
+fn update_shooting(
+    mut commands: Commands,
+    time: Res<Time>,
     hivemind: Query<&Hivemind>,
-    enemies: Query<(&Enemy, &RayCast)>,
+    mut enemies: Query<(&mut Enemy, &Transform, &RayCast)>,
 ) {
-    let hivemind = hivemind.single();
-    let Some(player_entity) = hivemind.player_entity else { return };
+    let delta_time = time.delta_seconds();
 
-    for (enemy, raycast) in enemies.iter() {
-        if let Some(hit) = &raycast.hit {
-            if hit.entity == player_entity {
-                // log::info!("I see the player!");
+    let hivemind = hivemind.single();
+
+    let Some(player_entity) = hivemind.player_entity else {
+        log::warn!("Hivemind doesn't know the players entity");
+        return;
+    };
+
+    for (mut enemy, transform, raycast) in enemies.iter_mut() {
+        enemy.shooter.update(delta_time);
+
+        if let Some(_) = player_entity_raycast(raycast, player_entity) {
+            if enemy.shooter.can_shoot() {
+                enemy.shooter.shoot(transform, &mut commands);
             }
         }
     }
 }
 
-fn follow_player(
+fn assign_paths_to_enemies(
     hivemind: Query<&Hivemind>,
     mut enemies: Query<(&mut Enemy, &Transform)>,
 ) {
@@ -115,36 +136,67 @@ fn follow_player(
 const FOLLOW_SPEED: f32 = 3.0;
 const NEXT_PATH_NODE_PICK_DISTANCE: f32 = 0.5;
 
-fn follow_path(
+fn enemy_movement(
     time: Res<Time>,
     hivemind: Query<&Hivemind>,
-    mut enemies: Query<(&mut Enemy, &mut Transform)>,
+    mut enemies: Query<(&mut Enemy, &mut Transform, &RayCast)>,
 ) {
     let delta = time.delta_seconds();
 
     let hivemind = hivemind.single();
 
     let player_pos = hivemind.known_player_position;
+    let Some(player_entity) = hivemind.player_entity else {
+        log::warn!("Hivemind doesn't know the players entity");
+        return;
+    };
 
-    for (mut enemy, mut transform) in enemies.iter_mut() {
-        if let Some(path) = &mut enemy.path {
-            if let Some(next) = path.first() {
-                let pos = graphical_to_physical(transform.translation);
-
-                let dir = *next - pos;
-                let dir = dir.normalize_or_zero() * FOLLOW_SPEED * delta;
-                let dir = physical_to_graphical(dir);
-                transform.translation += dir;
-
-                let pos = graphical_to_physical(transform.translation);
-
-                if pos.distance(*next) < NEXT_PATH_NODE_PICK_DISTANCE {
-                    path.remove(0);
-                }
-            } else {
-                enemy.path = None;
-            }
+    for (mut enemy, mut transform, raycast) in enemies.iter_mut() {
+        if let Some(_player_pos) = player_entity_raycast(raycast, player_entity)
+        {
+            // TODO: Side strafing
+            // do nothing
+        } else {
+            follow_path_to_player(&mut enemy, &mut transform, delta);
         }
+    }
+}
+
+fn follow_path_to_player(
+    enemy: &mut Enemy,
+    transform: &mut Transform,
+    delta: f32,
+) {
+    let Some(path) = &mut enemy.path else { return };
+    let Some(next) = path.first() else {
+        enemy.path = None;
+        return;
+    };
+
+    let pos = graphical_to_physical(transform.translation);
+
+    let dir = *next - pos;
+    let dir = dir.normalize_or_zero() * FOLLOW_SPEED * delta;
+    let dir = physical_to_graphical(dir);
+    transform.translation += dir;
+
+    let pos = graphical_to_physical(transform.translation);
+
+    if pos.distance(*next) < NEXT_PATH_NODE_PICK_DISTANCE {
+        path.remove(0);
+    }
+}
+
+fn player_entity_raycast(
+    raycast: &RayCast,
+    player_entity: Entity,
+) -> Option<Vec2> {
+    let hit = raycast.hit.as_ref()?;
+
+    if hit.entity == player_entity {
+        Some(hit.position)
+    } else {
+        None
     }
 }
 

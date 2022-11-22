@@ -7,6 +7,7 @@ use doome_bevy::components::*;
 use doome_bevy::enemies::{Enemy, RecalculateNavData};
 use doome_bevy::physics::components::{Body, BodyType, Collider, RayCast};
 use doome_bevy::player::Player;
+use doome_bevy::shooting::Shooter;
 use glam::vec3;
 use indoc::indoc;
 
@@ -84,8 +85,9 @@ pub fn init(
     assets: Res<Assets>,
     mut recalc_nav_data: EventWriter<RecalculateNavData>,
 ) {
+    let player_shooter = Shooter::new(0.5, 20.0, assets.load_model("bullet"));
     commands.spawn((
-        Player { can_move: false },
+        Player::new(player_shooter),
         Transform::from_rotation(Quat::from_rotation_x(PI)),
         Body {
             velocity: Vec2::ZERO,
@@ -97,7 +99,7 @@ pub fn init(
     let moth_model = assets.load_model("moth_monster");
 
     commands.spawn((
-        Enemy::default(),
+        Enemy::new(Shooter::new(1.0, 10.0, assets.load_model("fireball"))),
         moth_model,
         Material::default().with_uv_transparency(),
         GeometryType::Dynamic,

@@ -81,16 +81,25 @@ fn setup(mut commands: Commands) {
 // TODO: Attach an event writer
 fn trigger_shoot(
     mut commands: Commands,
+    time: Res<Time>,
     assets: Res<Assets>,
-    player: Query<(&Player, &Transform)>,
+    mut player: Query<(&mut Player, &Transform)>,
     mut shooting_animation: Query<&mut ShootingAnimation>,
     mouse: Res<Input<MouseButton>>,
     keyboard: Res<Input<KeyCode>>,
     mut audio: ResMut<Audio>,
 ) {
-    let (player, player_transform) = player.single();
+    let (mut player, player_transform) = player.single_mut();
 
     if !player.can_move {
+        return;
+    }
+
+    let delta = time.delta_seconds();
+
+    player.shooter.update(delta);
+
+    if !player.shooter.can_shoot() {
         return;
     }
 
@@ -105,29 +114,7 @@ fn trigger_shoot(
         shooting_animation.timer.unpause();
         shooting_animation.timer.reset();
 
-        let forward = player_transform.forward();
-        let position_offset = forward * 1.0;
-        let forward = graphical_to_physical(forward);
-
-        let mut bullet_transform = player_transform.clone();
-        bullet_transform.translation += position_offset;
-        bullet_transform.translation += Vec3::Y * 1.0; // from the camera
-
-        let bullet_model = assets.load_model("bullet");
-
-        commands.spawn((
-            bullet_model,
-            Material::default().with_uv_transparency().emissive(),
-            GeometryType::Dynamic,
-            Bullet::new(10.0),
-            Billboard,
-            bullet_transform,
-            Collider::circle(0.25),
-            Body {
-                velocity: forward.normalize() * 20.0,
-                body_type: BodyType::Kinematic,
-            },
-        ));
+        player.shooter.shoot(player_transform, &mut commands);
     }
 }
 
