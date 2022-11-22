@@ -117,7 +117,7 @@ fn trigger_shoot(
 
         commands.spawn((
             bullet_model,
-            Material::default().with_uv_transparency(),
+            Material::default().with_uv_transparency().emissive(),
             GeometryType::Dynamic,
             Bullet::new(10.0),
             Billboard,

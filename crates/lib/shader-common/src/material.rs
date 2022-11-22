@@ -6,20 +6,38 @@ use crate::*;
 pub struct Material {
     // x,y,z is color, w is 1.0 indicates texture is present, 0.0 indicates texture is not present
     color: Vec4,
-    // x,y,z is reflectivity color, w is reflectivity
+    // x,y,z is reflectivity color
+    // w is to be reinterpreted as a u32:
+    //   - lower 8 bits are the reflectivity parameter (0-255 mapped into 0.0-1.0)
+    //   - next 8 bits are the emission parameter (0xff indicates an emissive material, 0x00 indicates a non-emissive material)
     reflectivity: Vec4,
 }
 
 impl Material {
+    fn reflectivity_color(&self) -> Vec3 {
+        self.reflectivity.xyz()
+    }
+
+    fn reflectivity(&self) -> f32 {
+        let w = self.reflectivity.w.to_bits();
+        let reflectivity = (w & 0x000000ff) as f32 / 255.0;
+        reflectivity
+    }
+
+    pub fn is_emissive(&self) -> bool {
+        let w = self.reflectivity.w.to_bits();
+        (w & 0x0000ff00) == 0x0000ff00
+    }
+
     pub fn shade(&self, world: &World, hit: Hit) -> Vec3 {
         let mut color = self.radiance(world, hit);
 
         // ------------ //
         // Reflectivity //
-        let reflectivity = self.reflectivity.w;
+        let reflectivity = self.reflectivity();
 
         if reflectivity > 0.0 {
-            let reflection_color = self.reflectivity.xyz();
+            let reflection_color = self.reflectivity_color();
 
             let reflection_dir = {
                 let camera_dir = -hit.ray.direction();
@@ -62,6 +80,12 @@ impl Material {
         } else {
             self.color.truncate()
         };
+
+        // ------------ //
+        // Emission     //
+        if self.is_emissive() {
+            return color;
+        }
 
         let mut radiance = vec3(0.0, 0.0, 0.0);
         let mut light_idx = 0;
@@ -140,7 +164,25 @@ impl Material {
         reflectivity: f32,
         reflection_color: Vec3,
     ) -> Self {
-        self.reflectivity = reflection_color.extend(reflectivity);
+        let reflectivity = reflectivity.clamp(0.0, 1.0);
+        let reflectivity = (reflectivity * 255.0) as u32;
+
+        let mut w = self.reflectivity.w.to_bits();
+        w ^= reflectivity & 0x000000ff;
+
+        self.reflectivity = reflection_color.extend(f32::from_bits(w));
+        self
+    }
+
+    pub fn with_emissive(mut self, emissive: bool) -> Self {
+        let mut w = self.reflectivity.w.to_bits();
+
+        let v = if emissive { 0x0000ff00 } else { 0x00000000 };
+
+        w |= v;
+
+        self.reflectivity.w = f32::from_bits(w);
+
         self
     }
 }

@@ -140,6 +140,7 @@ pub struct Material {
     pub alpha: Option<f32>,
     pub color: Option<Color>,
     pub reflectivity: Option<f32>,
+    pub emissive: bool,
     pub reflection_color: Option<Color>,
     pub texture: Option<AssetHandle<Texture>>,
     pub texture_enabled: Option<bool>,
@@ -183,6 +184,11 @@ impl Material {
         self
     }
 
+    pub fn emissive(mut self) -> Self {
+        self.emissive = true;
+        self
+    }
+
     pub(crate) fn merge_with(self, other: Self) -> Self {
         Self {
             alpha: self.alpha.or(other.alpha),
@@ -193,6 +199,7 @@ impl Material {
             texture_enabled: self.texture_enabled.or(other.texture_enabled),
             uv_divisor: self.uv_divisor.or(other.uv_divisor),
             uv_transparency: self.uv_transparency.or(other.uv_transparency),
+            emissive: self.emissive || other.emissive,
         }
     }
 
@@ -207,6 +214,7 @@ impl Material {
             .with_color(color)
             .with_texture(texture)
             .with_reflectivity(reflectivity, reflection_color)
+            .with_emissive(self.emissive)
     }
 }
 
