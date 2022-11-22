@@ -15,12 +15,13 @@ pub struct RayCast {
 
 impl RayCast {
     pub fn transformed_origin_and_dir(&self, matrix: &Mat4) -> (Vec2, Vec2) {
-        let origin =
-            matrix.transform_point3(self.origin.extend(0.0).xzy()).xz();
+        let origin = graphical_to_physical(
+            matrix.transform_point3(physical_to_graphical(self.origin)),
+        );
 
-        let direction = matrix
-            .transform_vector3(self.direction.extend(0.0).xzy())
-            .xz();
+        let direction = graphical_to_physical(
+            matrix.transform_vector3(physical_to_graphical(self.direction)),
+        );
 
         (origin, direction)
     }

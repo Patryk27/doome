@@ -5,7 +5,7 @@ use doome_bevy::assets::Assets;
 use doome_bevy::billboard::Billboard;
 use doome_bevy::components::*;
 use doome_bevy::enemies::{Enemy, RecalculateNavData};
-use doome_bevy::physics::components::{Body, BodyType, Collider};
+use doome_bevy::physics::components::{Body, BodyType, Collider, RayCast};
 use doome_bevy::player::Player;
 use glam::vec3;
 use indoc::indoc;
@@ -103,7 +103,11 @@ pub fn init(
         GeometryType::Dynamic,
         Transform::from_translation(vec3(0.0, 0.0, ELEPHANT_Z + 1.0)),
         Billboard,
-        // Collider::circle(0.5),
+        RayCast {
+            origin: Vec2::ZERO,
+            direction: Vec2::NEG_Y * 20.0,
+            hit: None,
+        }, // Collider::circle(0.5),
     ));
 
     let mut lvl = LevelBuilder::new(&mut commands, &assets);

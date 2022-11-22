@@ -4,7 +4,7 @@ use instant::Instant;
 
 use crate::convert::{graphical_to_physical, physical_to_graphical};
 use crate::nav::NavObstacle;
-use crate::physics::components::Collider;
+use crate::physics::components::{Collider, RayCast};
 use crate::player::Player;
 
 pub struct EnemiesPlugin;
@@ -25,6 +25,7 @@ impl Plugin for EnemiesPlugin {
         app.add_system(update_hivemind);
         app.add_system(follow_player);
         app.add_system(follow_path);
+        app.add_system(i_see_the_player);
     }
 }
 
@@ -32,6 +33,7 @@ fn setup(mut commands: Commands) {
     commands.spawn(Hivemind {
         nav_data: None,
         known_player_position: Vec2::ZERO,
+        player_entity: None,
     });
 }
 
@@ -39,20 +41,38 @@ fn setup(mut commands: Commands) {
 struct Hivemind {
     nav_data: Option<NavData>,
     known_player_position: Vec2,
+    player_entity: Option<Entity>,
 }
 
 const MAX_DISTANCE_FOR_NEW_PATH: f32 = 1.0;
 
 fn update_hivemind(
     mut hivemind: Query<&mut Hivemind>,
-    player: Query<(&Player, &Transform)>,
+    player: Query<(Entity, &Player, &Transform)>,
 ) {
     let mut hivemind = hivemind.single_mut();
 
-    let (_player, player_transform) = player.single();
+    let (player_entity, _player, player_transform) = player.single();
     let player_pos = graphical_to_physical(player_transform.translation);
 
     hivemind.known_player_position = player_pos;
+    hivemind.player_entity = Some(player_entity);
+}
+
+fn i_see_the_player(
+    hivemind: Query<&Hivemind>,
+    enemies: Query<(&Enemy, &RayCast)>,
+) {
+    let hivemind = hivemind.single();
+    let Some(player_entity) = hivemind.player_entity else { return };
+
+    for (enemy, raycast) in enemies.iter() {
+        if let Some(hit) = &raycast.hit {
+            if hit.entity == player_entity {
+                // log::info!("I see the player!");
+            }
+        }
+    }
 }
 
 fn follow_player(
