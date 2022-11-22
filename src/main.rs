@@ -77,6 +77,8 @@ fn main() {
         .add_plugin(doome_bevy::billboard::BillboardPlugin)
         .add_plugin(doome_bevy::bullets::BulletsPlugin)
         // Misc systems
+        .add_system(doome_bevy::simple_animations::rotate)
+        .add_system(doome_bevy::simple_animations::float)
         .add_system(quit_on_exit)
         .add_system(process_movement)
         .add_system(process_camera)

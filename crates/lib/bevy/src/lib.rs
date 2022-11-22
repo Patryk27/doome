@@ -14,6 +14,7 @@ pub mod physics;
 pub mod player;
 pub mod renderer;
 pub mod shooting;
+pub mod simple_animations;
 pub mod text;
 
 mod raytracer;

@@ -8,6 +8,7 @@ use doome_bevy::enemies::{Enemy, RecalculateNavData};
 use doome_bevy::health::Health;
 use doome_bevy::physics::components::{Body, BodyType, Collider, RayCast};
 use doome_bevy::player::Player;
+use doome_bevy::simple_animations::{Rotate, Float};
 use doome_bevy::shooting::Shooter;
 use glam::vec3;
 use indoc::indoc;
@@ -86,6 +87,8 @@ pub fn init(
     assets: Res<Assets>,
     mut recalc_nav_data: EventWriter<RecalculateNavData>,
 ) {
+    // ------ //
+    // Player //
     let player_shooter =
         Shooter::new(0.5, 20.0, 10.0, assets.load_model("bullet"));
     commands.spawn((
@@ -99,15 +102,17 @@ pub fn init(
         Health { val: 100.0 },
     ));
 
+    // ------- //
+    // Monster //
     let moth_model = assets.load_model("moth_monster");
 
     commands.spawn((
-        Enemy::new(Shooter::new(
-            1.0,
-            10.0,
-            10.0,
-            assets.load_model("fireball"),
-        )),
+        // Enemy::new(Shooter::new(
+        //     1.0,
+        //     10.0,
+        //     10.0,
+        //     assets.load_model("fireball"),
+        // )),
         moth_model,
         Material::default().with_uv_transparency(),
         GeometryType::Dynamic,
@@ -119,6 +124,29 @@ pub fn init(
             direction: Vec2::NEG_Y * 20.0,
             hit: None,
         }, // Collider::circle(0.5),
+    ));
+
+    //------ //
+    // Heart //
+    let heart_model = assets.load_model("heart");
+
+    commands.spawn((
+        heart_model,
+        Transform::from_translation(vec3(0.0, 1.5, ELEPHANT_Z - 3.0)),
+        Rotate {
+            inverted: false,
+            speed: 0.4,
+        },
+        Float {
+            anchor: vec3(0.0, 1.5, ELEPHANT_Z - 3.0),
+            amplitude: 0.5,
+            speed: 1.0,
+        },
+        GeometryType::Dynamic,
+        Material::default()
+            .with_reflectivity(1.0)
+            .with_color(Color::hex(0xf12421))
+            .with_reflection_color(Color::hex(0xf12421)),
     ));
 
     let mut lvl = LevelBuilder::new(&mut commands, &assets);
