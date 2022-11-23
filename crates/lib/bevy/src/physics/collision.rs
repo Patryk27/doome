@@ -57,12 +57,14 @@ pub fn resolve_collisions(
                     entity_b: passive_entity,
                 });
 
-                let mtv_component = vector_decompose(body.velocity, mtv);
+                if body.body_type.is_kinematic() {
+                    let mtv_component = vector_decompose(body.velocity, mtv);
 
-                body.velocity -= mtv * mtv_component;
+                    body.velocity -= mtv * mtv_component;
 
-                if body.velocity.length() < MIN_VELOCITY {
-                    body.velocity = Vec2::ZERO;
+                    if body.velocity.length() < MIN_VELOCITY {
+                        body.velocity = Vec2::ZERO;
+                    }
                 }
             }
         }

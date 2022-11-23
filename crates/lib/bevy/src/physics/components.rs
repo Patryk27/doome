@@ -83,7 +83,19 @@ pub struct Body {
 }
 
 pub enum BodyType {
-    Static,
+    /// The body is moved by the physics engine and will stop on collisions
     Kinematic,
-    // Rigid, // TODO: implement rigid body physics
+    /// The body is moved by the physics engine and will not stop on collisions
+    /// Useful for bullets & maybe enemies
+    Ethereal,
+}
+
+impl BodyType {
+    pub fn is_kinematic(&self) -> bool {
+        matches!(self, BodyType::Kinematic)
+    }
+
+    pub fn is_ethereal(&self) -> bool {
+        matches!(self, BodyType::Ethereal)
+    }
 }

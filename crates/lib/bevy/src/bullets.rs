@@ -30,6 +30,10 @@ fn collide_and_apply_damage(
 ) {
     for collision in collision_events.iter() {
         if let Ok(bullet) = bullets.get(collision.entity_a) {
+            if is_a_bullet(&bullets, collision.entity_b) {
+                continue;
+            }
+
             if let Some(mut entity) = commands.get_entity(collision.entity_a) {
                 entity.despawn();
             }
@@ -39,4 +43,8 @@ fn collide_and_apply_damage(
             }
         }
     }
+}
+
+fn is_a_bullet(bullets: &Query<&Bullet>, entity: Entity) -> bool {
+    bullets.get(entity).is_ok()
 }

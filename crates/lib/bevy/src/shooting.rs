@@ -15,6 +15,7 @@ pub struct Shooter {
     bullet_speed: f32,
     bullet_model: AssetHandle<Model>,
     bullet_damage: f32,
+    bullet_scale: f32,
 }
 
 impl Shooter {
@@ -22,6 +23,7 @@ impl Shooter {
         cooldown: f32,
         bullet_speed: f32,
         bullet_damage: f32,
+        bullet_scale: f32,
         bullet_model: AssetHandle<Model>,
     ) -> Self {
         Self {
@@ -30,6 +32,7 @@ impl Shooter {
             bullet_speed,
             bullet_model,
             bullet_damage,
+            bullet_scale,
         }
     }
 
@@ -47,7 +50,7 @@ impl Shooter {
         let mut bullet_transform = transform.clone();
         bullet_transform.translation += position_offset;
         bullet_transform.translation += Vec3::Y * 1.0; // from the camera
-        bullet_transform.scale = Vec3::ONE * 0.5;
+        bullet_transform.scale = Vec3::ONE * self.bullet_scale;
 
         commands.spawn((
             bullet_transform,
@@ -58,7 +61,7 @@ impl Shooter {
                 velocity: graphical_to_physical(
                     forward.normalize() * self.bullet_speed,
                 ),
-                body_type: BodyType::Kinematic,
+                body_type: BodyType::Ethereal,
             },
             GeometryType::Dynamic,
             Bullet {
