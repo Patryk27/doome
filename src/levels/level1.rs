@@ -108,12 +108,12 @@ pub fn init(
     let moth_model = assets.load_model("moth_monster");
 
     commands.spawn((
-        // Enemy::new(Shooter::new(
-        //     1.0,
-        //     10.0,
-        //     10.0,
-        //     assets.load_model("fireball"),
-        // )),
+        Enemy::new(Shooter::new(
+            1.0,
+            10.0,
+            10.0,
+            assets.load_model("fireball"),
+        )),
         moth_model,
         Material::default().with_uv_transparency(),
         GeometryType::Dynamic,
