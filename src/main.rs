@@ -1,5 +1,7 @@
 #![allow(clippy::type_complexity, clippy::too_many_arguments)]
 
+mod charon;
+mod explosions;
 mod interaction;
 mod levels;
 mod markers;
@@ -10,14 +12,10 @@ use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
 use doome_bevy::assets::Assets;
-use doome_bevy::audio::AudioPlugin;
 use doome_bevy::components::*;
 use doome_bevy::convert::graphical_to_physical;
-use doome_bevy::doome::DoomePlugin;
 use doome_bevy::physics::components::Body;
-use doome_bevy::physics::PhysicsPlugin;
 use doome_bevy::player::Player;
-use doome_bevy::renderer::RendererPlugin;
 use doome_bevy::text::TextEngine;
 use doome_engine::{HEIGHT, WIDTH};
 use glam::vec3;
@@ -67,15 +65,17 @@ fn main() {
         .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
         .add_plugin(bevy::winit::WinitPlugin::default())
         // Internal plugins
-        .add_plugin(RendererPlugin)
-        .add_plugin(DoomePlugin)
-        .add_plugin(PhysicsPlugin::default())
-        .add_plugin(UiPlugin)
-        .add_plugin(AudioPlugin)
-        // Game plugins
+        .add_plugin(doome_bevy::renderer::RendererPlugin)
+        .add_plugin(doome_bevy::doome::DoomePlugin)
+        .add_plugin(doome_bevy::physics::PhysicsPlugin::default())
+        .add_plugin(doome_bevy::audio::AudioPlugin)
         .add_plugin(doome_bevy::enemies::EnemiesPlugin)
         .add_plugin(doome_bevy::billboard::BillboardPlugin)
         .add_plugin(doome_bevy::bullets::BulletsPlugin)
+        .add_plugin(doome_bevy::health::HealthPlugin)
+        // Game plugins
+        .add_plugin(ui::UiPlugin)
+        .add_plugin(charon::Charon)
         // Misc systems
         .add_system(doome_bevy::simple_animations::rotate)
         .add_system(doome_bevy::simple_animations::float)
@@ -83,6 +83,7 @@ fn main() {
         .add_system(quit_on_exit)
         .add_system(process_movement)
         .add_system(process_camera)
+        .add_system(explosions::update_explosions)
         .add_startup_system(hide_cursor)
         .add_startup_system(levels::level1::init)
         .add_system(levels::level1::process)

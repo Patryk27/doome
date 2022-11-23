@@ -15,6 +15,7 @@ use glam::vec3;
 use indoc::indoc;
 
 use super::utils::*;
+use crate::explosions::spawn_explosion;
 use crate::ui::{Text, TypewriterPrint};
 
 const INTRO_TEXT: &str = indoc! {r#"
@@ -91,7 +92,7 @@ pub fn init(
     // ------ //
     // Player //
     let player_shooter =
-        Shooter::new(0.2, 20.0, 10.0, assets.load_model("bullet"));
+        Shooter::new(0.2, 20.0, 30.0, assets.load_model("bullet"));
     commands.spawn((
         Player::new(player_shooter),
         Transform::from_rotation(Quat::from_rotation_x(PI)),
@@ -100,7 +101,7 @@ pub fn init(
             body_type: BodyType::Kinematic,
         },
         Collider::circle(0.5),
-        Health { val: 100.0 },
+        Health::new(100.0),
     ));
 
     // ------- //
@@ -119,12 +120,13 @@ pub fn init(
         GeometryType::Dynamic,
         Transform::from_translation(vec3(0.0, 0.0, ELEPHANT_Z + 1.0)),
         Billboard,
-        Health { val: 100.0 },
+        Health::new(100.0),
         RayCast {
             origin: Vec2::ZERO,
             direction: Vec2::NEG_Y * 20.0,
             hit: None,
-        }, // Collider::circle(0.5),
+        },
+        Collider::circle(0.5),
     ));
 
     //--------------------- //
@@ -133,31 +135,7 @@ pub fn init(
     let transform =
         Transform::from_translation(vec3(0.0, 1.0, ELEPHANT_Z - 6.0))
             .with_scale(Vec3::ONE * 6.0);
-    let frames = (0..=11)
-        .map(|n| format!("explosion_{n}"))
-        .map(|name| assets.load_model(&name))
-        .map(|handle| ModelAnimationFrame {
-            duration: 0.07,
-            handle,
-        })
-        .collect();
-
-    let model_animation = ModelAnimation {
-        frames,
-        frame_time: 0.0,
-        current_frame: 0,
-    };
-
-    let starting_model = model_animation.frames[5].handle;
-
-    commands.spawn((
-        transform,
-        model_animation,
-        starting_model,
-        GeometryType::Dynamic,
-        Billboard,
-        Material::default().with_uv_transparency().emissive(),
-    ));
+    spawn_explosion(&mut commands, &assets, transform);
 
     //------ //
     // Heart //

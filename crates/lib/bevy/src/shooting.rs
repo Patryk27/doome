@@ -47,6 +47,7 @@ impl Shooter {
         let mut bullet_transform = transform.clone();
         bullet_transform.translation += position_offset;
         bullet_transform.translation += Vec3::Y * 1.0; // from the camera
+        bullet_transform.scale = Vec3::ONE * 0.5;
 
         commands.spawn((
             bullet_transform,
