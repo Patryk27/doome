@@ -38,7 +38,7 @@ impl Plugin for DoomeRaytracerPlugin {
         };
 
         app.insert_resource(state)
-            .add_system(sync_created_geometry)
+            .add_system_to_stage(CoreStage::PreUpdate, sync_created_geometry)
             .add_system(sync_updated_geometry)
             .add_system(sync_lights)
             .add_system(sync_camera)
