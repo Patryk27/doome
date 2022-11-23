@@ -7,6 +7,7 @@ edition = "2021"
 # Workspace
 doome-engine = { path = "../engine" }
 doome-pixels = { path = "../pixels" }
+doome-screen-space-effects = { path = "../screen-space-effects" }
 doome-raytracer = { path = "../raytracer" }
 doome-scaler = { path = "../scaler" }
 doome-text = { path = "../text" }

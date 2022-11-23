@@ -13,3 +13,7 @@ path_to_copy_to = "crates/lib/scaler/src/shader"
 [[shaders]]
 path_to_shader = "crates/shaders/pixels"
 path_to_copy_to = "crates/lib/pixels/src/shader"
+
+[[shaders]]
+path_to_shader = "crates/shaders/crt"
+path_to_copy_to = "crates/lib/screen-space-effects/src/crt"

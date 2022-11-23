@@ -5,6 +5,7 @@ use doome_engine::{HEIGHT, WIDTH};
 use doome_pixels::Pixels;
 use doome_raytracer as rt;
 use doome_scaler::Scaler;
+use doome_screen_space_effects::ScreenSpaceEffects;
 use doome_wgpu_ext::AllocatedUniform;
 use rt::ShaderConstants;
 
@@ -19,9 +20,15 @@ pub struct DoomePlugin;
 #[derive(Resource)]
 pub struct DoomeRenderer {
     pub raytracer: rt::Raytracer,
-    pub scaler: Scaler,
     pub pixels: Pixels,
+    pub screen_space_effects: ScreenSpaceEffects,
+    pub scaler: Scaler,
+
+    pub width: f32,
+    pub height: f32,
+
     pub intermediate_output_texture_view: wgpu::TextureView,
+    pub sse_output_texture_view: wgpu::TextureView,
     pub shader_constants: AllocatedUniform<ShaderConstants>,
 }
 
@@ -39,16 +46,8 @@ impl Plugin for DoomePlugin {
 
         let window = windows.get_primary().unwrap();
 
-        shader_constants.write0(
-            queue,
-            &ShaderConstants {
-                width: WIDTH as f32,
-                height: HEIGHT as f32,
-                // TODO: Get it
-                scaled_width: window.physical_width() as f32,
-                scaled_height: window.physical_height() as f32,
-            },
-        );
+        let width = window.physical_width() as f32;
+        let height = window.physical_height() as f32;
 
         let raytracer = rt::Raytracer::new(
             device,
@@ -81,9 +80,35 @@ impl Plugin for DoomePlugin {
         let intermediate_output_texture_view =
             intermediate_output_texture.create_view(&Default::default());
 
-        let scaler = Scaler::new(
+        let sse_output_texture =
+            device.create_texture(&wgpu::TextureDescriptor {
+                size: wgpu::Extent3d {
+                    width: WIDTH as u32,
+                    height: HEIGHT as u32,
+                    depth_or_array_layers: 1,
+                },
+                label: Some("raytracer_output"),
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                usage: wgpu::TextureUsages::COPY_SRC
+                    | wgpu::TextureUsages::RENDER_ATTACHMENT
+                    | wgpu::TextureUsages::TEXTURE_BINDING,
+            });
+
+        let sse_output_texture_view =
+            sse_output_texture.create_view(&Default::default());
+
+        let screen_space_effects = ScreenSpaceEffects::new(
             device,
             &intermediate_output_texture_view,
+            &shader_constants,
+        );
+
+        let scaler = Scaler::new(
+            device,
+            &sse_output_texture_view,
             renderer.output_texture_format,
             &shader_constants,
         );
@@ -91,9 +116,13 @@ impl Plugin for DoomePlugin {
         app.insert_resource(DoomeRenderer {
             raytracer,
             scaler,
+            screen_space_effects,
             pixels,
+            width,
+            height,
             shader_constants,
             intermediate_output_texture_view,
+            sse_output_texture_view,
         });
 
         // TODO
@@ -109,7 +138,7 @@ impl Plugin for DoomePlugin {
 fn on_resize(
     mut window_resized: EventReader<WindowResized>,
     renderer: Res<RendererState>,
-    state: ResMut<DoomeRenderer>,
+    mut state: ResMut<DoomeRenderer>,
 ) {
     for window_resized in window_resized.iter() {
         let scale_factor = renderer.window_scale_factor;
@@ -122,13 +151,9 @@ fn on_resize(
         let RendererState {
             surface,
             device,
-            queue,
             output_texture_format,
             ..
         } = renderer.as_ref();
-        let DoomeRenderer {
-            shader_constants, ..
-        } = state.as_ref();
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -140,16 +165,8 @@ fn on_resize(
         };
 
         surface.configure(device, &config);
-
-        shader_constants.write0(
-            queue,
-            &ShaderConstants {
-                width: WIDTH as f32,
-                height: HEIGHT as f32,
-                scaled_width: width,
-                scaled_height: height,
-            },
-        );
+        state.width = width;
+        state.height = height;
     }
 }
 

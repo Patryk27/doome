@@ -185,6 +185,7 @@ fn sync_camera(
 }
 
 fn render(
+    time: Res<Time>,
     renderer: Res<DoomeRenderer>,
     renderer_state: Res<RendererState>,
     mut raytracer_state: ResMut<DoomeRaytracerState>,
@@ -192,11 +193,14 @@ fn render(
     let Ok(current_texture) = renderer_state.surface.get_current_texture() else { return };
     let device = &renderer_state.device;
     let queue = &renderer_state.queue;
+
     let intermediate_texture = &renderer.intermediate_output_texture_view;
+    let sse_texture = &renderer.sse_output_texture_view;
 
     let DoomeRenderer {
         raytracer,
         pixels,
+        screen_space_effects,
         scaler,
         shader_constants,
         ..
@@ -220,6 +224,18 @@ fn render(
             label: Some("render_command_encoder"),
         });
 
+    shader_constants.write0(
+        queue,
+        &rt::ShaderConstants {
+            width: WIDTH as f32,
+            height: HEIGHT as f32,
+            scaled_width: renderer.width,
+            scaled_height: renderer.height,
+            time: time.elapsed_seconds(),
+            ..rt::ShaderConstants::default()
+        },
+    );
+
     raytracer.render(
         queue,
         &mut encoder,
@@ -234,6 +250,12 @@ fn render(
     );
 
     pixels.render(queue, &mut encoder, shader_constants, intermediate_texture);
+    screen_space_effects.render(
+        queue,
+        &mut encoder,
+        shader_constants,
+        sse_texture,
+    );
     scaler.render(queue, &mut encoder, shader_constants, &texture_view);
 
     renderer_state.queue.submit(vec![encoder.finish()]);

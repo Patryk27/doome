@@ -1265,6 +1265,7 @@ dependencies = [
  "doome-pixels",
  "doome-raytracer",
  "doome-scaler",
+ "doome-screen-space-effects",
  "doome-text",
  "doome-wgpu-ext",
  "futures-lite",
@@ -1279,6 +1280,14 @@ dependencies = [
  "tobj",
  "wgpu",
  "winit",
+]
+
+[[package]]
+name = "doome-crt-shader"
+version = "0.1.0"
+dependencies = [
+ "doome-shader-common",
+ "spirv-std",
 ]
 
 [[package]]
@@ -1343,6 +1352,15 @@ dependencies = [
 
 [[package]]
 name = "doome-scaler"
+version = "0.1.0"
+dependencies = [
+ "doome-shader-common",
+ "doome-wgpu-ext",
+ "wgpu",
+]
+
+[[package]]
+name = "doome-screen-space-effects"
 version = "0.1.0"
 dependencies = [
  "doome-shader-common",
