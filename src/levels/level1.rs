@@ -91,8 +91,10 @@ pub fn init(
 ) {
     // ------ //
     // Player //
-    let player_shooter =
-        Shooter::new(0.2, 20.0, 30.0, 0.25, assets.load_model("bullet"));
+    let player_shooter = Shooter::default()
+        .with_speed(20.0)
+        .with_cooldown(0.2)
+        .with_damage(30.0);
     commands.spawn((
         Player::new(player_shooter),
         Transform::from_rotation(Quat::from_rotation_x(PI)),
@@ -109,13 +111,13 @@ pub fn init(
     let moth_model = assets.load_model("moth_monster");
 
     commands.spawn((
-        Enemy::new(Shooter::new(
-            1.0,
-            10.0,
-            10.0,
-            1.0,
-            assets.load_model("fireball"),
-        )),
+        Enemy::new(
+            Shooter::default()
+                .with_cooldown(1.0)
+                .with_damage(10.0)
+                .with_speed(10.0)
+                .with_model(assets.load_model("fireball")),
+        ),
         moth_model,
         Material::default().with_uv_transparency(),
         GeometryType::Dynamic,
