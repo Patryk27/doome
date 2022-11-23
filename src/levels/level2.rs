@@ -79,6 +79,13 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
         .spawn()
         .id();
 
+    lvl.model("table")
+        .with_translation(vec3(0.0, 0.0, 0.0))
+        .with_rotation(Quat::from_rotation_y(-PI / 2.0))
+        .with_scale(Vec3::ONE * 0.6)
+        .with_material(Material::default().with_uv_divisor(4, 4))
+        .spawn();
+
     for n in 0..6 {
         let nf = n as f32 / 3.0 * PI;
         let pos = vec3(-8.5 * nf.cos(), 0.0, 8.5 * nf.sin());
