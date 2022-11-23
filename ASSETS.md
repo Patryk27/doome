@@ -7,6 +7,11 @@
 | RPG-7                  | https://sketchfab.com/3d-models/rpg-7-da0deb112e734dd5b00cbb69cfb5f271      | CC Attribution |
 | Pixel Texture Pack     | https://opengameart.org/content/pixel-texture-pack                          | CC-BY4.0       |
 | A pixel art exposion   | https://opengameart.org/content/pixel-explosion-12-frames                   | ???            |
+| Weathered Metal Grates | https://opengameart.org/content/weathered-metal-grates                      | ???            |
+| Rusted metal texture pack | https://opengameart.org/content/rusted-metal-texture-pack | ??? |
+| Sewer tileset | https://opengameart.org/content/sewer-tileset | CC-BY 3.0 |
+
+
 
 # Misc
 

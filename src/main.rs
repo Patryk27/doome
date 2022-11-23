@@ -85,8 +85,8 @@ fn main() {
         .add_system(process_camera)
         .add_system(explosions::update_explosions)
         .add_startup_system(hide_cursor)
-        .add_startup_system(levels::level1::init)
-        .add_system(levels::level1::process)
+        .add_startup_system(levels::level2::init)
+        .add_system(levels::level2::process)
         .run();
 }
 
@@ -162,6 +162,6 @@ fn process_camera(
     let (transform,) = player.single();
     let pos = transform.translation;
 
-    camera.origin = vec3(pos.x, 1.0, pos.z);
+    camera.origin = vec3(pos.x, 1.2, pos.z);
     camera.look_at = camera.origin + transform.forward() * 5.0;
 }

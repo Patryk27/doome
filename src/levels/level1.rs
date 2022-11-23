@@ -179,7 +179,7 @@ pub fn init(
             Color::hex(0xffffff),
             0.0,
         )
-        .insert(LightFade::in_delayed(0.5, 0.1))
+        .insert(LightFade::fade_in_delayed(0.5, 0.1))
         .id();
 
     let corr_sl1 = lvl
@@ -190,7 +190,7 @@ pub fn init(
             Color::hex(0xffffff),
             0.0,
         )
-        .insert(LightFade::in_delayed(1.5, 0.1))
+        .insert(LightFade::fade_in_delayed(1.5, 0.1))
         .id();
 
     let corr_sl2 = lvl
@@ -201,7 +201,7 @@ pub fn init(
             Color::hex(0xffffff),
             0.0,
         )
-        .insert(LightFade::in_delayed(2.5, 0.1))
+        .insert(LightFade::fade_in_delayed(2.5, 0.1))
         .id();
 
     let corr_sl3 = lvl
@@ -212,7 +212,7 @@ pub fn init(
             Color::hex(0xffffff),
             0.0,
         )
-        .insert(LightFade::in_delayed(3.5, 0.1))
+        .insert(LightFade::fade_in_delayed(3.5, 0.1))
         .id();
 
     // Main
@@ -243,7 +243,7 @@ pub fn init(
             Color::hex(0x990000),
             0.0,
         )
-        .insert(LightFade::in_delayed(4.5, 0.1))
+        .insert(LightFade::fade_in_delayed(4.5, 0.1))
         .id();
 
     recalc_nav_data.send(RecalculateNavData);
@@ -358,12 +358,12 @@ pub fn process(
                 && (19.0..=20.0).contains(&camera.z)
             {
                 for sl in [corr_sl0, corr_sl1, corr_sl2, corr_sl3] {
-                    commands.entity(*sl).insert(LightFade::out(1.0));
+                    commands.entity(*sl).insert(LightFade::fade_out(1.0));
                 }
 
                 commands
                     .entity(*main_sl0)
-                    .insert(LightFade::out_delayed(1.5, 0.5));
+                    .insert(LightFade::fade_out_delayed(1.5, 0.5));
 
                 let mut lvl = LevelBuilder::new(&mut commands, &assets);
 
@@ -375,7 +375,7 @@ pub fn process(
                         Color::hex(0xffffff),
                         0.0,
                     )
-                    .insert(LightFade::in_delayed(3.0, 0.15))
+                    .insert(LightFade::fade_in_delayed(3.0, 0.15))
                     .id();
 
                 let main_sl1 = lvl
@@ -386,7 +386,7 @@ pub fn process(
                         Color::hex(0xffffff),
                         0.0,
                     )
-                    .insert(LightFade::in_delayed(3.0, 0.15))
+                    .insert(LightFade::fade_in_delayed(3.0, 0.15))
                     .id();
 
                 player.single_mut().can_move = false;
@@ -465,8 +465,8 @@ pub fn process(
 
             txt_elephant_visibility.is_visible = is_close_to_elephant;
 
-            commands.entity(*main_sl0).insert(LightFade::out(3.0));
-            commands.entity(*main_sl1).insert(LightFade::out(3.0));
+            commands.entity(*main_sl0).insert(LightFade::fade_out(3.0));
+            commands.entity(*main_sl1).insert(LightFade::fade_out(3.0));
 
             if is_close_to_elephant && keys.just_pressed(KeyCode::F) {
                 txt_elephant_visibility.is_visible = false;

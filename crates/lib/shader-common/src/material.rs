@@ -14,11 +14,18 @@ pub struct Material {
 }
 
 impl Material {
-    fn reflectivity_color(&self) -> Vec3 {
+    pub fn none() -> Self {
+        Self {
+            color: Default::default(),
+            reflectivity: Default::default(),
+        }
+    }
+
+    pub fn reflectivity_color(&self) -> Vec3 {
         self.reflectivity.xyz()
     }
 
-    fn reflectivity(&self) -> f32 {
+    pub fn reflectivity(&self) -> f32 {
         let w = self.reflectivity.w.to_bits();
 
         (w & 0x000000ff) as f32 / 255.0
@@ -30,50 +37,7 @@ impl Material {
         (w & 0x0000ff00) == 0x0000ff00
     }
 
-    pub fn shade(&self, world: &World, hit: Hit) -> Vec3 {
-        let mut color = self.radiance(world, hit);
-        let reflectivity = self.reflectivity();
-
-        if reflectivity > 0.0 {
-            let reflection_color = self.reflectivity_color();
-
-            let reflection_dir = {
-                let camera_dir = -hit.ray.direction();
-
-                hit.normal * hit.normal.dot(camera_dir) * 2.0 - camera_dir
-            };
-
-            let ray_color =
-                Ray::new(hit.point, reflection_dir).shade_basic(world);
-
-            color += ray_color * reflection_color * reflectivity;
-        }
-
-        // ------------ //
-        // Transparency //
-        // TODO
-        // let triangle = world.geometry(hit.tri_id);
-
-        // if triangle.alpha() < 1.0 {
-        //     let ray_color = Ray::new(
-        //         hit.point + 0.1 * hit.ray.direction(),
-        //         hit.ray.direction(),
-        //     )
-        //     .shade_basic(world);
-
-        //     color =
-        //         color * triangle.alpha() + ray_color * (1.0 - triangle.alpha());
-        // }
-
-        color
-    }
-
-    /// See: [`Ray::shade_basic()`].
-    pub fn shade_basic(&self, world: &World, hit: Hit) -> Vec3 {
-        self.radiance(world, hit)
-    }
-
-    fn radiance(&self, world: &World, hit: Hit) -> Vec3 {
+    pub fn radiance(&self, world: &World, hit: Hit) -> Vec3 {
         let color = if self.has_texture() {
             (world.atlas_sample(hit.tri_id, hit) * self.color).truncate()
         } else {
@@ -164,13 +128,11 @@ impl Material {
 
     pub fn with_emissive(mut self, emissive: bool) -> Self {
         let mut w = self.reflectivity.w.to_bits();
-
         let v = if emissive { 0x0000ff00 } else { 0x00000000 };
 
         w |= v;
 
         self.reflectivity.w = f32::from_bits(w);
-
         self
     }
 }

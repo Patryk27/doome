@@ -6,8 +6,7 @@ use crate::*;
 /// v0.x = vertex 0 (x; f32)
 /// v0.y = vertex 0 (y; f32)
 /// v0.z = vertex 0 (z; f32)
-/// v0.w (bit 15) = uv transparency enabled/disabled (bool)
-/// v0.w (bits 16..=31) = material id (u16)
+/// v0.w (bits 0..16) = material id (u16)
 ///
 /// v1.x = vertex 1 (x; f32)
 /// v1.y = vertex 1 (y; f32)
@@ -17,7 +16,9 @@ use crate::*;
 /// v2.x = vertex 2 (x; f32)
 /// v2.y = vertex 2 (y; f32)
 /// v2.z = vertex 3 (z; f32)
-/// v2.w (bits 15..=31) = uv divisor (u16)
+/// v2.w (bit 0) = casts shadows (bool)
+/// v2.w (bit 1) = uv transparency enabled/disabled (bool)
+/// v2.w (bits 15..32) = uv divisor (u16)
 /// ```
 #[repr(C)]
 #[derive(Copy, Clone, Default, PartialEq, Pod, Zeroable)]
@@ -29,11 +30,12 @@ pub struct Triangle {
 }
 
 impl Triangle {
-    const UV_TRANSPARENCY_MASK: u32 = 1 << 16;
+    const CASTS_SHADOWS_MASK: u32 = 1 << 0;
+    const UV_TRANSPARENCY_MASK: u32 = 1 << 1;
 
     pub fn new(v0: Vec3, v1: Vec3, v2: Vec3, mat_id: MaterialId) -> Self {
         Self {
-            v0: v0.extend(mat_id.get() as f32),
+            v0: v0.extend(f32::from_bits(mat_id.get() as _)),
             v1: v1.extend(1.0),
             v2: v2.extend(0.0),
         }
@@ -65,7 +67,27 @@ impl Triangle {
         self.v1.w
     }
 
-    pub fn hit(self, ray: Ray) -> Hit {
+    pub fn material_id(&self) -> MaterialId {
+        MaterialId::new(self.v0.w.to_bits() as _)
+    }
+
+    pub fn casts_shadows(&self) -> bool {
+        self.v2.w.to_bits() & Self::CASTS_SHADOWS_MASK > 0
+    }
+
+    pub fn has_uv_transparency(&self) -> bool {
+        self.v2.w.to_bits() & Self::UV_TRANSPARENCY_MASK > 0
+    }
+
+    pub fn uv_divisor(&self) -> Vec2 {
+        let w = self.v2.w.to_bits() >> 16;
+        let u = w >> 8;
+        let v = w & ((1 << 8) - 1);
+
+        vec2(1.0 / (u as f32), 1.0 / (v as f32))
+    }
+
+    pub fn hit(self, ray: Ray, culling: bool) -> Hit {
         // Following the Möller-Trumbore algorithm
 
         let v0v1 = (self.v1 - self.v0).truncate();
@@ -73,9 +95,14 @@ impl Triangle {
         let pvec = ray.direction().cross(v0v2);
         let det = v0v1.dot(pvec);
 
-        // TODO enable culling for hit-testing & checking alphas
-        if det.abs() < f32::EPSILON {
-            return Hit::none();
+        if culling {
+            if det < f32::EPSILON {
+                return Hit::none();
+            }
+        } else {
+            if det.abs() < f32::EPSILON {
+                return Hit::none();
+            }
         }
 
         let inv_det = 1.0 / det;
@@ -115,23 +142,8 @@ impl Triangle {
             normal: v0v1.cross(v0v2).normalize(),
             tri_id: TriangleId::new_static(0).into_any(),
             mat_id: self.material_id(),
+            alpha: self.alpha(),
         }
-    }
-
-    pub fn material_id(&self) -> MaterialId {
-        MaterialId::new(((self.v0.w as u32) & !(1 << 16)) as _)
-    }
-
-    pub fn has_uv_transparency(&self) -> bool {
-        (self.v0.w as u32) & Self::UV_TRANSPARENCY_MASK > 0
-    }
-
-    pub fn uv_divisor(&self) -> Vec2 {
-        let w = self.v2.w as u32;
-        let u = w >> 8;
-        let v = w & ((1 << 8) - 1);
-
-        vec2(1.0 / (u as f32), 1.0 / (v as f32))
     }
 }
 
@@ -149,8 +161,21 @@ impl Triangle {
         self
     }
 
+    pub fn with_casts_shadows(mut self, val: bool) -> Self {
+        let mut w = self.v2.w.to_bits();
+
+        if val {
+            w |= Self::CASTS_SHADOWS_MASK;
+        } else {
+            w &= !Self::CASTS_SHADOWS_MASK;
+        }
+
+        self.v2.w = f32::from_bits(w);
+        self
+    }
+
     pub fn with_uv_transparency(mut self, val: bool) -> Self {
-        let mut w = self.v0.w as u32;
+        let mut w = self.v2.w.to_bits();
 
         if val {
             w |= Self::UV_TRANSPARENCY_MASK;
@@ -158,12 +183,19 @@ impl Triangle {
             w &= !Self::UV_TRANSPARENCY_MASK;
         }
 
-        self.v0.w = w as _;
+        self.v2.w = f32::from_bits(w);
         self
     }
 
     pub fn with_uv_divisor(mut self, u: u8, v: u8) -> Self {
-        self.v2.w = (((u as u32) << 8) + (v as u32)) as _;
+        let mut w = self.v2.w.to_bits();
+
+        let u = u as u32;
+        let v = v as u32;
+
+        w |= (u << (3 * 8)) | (v << (2 * 8));
+
+        self.v2.w = f32::from_bits(w);
         self
     }
 

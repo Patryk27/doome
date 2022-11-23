@@ -34,6 +34,7 @@ impl ModelTriangle {
         )
         .with_alpha(mat.alpha.unwrap_or(1.0))
         .with_transform(xform)
+        .with_casts_shadows(mat.casts_shadows.unwrap_or(true))
         .with_uv_transparency(mat.uv_transparency.unwrap_or_default())
         .with_uv_divisor(u_div, v_div)
     }

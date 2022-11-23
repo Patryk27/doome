@@ -14,10 +14,6 @@ impl Ray {
         }
     }
 
-    pub fn none() -> Self {
-        Self::new(Default::default(), Default::default())
-    }
-
     pub fn origin(&self) -> Vec3 {
         self.origin
     }
@@ -54,9 +50,9 @@ impl Ray {
         while tri_idx < world.dynamic_geo.len() {
             let tri_id = TriangleId::new_dynamic(tri_idx);
             let tri = world.dynamic_geo.get(tri_id);
-            let hit = tri.hit(self);
+            let hit = tri.hit(self, false);
 
-            if hit.t < distance {
+            if hit.t < distance && tri.casts_shadows() {
                 let got_hit = if tri.has_uv_transparency() {
                     world.atlas_sample(tri_id.into_any(), hit).w > 0.5
                 } else {
@@ -82,9 +78,9 @@ impl Ray {
             if is_leaf {
                 let tri_id = TriangleId::new_static(v1.w as _);
                 let tri = world.static_geo.get(tri_id);
-                let hit = tri.hit(self);
+                let hit = tri.hit(self, false);
 
-                if hit.t < distance {
+                if hit.t < distance && tri.casts_shadows() {
                     return true;
                 }
 
@@ -105,7 +101,7 @@ impl Ray {
         }
     }
 
-    pub fn trace(self, world: &World) -> Hit {
+    pub fn trace(self, world: &World, culling: bool) -> Hit {
         let mut hit = Hit::none();
 
         // Check dynamic geometry
@@ -114,7 +110,7 @@ impl Ray {
         while tri_idx < world.dynamic_geo.len() {
             let tri_id = TriangleId::new_dynamic(tri_idx);
             let tri = world.dynamic_geo.get(tri_id);
-            let curr_hit = tri.hit(self);
+            let curr_hit = tri.hit(self, culling);
 
             if curr_hit.is_closer_than(hit) {
                 let got_hit = if tri.has_uv_transparency() {
@@ -143,7 +139,7 @@ impl Ray {
             if is_leaf {
                 let tri_id = TriangleId::new_static(v1.w as _);
                 let tri = world.static_geo.get(tri_id);
-                let curr_hit = tri.hit(self);
+                let curr_hit = tri.hit(self, culling);
 
                 if curr_hit.is_closer_than(hit) {
                     hit = curr_hit;
@@ -169,26 +165,108 @@ impl Ray {
         hit
     }
 
-    pub fn shade(self, world: &World) -> Vec3 {
-        let hit = self.trace(world);
+    pub fn shade(mut self, color: &mut Vec4, world: &World) {
+        const ST_FIRST_HIT: usize = 0;
+        const ST_REFLECTED: usize = 1;
+        const ST_TRANSPARENT: usize = 2;
+        const ST_REFLECTED_AND_TRANSPARENT: usize = 3;
 
-        if hit.is_some() {
-            world.materials.get(hit.mat_id).shade(world, hit)
-        } else {
-            Default::default()
-        }
-    }
+        let mut state = ST_FIRST_HIT;
+        let mut state_vars = Mat4::default();
 
-    /// Shaders can't have recursive functions, so if we're processing a
-    /// reflective surface, our code will call this function instead of
-    /// [`Self::shade()`] to break the recursion-chain.
-    pub fn shade_basic(self, world: &World) -> Vec3 {
-        let hit = self.trace(world);
+        loop {
+            let culling = state == ST_FIRST_HIT || state == ST_TRANSPARENT;
 
-        if hit.is_some() {
-            world.materials.get(hit.mat_id).shade_basic(world, hit)
-        } else {
-            Default::default()
+            let hit = self.trace(world, culling);
+            let hit_mat;
+            let hit_color;
+
+            if hit.is_some() {
+                hit_mat = world.materials.get(hit.mat_id);
+                hit_color = hit_mat.radiance(world, hit);
+            } else {
+                hit_mat = Material::none();
+                hit_color = Default::default();
+            }
+
+            match state {
+                ST_FIRST_HIT => {
+                    *color = hit_color.extend(1.0);
+
+                    if hit_mat.reflectivity() > 0.0 {
+                        state = ST_REFLECTED;
+
+                        state_vars.x_axis = hit_mat
+                            .reflectivity_color()
+                            .extend(hit_mat.reflectivity());
+
+                        // We preemtively store `self.direction`, because we
+                        // might need it if `hit.alpha < 1.0`
+                        state_vars.z_axis = self.direction.extend(0.0);
+
+                        let reflection_dir = {
+                            let camera_dir = -hit.ray.direction();
+
+                            hit.normal * hit.normal.dot(camera_dir) * 2.0
+                                - camera_dir
+                        };
+
+                        self.origin = hit.point;
+                        self.direction = reflection_dir.normalize();
+                    }
+
+                    if hit.alpha < 1.0 {
+                        if state == ST_REFLECTED {
+                            state = ST_REFLECTED_AND_TRANSPARENT;
+                            state_vars.y_axis = hit.point.extend(0.0);
+                            state_vars.w_axis = vec4(hit.alpha, 0.0, 0.0, 0.0);
+                        } else {
+                            state = ST_TRANSPARENT;
+                            state_vars.x_axis = vec4(hit.alpha, 0.0, 0.0, 0.0);
+
+                            self.origin = hit.point + 0.1 * self.direction;
+                        }
+                    }
+
+                    if state == ST_FIRST_HIT {
+                        break;
+                    }
+                }
+
+                ST_REFLECTED | ST_REFLECTED_AND_TRANSPARENT => {
+                    *color += (hit_color
+                        * state_vars.x_axis.xyz()
+                        * state_vars.x_axis.w)
+                        .extend(0.0);
+
+                    if state == ST_REFLECTED_AND_TRANSPARENT {
+                        state = ST_TRANSPARENT;
+                        state_vars.x_axis = state_vars.w_axis;
+
+                        self.direction = state_vars.z_axis.truncate();
+
+                        self.origin =
+                            state_vars.y_axis.truncate() + 0.1 * self.direction;
+                    } else {
+                        break;
+                    }
+                }
+
+                ST_TRANSPARENT => {
+                    let alpha = state_vars.x_axis.x;
+
+                    *color = (color.truncate() * alpha
+                        + hit_color * (1.0 - alpha))
+                        .extend(1.0);
+
+                    break;
+                }
+
+                _ => {
+                    // unreachable
+                    break;
+                }
+            }
         }
     }
 }

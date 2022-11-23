@@ -44,5 +44,5 @@ pub fn fs_main(
         atlas_sampler,
     };
 
-    *color = camera.ray(pos.xy()).shade(&world).extend(1.0);
+    camera.ray(pos.xy()).shade(color, &world);
 }

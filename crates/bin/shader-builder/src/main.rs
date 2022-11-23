@@ -85,6 +85,7 @@ fn build_shader(shader_config: &ShaderConfig) -> anyhow::Result<()> {
     }
 
     let spirv_module_path = shader_config.path_to_copy_to.with_extension("spv");
+    let glsl_module_path = shader_config.path_to_copy_to.with_extension("glsl");
 
     fs_extra::file::copy(
         build_result.module.unwrap_single(),
@@ -95,6 +96,50 @@ fn build_shader(shader_config: &ShaderConfig) -> anyhow::Result<()> {
             ..fs_extra::file::CopyOptions::default()
         },
     )?;
+
+    // TODO that's a hack so that we can inspect the raytracer's glsl output
+    {
+        let module = fs::read(spirv_module_path)?;
+
+        let module =
+            naga::front::spv::parse_u8_slice(&module, &Default::default())?;
+
+        let info =
+            naga::valid::Validator::new(Default::default(), Default::default())
+                .validate(&module)?;
+
+        let policies = naga::proc::BoundsCheckPolicies {
+            index: naga::proc::BoundsCheckPolicy::Unchecked,
+            buffer: naga::proc::BoundsCheckPolicy::Unchecked,
+            image: naga::proc::BoundsCheckPolicy::Unchecked,
+            binding_array: naga::proc::BoundsCheckPolicy::Unchecked,
+        };
+
+        let opts = Default::default();
+
+        let pipeline_options = naga::back::glsl::PipelineOptions {
+            shader_stage: naga::ShaderStage::Fragment,
+            entry_point: "fs_main".into(),
+            multiview: None,
+        };
+
+        let mut output = String::new();
+
+        let writer = naga::back::glsl::Writer::new(
+            &mut output,
+            &module,
+            &info,
+            &opts,
+            &pipeline_options,
+            policies,
+        );
+
+        if let Ok(mut writer) = writer {
+            writer.write()?;
+
+            fs::write(glsl_module_path, output)?;
+        }
+    }
 
     Ok(())
 }

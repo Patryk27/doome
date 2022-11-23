@@ -9,6 +9,7 @@ pub struct Hit {
     pub normal: Vec3,
     pub tri_id: TriangleId<AnyTriangle>,
     pub mat_id: MaterialId,
+    pub alpha: f32,
 }
 
 impl Hit {
@@ -23,11 +24,16 @@ impl Hit {
             normal: Default::default(),
             tri_id: TriangleId::new(AnyTriangle, 0),
             mat_id: MaterialId::new(0),
+            alpha: 1.0,
         }
     }
 
     pub fn is_some(&self) -> bool {
         self.t < Self::MAX_T
+    }
+
+    pub fn is_none(&self) -> bool {
+        !self.is_some()
     }
 
     pub fn is_closer_than(&self, other: Self) -> bool {

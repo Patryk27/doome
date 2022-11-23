@@ -33,3 +33,7 @@ static-assets = []
 
 [profile.dev]
 overflow-checks = false
+
+[patch."crates-io"]
+# TODO https://github.com/gfx-rs/naga/issues/1969
+naga = { git = "https://github.com/Patryk27/wgpu", branch = "issues/1969" }

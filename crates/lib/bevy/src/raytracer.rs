@@ -146,9 +146,11 @@ fn sync_lights(
 ) {
     ctxt.lights = Default::default();
 
-    let enabled_lights = lights.iter().filter(|(light, _, _)| light.enabled);
+    let lights = lights
+        .iter()
+        .filter(|(light, _, _)| light.enabled && light.intensity > 0.0);
 
-    for (light, transform, color) in enabled_lights {
+    for (light, transform, color) in lights {
         let position = transform.translation;
 
         match light.kind {

@@ -110,7 +110,7 @@ impl AssetsLoader {
             ..ModelMaterial::default()
         };
 
-        if !raw_mat.diffuse.is_empty() {
+        if !raw_mat.diffuse_texture.is_empty() {
             let texture = Path::new(&raw_mat.diffuse_texture)
                 .file_stem()
                 .unwrap()

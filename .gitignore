@@ -1,3 +1,4 @@
 /target
+shader.glsl
 shader.naga
 shader.spv

@@ -1,3 +1,5 @@
+use std::ops;
+
 use bevy::prelude::*;
 use doome_raytracer as rt;
 use glam::vec3;
@@ -46,6 +48,17 @@ impl Default for Color {
     }
 }
 
+impl ops::Mul<f32> for Color {
+    type Output = Self;
+
+    fn mul(mut self, rhs: f32) -> Self::Output {
+        self.r *= rhs;
+        self.g *= rhs;
+        self.b *= rhs;
+        self
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Light {
     // I feel like for proper bevy-ness this should be a different component
@@ -53,6 +66,15 @@ pub struct Light {
     pub enabled: bool,
     pub intensity: f32,
     pub kind: LightKind,
+}
+
+impl Light {
+    pub fn point_at_mut(&mut self) -> Option<&mut Vec3> {
+        match &mut self.kind {
+            LightKind::Point => None,
+            LightKind::Spot { point_at, .. } => Some(point_at),
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -70,15 +92,19 @@ pub struct LightFade {
 }
 
 impl LightFade {
-    pub fn out(duration: f32) -> Self {
-        Self::out_delayed(0.0, duration)
+    pub fn fade_out(duration: f32) -> Self {
+        Self::fade_out_delayed(0.0, duration)
     }
 
-    pub fn out_delayed(start_at: f32, duration: f32) -> Self {
+    pub fn fade_out_delayed(start_at: f32, duration: f32) -> Self {
         Self::delayed(-1.0, start_at, duration)
     }
 
-    pub fn in_delayed(start_at: f32, duration: f32) -> Self {
+    pub fn fade_in(duration: f32) -> Self {
+        Self::fade_in_delayed(0.0, duration)
+    }
+
+    pub fn fade_in_delayed(start_at: f32, duration: f32) -> Self {
         Self::delayed(1.0, start_at, duration)
     }
 
@@ -134,11 +160,12 @@ pub struct Camera {
 pub struct Material {
     pub alpha: Option<f32>,
     pub color: Option<Color>,
-    pub reflectivity: Option<f32>,
     pub emissive: bool,
+    pub reflectivity: Option<f32>,
     pub reflection_color: Option<Color>,
     pub texture: Option<AssetHandle<Texture>>,
     pub texture_enabled: Option<bool>,
+    pub casts_shadows: Option<bool>,
     pub uv_divisor: Option<(u8, u8)>,
     pub uv_transparency: Option<bool>,
 }
@@ -164,13 +191,24 @@ impl Material {
         self
     }
 
+    pub fn with_texture(mut self, texture: AssetHandle<Texture>) -> Self {
+        self.texture = Some(texture);
+        self.texture_enabled = Some(true);
+        self
+    }
+
     pub fn without_texture(mut self) -> Self {
         self.texture_enabled = Some(false);
         self
     }
 
-    pub fn with_uv_divisor(mut self, u_div: u8, v_div: u8) -> Self {
-        self.uv_divisor = Some((u_div, v_div));
+    pub fn without_casting_shadows(mut self) -> Self {
+        self.casts_shadows = Some(false);
+        self
+    }
+
+    pub fn with_uv_divisor(mut self, u: u8, v: u8) -> Self {
+        self.uv_divisor = Some((u, v));
         self
     }
 
@@ -188,13 +226,14 @@ impl Material {
         Self {
             alpha: self.alpha.or(other.alpha),
             color: self.color.or(other.color),
+            emissive: self.emissive || other.emissive,
             reflectivity: self.reflectivity.or(other.reflectivity),
             reflection_color: self.reflection_color.or(other.reflection_color),
             texture: self.texture.or(other.texture),
             texture_enabled: self.texture_enabled.or(other.texture_enabled),
+            casts_shadows: self.casts_shadows.or(other.casts_shadows),
             uv_divisor: self.uv_divisor.or(other.uv_divisor),
             uv_transparency: self.uv_transparency.or(other.uv_transparency),
-            emissive: self.emissive || other.emissive,
         }
     }
 

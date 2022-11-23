@@ -92,6 +92,12 @@ impl Assets {
             .unwrap_or_else(|| panic!("Unknown model: {}", name))
     }
 
+    pub fn load_texture(&self, name: &str) -> AssetHandle<Texture> {
+        self.textures
+            .by_name(name)
+            .unwrap_or_else(|| panic!("Unknown texture: {}", name))
+    }
+
     pub fn load_image(&self, name: &str) -> AssetHandle<RgbaImage> {
         self.images
             .by_name(name)

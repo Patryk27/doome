@@ -19,3 +19,12 @@ pub mod simple_animations;
 pub mod text;
 
 mod raytracer;
+
+pub mod prelude {
+    pub use glam::*;
+
+    pub use crate::assets::*;
+    pub use crate::components::*;
+    pub use crate::physics::components::*;
+    pub use crate::player::*;
+}

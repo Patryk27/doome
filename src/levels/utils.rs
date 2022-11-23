@@ -54,7 +54,8 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
                     .with_color(Color::hex(0xffffff))
                     .with_reflectivity(0.1)
                     .with_reflection_color(Color::hex(0xffffff))
-                    .with_uv_divisor(dx as _, dz as _),
+                    .with_uv_divisor(dx as _, dz as _)
+                    .without_casting_shadows(),
             )
     }
 
@@ -92,8 +93,6 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
             .with_material(
                 Material::default()
                     .with_color(Color::hex(0xffffff))
-                    .with_reflectivity(0.1)
-                    .with_reflection_color(Color::hex(0xffffff))
                     .with_uv_divisor(dx as _, dz as _),
             )
     }
@@ -155,10 +154,8 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
 
     pub fn point_light<'a>(
         &'a mut self,
-        x: f32,
-        y: f32,
-        z: f32,
-        c: u32,
+        pos: Vec3,
+        color: Color,
     ) -> EntityCommands<'w, 's, 'a> {
         self.commands.spawn((
             Light {
@@ -166,8 +163,8 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
                 intensity: 1.0,
                 kind: LightKind::Point,
             },
-            Transform::from_xyz(x, y, z),
-            Color::hex(c),
+            Transform::from_translation(pos),
+            color,
         ))
     }
 
@@ -238,6 +235,11 @@ impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
 
     pub fn dynamic(mut self) -> Self {
         self.geo_type = GeometryType::Dynamic;
+        self
+    }
+
+    pub fn with_transform(mut self, transform: Transform) -> Self {
+        self.transform = transform;
         self
     }
 
