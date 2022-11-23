@@ -106,9 +106,7 @@ fn trigger_shoot(
 
     let mut shooting_animation = shooting_animation.single_mut();
 
-    if mouse.just_pressed(MouseButton::Left)
-        || keyboard.just_pressed(KeyCode::Space)
-    {
+    if mouse.pressed(MouseButton::Left) || keyboard.pressed(KeyCode::Space) {
         audio.play(assets.load_sound("gun_shoot"));
         shooting_animation.is_firing = true;
         shooting_animation.current_frame = 0;
@@ -196,7 +194,8 @@ fn render(
     const HEALTH_X: u16 = 200;
     const HEALTH_Y: u16 = HEIGHT - 9 - HEALTH_HEIGHT;
 
-    let actual_width = (player_health.val * HEALTH_WIDTH as f32 / 100.0).floor() as u16;
+    let actual_width =
+        (player_health.val * HEALTH_WIDTH as f32 / 100.0).floor() as u16;
 
     canvas.rect(
         HEALTH_X,
