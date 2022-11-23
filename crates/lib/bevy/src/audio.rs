@@ -31,20 +31,24 @@ pub struct AudioPlugin;
 struct AudioOutput {
     stream: OutputStream,
     stream_handle: OutputStreamHandle,
-    sink: Sink,
+    sinks: Vec<Sink>,
 }
+
+const NUM_SINKS: usize = 32;
 
 impl FromWorld for AudioOutput {
     fn from_world(_world: &mut World) -> Self {
         let (stream, stream_handle) = OutputStream::try_default()
             .expect("Failed to initialize audio state");
 
-        let sink = Sink::try_new(&stream_handle).unwrap();
+        let sinks = (0..NUM_SINKS)
+            .map(|_| Sink::try_new(&stream_handle).unwrap())
+            .collect();
 
         Self {
             stream,
             stream_handle,
-            sink,
+            sinks,
         }
     }
 }
@@ -69,6 +73,11 @@ fn play_audio(
         let source = Decoder::new(Cursor::new(sound.content.clone()))
             .expect("Failed to decode audio");
 
-        state.sink.append(source);
+        for sink in state.sinks.iter() {
+            if sink.empty() {
+                sink.append(source);
+                break;
+            }
+        }
     }
 }
