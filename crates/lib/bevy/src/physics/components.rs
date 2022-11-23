@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use doome_geo::Polygon;
-use glam::Vec3Swizzles;
 
 use crate::convert::{graphical_to_physical, physical_to_graphical};
 

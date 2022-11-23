@@ -4,7 +4,7 @@ use instant::Instant;
 
 use crate::convert::{graphical_to_physical, physical_to_graphical};
 use crate::nav::NavObstacle;
-use crate::physics::components::{Collider, RayCast, RayCastHit};
+use crate::physics::components::{Collider, RayCast};
 use crate::player::Player;
 use crate::shooting::Shooter;
 
@@ -145,7 +145,6 @@ fn enemy_movement(
 
     let hivemind = hivemind.single();
 
-    let player_pos = hivemind.known_player_position;
     let Some(player_entity) = hivemind.player_entity else {
         log::warn!("Hivemind doesn't know the players entity");
         return;

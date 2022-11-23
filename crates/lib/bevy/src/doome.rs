@@ -39,7 +39,6 @@ impl Plugin for DoomePlugin {
         let windows = app.world.resource::<Windows>();
 
         let device = &renderer.device;
-        let queue = &renderer.queue;
 
         let shader_constants =
             AllocatedUniform::create(device, "shader_constants");

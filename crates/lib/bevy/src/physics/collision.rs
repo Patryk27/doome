@@ -1,10 +1,9 @@
 use bevy::prelude::*;
 use doome_geo::sat;
-use glam::{vec3, Vec3Swizzles};
 
 use super::components::{Body, Collider};
 use super::events::Collision;
-use crate::convert::{graphical_to_physical, physical_to_graphical};
+use crate::convert::physical_to_graphical;
 
 const MIN_VELOCITY: f32 = 0.1;
 
