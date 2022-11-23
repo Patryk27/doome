@@ -6,6 +6,13 @@ use doome_bevy::prelude::Player;
 use doome_engine::Canvas;
 
 const FACE_SWAY_SPEED: f32 = 2.0;
+const ANGRY_JITTER_SPEED: (f32, f32) = (128.7, 120.13);
+
+enum State {
+    Happy,
+    Meh,
+    Angrey,
+}
 
 pub fn render(
     time: Res<Time>,
@@ -24,20 +31,58 @@ pub fn render(
     let mehey_face = assets.load_image("mehey");
     let angrey_face = assets.load_image("angrey");
 
-    let face = if health.val > 50.0 {
-        smiley_face
+    let state = if health.val > 50.0 {
+        State::Happy
     } else if health.val > 25.0 {
-        mehey_face
+        State::Meh
     } else {
-        angrey_face
+        State::Angrey
+    };
+
+    let face = match state {
+        State::Happy => smiley_face,
+        State::Meh => mehey_face,
+        State::Angrey => angrey_face,
     };
 
     canvas.blit(0, 0, assets.image(ui_image));
 
-    let y = if (FACE_SWAY_SPEED * time.elapsed_seconds()).sin() > 0.0 {
-        0
-    } else {
-        1
+    let seconds = time.elapsed_seconds();
+    let (x, y) = match state {
+        State::Happy => {
+            let y = if (FACE_SWAY_SPEED * seconds).sin() > 0.0 {
+                0
+            } else {
+                1
+            };
+
+            (0, y)
+        }
+        State::Meh => {
+            let x = if (FACE_SWAY_SPEED * seconds).sin() > 0.0 {
+                0
+            } else {
+                1
+            };
+
+            (x, 0)
+        }
+        State::Angrey => {
+            let y = if (seconds * ANGRY_JITTER_SPEED.0).sin() > 0.0 {
+                0
+            } else {
+                1
+            };
+
+            let x = if ((seconds + 42.0) * ANGRY_JITTER_SPEED.1).sin() > 0.0 {
+                0
+            } else {
+                1
+            };
+
+            (x, y)
+        }
     };
-    canvas.blit(0, y, assets.image(face));
+
+    canvas.blit(x, y, assets.image(face));
 }
