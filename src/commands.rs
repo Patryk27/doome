@@ -1,3 +1,4 @@
+use bevy::app::AppExit;
 use bevy::prelude::*;
 use doome_bevy::health::Health;
 use doome_bevy::prelude::Player;
@@ -8,21 +9,27 @@ mod cmd;
 
 pub use self::cmd::*;
 
+pub struct CommandOutput(pub String);
+
 pub struct CommandsPlugin;
 
 impl Plugin for CommandsPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<Command>();
+        app.add_event::<CommandOutput>();
         app.add_system(handle_commands);
     }
 }
 
 fn handle_commands(
     mut game_commands: EventReader<Command>,
+    mut output: EventWriter<CommandOutput>,
     mut input_lock: ResMut<InputLock>,
-    mut transforms: Query<(&mut Transform)>,
-    mut healths: Query<(&mut Health)>,
+    mut transforms: Query<&mut Transform>,
+    mut healths: Query<&mut Health>,
     player: Query<(Entity, &Player)>,
+    all_entities: Query<Entity>,
+    mut exit: EventWriter<AppExit>,
 ) {
     let commands: Vec<Command> = game_commands.iter().copied().collect();
 
@@ -31,13 +38,18 @@ fn handle_commands(
 
         match cmd {
             Command::Quit => {
-                log::info!("Quit");
+                exit.send(AppExit);
             }
             Command::LockInput => {
                 input_lock.is_locked = true;
             }
             Command::UnlockInput => {
                 input_lock.is_locked = false;
+            }
+            Command::ListEntities => {
+                for entity in all_entities.iter() {
+                    output.send(CommandOutput(format!("{:?}", entity)));
+                }
             }
             Command::Move { entity, position } => match entity {
                 EntityOrPlayer::Entity(_) => {

@@ -4,7 +4,7 @@ use doome_bevy::text::TextEngine;
 use doome_engine::{TextCanvas, HEIGHT, WIDTH};
 use doome_surface::Color;
 
-use crate::commands::Command;
+use crate::commands::{Command, CommandOutput};
 
 #[derive(Resource)]
 pub struct CommandLine {
@@ -25,6 +25,7 @@ pub fn update(
     mut cmd_line: ResMut<CommandLine>,
     mut commands: EventWriter<Command>,
     mut char_evr: EventReader<ReceivedCharacter>,
+    mut outputs: EventReader<CommandOutput>,
     keys: Res<Input<KeyCode>>,
 ) {
     let cmd_line = cmd_line.as_mut();
@@ -33,6 +34,10 @@ pub fn update(
         if cmd_line.is_shown {
             cmd_line.current.push(ev.char);
         }
+    }
+
+    for ev in outputs.iter() {
+        cmd_line.buffer.push(ev.0.clone());
     }
 
     if keys.just_pressed(KeyCode::Grave) {

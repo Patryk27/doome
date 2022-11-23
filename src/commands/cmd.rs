@@ -6,13 +6,20 @@ use glam::Vec3;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Command {
+    // quit
     Quit,
+    // lock-input
     LockInput,
+    // unlock-input
     UnlockInput,
+    // list-entities
+    ListEntities,
+    // Example: move player 0,0,0
     Move {
         entity: EntityOrPlayer,
         position: Vec3,
     },
+    // Example: set-health player 100
     SetHealth {
         entity: EntityOrPlayer,
         health: f32,
@@ -37,6 +44,7 @@ impl FromStr for Command {
             "quit" => Ok(Command::Quit),
             "lock-input" => Ok(Command::LockInput),
             "unlock-input" => Ok(Command::UnlockInput),
+            "list-entities" => Ok(Command::ListEntities),
             "move" => {
                 let entity = parts.next().context("Missing entity")?;
                 let entity = entity.parse()?;
