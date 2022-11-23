@@ -40,6 +40,9 @@ impl Plugin for UiPlugin {
         app.add_startup_system(command_line::setup);
         app.add_startup_system(gun::setup);
 
+        // Updates
+        app.add_system(command_line::update);
+
         // TODO: Extract this stuff
         // Gun
         app.add_system(gun::trigger_shoot);

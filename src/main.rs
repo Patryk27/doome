@@ -33,6 +33,11 @@ const WINDOW_SCALE: f32 = 4.0;
 #[cfg(target_arch = "wasm32")]
 const WINDOW_SCALE: f32 = 3.5;
 
+#[derive(Resource)]
+pub struct InputLock {
+    pub is_locked: bool,
+}
+
 fn main() {
     #[cfg(feature = "static-assets")]
     let assets = Assets::init_static(&ASSETS).unwrap();
@@ -41,6 +46,7 @@ fn main() {
     let assets = Assets::init("assets").unwrap();
 
     App::new()
+        .insert_resource(InputLock { is_locked: false })
         .insert_resource(assets)
         .insert_resource(TextEngine::default())
         // Bevy plugins
@@ -75,6 +81,7 @@ fn main() {
         // Game plugins
         .add_plugin(ui::UiPlugin)
         .add_plugin(charon::Charon)
+        .add_plugin(commands::CommandsPlugin)
         // Misc systems
         .add_system(doome_bevy::simple_animations::rotate)
         .add_system(doome_bevy::simple_animations::float)
@@ -105,6 +112,7 @@ fn quit_on_exit(keys: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
 }
 
 fn process_movement(
+    input_lock: Res<InputLock>,
     time: Res<Time>,
     keys: Res<Input<KeyCode>>,
     mut mouse_motion: EventReader<MouseMotion>,
@@ -116,6 +124,11 @@ fn process_movement(
 
     let (player, mut body, mut transform) = player.single_mut();
     let delta = time.delta_seconds();
+
+
+    if input_lock.is_locked {
+        return;
+    }
 
     // TODO a bit wonky
     #[cfg(not(target_arch = "wasm32"))]

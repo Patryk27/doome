@@ -9,6 +9,8 @@ use doome_bevy::player::Player;
 use doome_engine::Canvas;
 use image::RgbaImage;
 
+use crate::InputLock;
+
 const GUN_OFFSET_Y: u16 = 16;
 
 #[derive(Resource)]
@@ -81,6 +83,7 @@ pub fn render(
 
 // TODO: Attach an event writer
 pub fn trigger_shoot(
+    input_lock: Res<InputLock>,
     mut commands: Commands,
     time: Res<Time>,
     assets: Res<Assets>,
@@ -99,6 +102,10 @@ pub fn trigger_shoot(
     let delta = time.delta_seconds();
 
     player.shooter.update(delta);
+
+    if input_lock.is_locked {
+        return;
+    }
 
     if !player.shooter.can_shoot() {
         return;

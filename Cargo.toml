@@ -27,6 +27,7 @@ image = "0.24"
 include_dir = "0.7"
 indoc = "1.0"
 log = "0.4"
+anyhow = "1.0"
 
 [features]
 static-assets = []

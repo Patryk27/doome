@@ -11,6 +11,14 @@ pub struct Color {
 }
 
 impl Color {
+    pub fn hex(hex: u32) -> Self {
+        let [r, g, b, a] = hex.to_be_bytes();
+
+        Self { r, g, b, a }
+    }
+}
+
+impl Color {
     pub const RED: Color = Color {
         r: 255,
         g: 0,
