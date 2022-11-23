@@ -1,6 +1,7 @@
 #![allow(clippy::type_complexity, clippy::too_many_arguments)]
 
 mod charon;
+mod commands;
 mod explosions;
 mod interaction;
 mod levels;
@@ -19,8 +20,6 @@ use doome_bevy::player::Player;
 use doome_bevy::text::TextEngine;
 use doome_engine::{HEIGHT, WIDTH};
 use glam::vec3;
-
-use self::ui::*;
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
@@ -85,6 +84,8 @@ fn main() {
         .add_system(process_camera)
         .add_system(explosions::update_explosions)
         .add_startup_system(hide_cursor)
+        // .add_startup_system(levels::level1::init)
+        // .add_system(levels::level1::process)
         .add_startup_system(levels::level2::init)
         .add_system(levels::level2::process)
         .run();

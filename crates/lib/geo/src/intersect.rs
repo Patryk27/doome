@@ -36,6 +36,7 @@ mod test {
     use glam::vec2;
 
     use super::*;
+
     #[test]
     fn perp_intersect_at_zero() {
         let p = vec2(-1.0, -1.0);

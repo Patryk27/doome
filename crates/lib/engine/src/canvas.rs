@@ -4,16 +4,23 @@ use image::RgbaImage;
 
 use crate::*;
 
-pub struct Canvas<'frame> {
-    text_engine: &'frame TextEngine,
+pub type TextCanvas<'frame> = Canvas<'frame, TextEngine>;
+
+pub struct Canvas<'frame, T = ()> {
     frame: &'frame mut [u8],
+    text_engine: &'frame T,
 }
 
-impl<'f> Canvas<'f> {
-    pub fn new(text_engine: &'f TextEngine, frame: &'f mut [u8]) -> Self {
-        Self { text_engine, frame }
+impl<'f> Canvas<'f, ()> {
+    pub fn new(frame: &'f mut [u8]) -> Self {
+        Self {
+            frame,
+            text_engine: &(),
+        }
     }
+}
 
+impl<'f, T> Canvas<'f, T> {
     pub fn clear(&mut self) {
         self.frame.fill(0);
     }
@@ -46,6 +53,16 @@ impl<'f> Canvas<'f> {
                 self.set(x_offset + x as u16, y_offset + y as u16, color);
             }
         }
+    }
+}
+
+// Text specific
+impl<'frame> Canvas<'frame, TextEngine> {
+    pub fn new_text(
+        text_engine: &'frame TextEngine,
+        frame: &'frame mut [u8],
+    ) -> Self {
+        Self { frame, text_engine }
     }
 
     pub fn text(

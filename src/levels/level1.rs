@@ -6,7 +6,6 @@ use doome_bevy::billboard::Billboard;
 use doome_bevy::components::*;
 use doome_bevy::enemies::{Enemy, RecalculateNavData};
 use doome_bevy::health::Health;
-use doome_bevy::model_animation::{ModelAnimation, ModelAnimationFrame};
 use doome_bevy::physics::components::{Body, BodyType, Collider, RayCast};
 use doome_bevy::player::Player;
 use doome_bevy::shooting::Shooter;

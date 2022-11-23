@@ -4,7 +4,7 @@ const LINE_HEIGHT: u16 = 12;
 use std::mem;
 
 use bevy::prelude::*;
-use doome_engine::{Canvas, HEIGHT};
+use doome_engine::{TextCanvas, HEIGHT};
 
 #[derive(Resource)]
 pub enum Typewriter {
@@ -20,7 +20,7 @@ pub enum Typewriter {
 }
 
 impl Typewriter {
-    pub fn render(&self, canvas: &mut Canvas) {
+    pub fn render(&self, canvas: &mut TextCanvas) {
         let Self::Working { layout, ..} = self else { return; };
 
         let x = 5;
