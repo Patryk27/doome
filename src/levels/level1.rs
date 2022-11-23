@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use doome_bevy::assets::Assets;
 use doome_bevy::billboard::Billboard;
 use doome_bevy::components::*;
-use doome_bevy::enemies::RecalculateNavData;
+use doome_bevy::enemies::{Enemy, RecalculateNavData};
 use doome_bevy::health::Health;
 use doome_bevy::model_animation::{ModelAnimation, ModelAnimationFrame};
 use doome_bevy::physics::components::{Body, BodyType, Collider, RayCast};

@@ -20,6 +20,9 @@ fn align_billboards(
     let (_, player_transform) = player.single();
 
     for (_billboard, mut transform) in billboards.iter_mut() {
-        transform.look_at(player_transform.translation, Vec3::Y);
+        let mut target_transform = player_transform.translation.clone();
+        target_transform.y = transform.translation.y;
+
+        transform.look_at(target_transform, Vec3::Y);
     }
 }
