@@ -91,7 +91,7 @@ pub fn init(
     // ------ //
     // Player //
     let player_shooter =
-        Shooter::new(0.5, 20.0, 10.0, assets.load_model("bullet"));
+        Shooter::new(0.2, 20.0, 10.0, assets.load_model("bullet"));
     commands.spawn((
         Player::new(player_shooter),
         Transform::from_rotation(Quat::from_rotation_x(PI)),

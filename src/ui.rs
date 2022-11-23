@@ -27,13 +27,10 @@ pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         let assets = app.world.resource::<Assets>();
-        let gun_idle = assets.load_image("gun_1");
+        let gun_idle = assets.load_image("rifle_0");
 
-        let gun_fire_sequence = vec![
-            assets.load_image("gun_shoot_1"),
-            assets.load_image("gun_shoot_2"),
-            assets.load_image("gun_shoot_3"),
-        ];
+        let gun_fire_sequence =
+            vec![assets.load_image("rifle_1"), assets.load_image("rifle_2")];
 
         // Typewriter
         app.insert_resource(Typewriter::Idle)
@@ -63,6 +60,7 @@ struct Gun {
 struct ShootingAnimation {
     is_firing: bool,
     current_frame: usize,
+    num_frames: usize,
     timer: Timer,
 }
 
@@ -75,6 +73,7 @@ fn setup(mut commands: Commands) {
     commands.spawn(ShootingAnimation {
         is_firing: false,
         current_frame: 0,
+        num_frames: 2,
         timer,
     });
 }
@@ -129,7 +128,7 @@ fn update_gun(
         shooting_animation.current_frame += 1;
 
         // TODO: No magic number
-        if shooting_animation.current_frame == 3 {
+        if shooting_animation.current_frame == shooting_animation.num_frames {
             shooting_animation.current_frame = 0;
             shooting_animation.is_firing = false;
             shooting_animation.timer.pause();
