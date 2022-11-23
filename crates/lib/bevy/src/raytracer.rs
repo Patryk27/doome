@@ -106,7 +106,11 @@ fn sync_updated_geometry(
             &Transform,
             Option<&Material>,
         ),
-        Or<(Changed<Transform>, Changed<Material>)>,
+        Or<(
+            Changed<Transform>,
+            Changed<Material>,
+            Changed<AssetHandle<Model>>,
+        )>,
     >,
 ) {
     let ctxt = &mut *ctxt;
@@ -129,8 +133,9 @@ fn sync_updated_geometry(
 
         // TODO wasteful
         let mat_id = ctxt.materials.alloc(entity, mat.materialize());
+        let tex = mat.texture.map(|tex_id| assets.texture(tex_id));
 
-        geo.update_model(entity, model, xform, mat, mat_id);
+        geo.update_model(entity, model, xform, mat, mat_id, tex);
     }
 }
 

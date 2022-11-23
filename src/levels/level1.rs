@@ -4,12 +4,13 @@ use bevy::prelude::*;
 use doome_bevy::assets::Assets;
 use doome_bevy::billboard::Billboard;
 use doome_bevy::components::*;
-use doome_bevy::enemies::{Enemy, RecalculateNavData};
+use doome_bevy::enemies::RecalculateNavData;
 use doome_bevy::health::Health;
+use doome_bevy::model_animation::{ModelAnimation, ModelAnimationFrame};
 use doome_bevy::physics::components::{Body, BodyType, Collider, RayCast};
 use doome_bevy::player::Player;
-use doome_bevy::simple_animations::{Rotate, Float};
 use doome_bevy::shooting::Shooter;
+use doome_bevy::simple_animations::{Float, Rotate};
 use glam::vec3;
 use indoc::indoc;
 
@@ -124,6 +125,38 @@ pub fn init(
             direction: Vec2::NEG_Y * 20.0,
             hit: None,
         }, // Collider::circle(0.5),
+    ));
+
+    //--------------------- //
+    // Test model animation //
+
+    let transform =
+        Transform::from_translation(vec3(0.0, 1.0, ELEPHANT_Z - 6.0))
+            .with_scale(Vec3::ONE * 6.0);
+    let frames = (0..=11)
+        .map(|n| format!("explosion_{n}"))
+        .map(|name| assets.load_model(&name))
+        .map(|handle| ModelAnimationFrame {
+            duration: 0.07,
+            handle,
+        })
+        .collect();
+
+    let model_animation = ModelAnimation {
+        frames,
+        frame_time: 0.0,
+        current_frame: 0,
+    };
+
+    let starting_model = model_animation.frames[5].handle;
+
+    commands.spawn((
+        transform,
+        model_animation,
+        starting_model,
+        GeometryType::Dynamic,
+        Billboard,
+        Material::default().with_uv_transparency().emissive(),
     ));
 
     //------ //

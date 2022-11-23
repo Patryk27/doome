@@ -55,17 +55,17 @@ impl GeometryManager {
         tri: rt::Triangle,
         tri_uv: rt::TriangleUv,
     ) {
+        let id = self
+            .dynamic_geo
+            .push(tri)
+            .expect("Tried to allocate too many dynamic triangles at once");
+
         log::trace!(
-            "Allocating (dynamic): {:?} (tri={:?}, tri_uv={:?})",
+            "Allocating (dynamic): {:?} (id={id:?}, tri={:?}, tri_uv={:?})",
             entity,
             tri,
             tri_uv
         );
-
-        let id = self
-            .dynamic_geo
-            .push(tri)
-            .expect("Tried to allocate too many static triangles at once");
 
         self.dynamic_geo_owners.push(entity);
         self.uvs.set(id.into_any(), tri_uv);
@@ -74,13 +74,16 @@ impl GeometryManager {
     fn update_dynamic(
         &mut self,
         entity: Entity,
-        mut for_each: impl FnMut(&mut rt::Triangle),
+        mut next_tri: impl FnMut() -> (rt::Triangle, rt::TriangleUv),
     ) {
         for id in 0..self.dynamic_geo.len() {
             if self.dynamic_geo_owners[id] == entity {
-                for_each(
-                    self.dynamic_geo.get_mut(rt::TriangleId::new_dynamic(id)),
-                );
+                let tri_id = rt::TriangleId::new_dynamic(id);
+
+                let (tri, tri_uv) = next_tri();
+
+                *self.dynamic_geo.get_mut(tri_id) = tri;
+                self.uvs.set(tri_id.into_any(), tri_uv);
             }
         }
     }

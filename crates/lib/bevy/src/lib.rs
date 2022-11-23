@@ -9,6 +9,7 @@ pub mod convert;
 pub mod doome;
 pub mod enemies;
 pub mod health;
+pub mod model_animation;
 pub mod nav;
 pub mod physics;
 pub mod player;

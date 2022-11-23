@@ -9,8 +9,8 @@ use doome_wgpu_ext::AllocatedUniform;
 
 pub use self::geometry_indexer::*;
 
-pub const ATLAS_WIDTH: u32 = 256;
-pub const ATLAS_HEIGHT: u32 = 256;
+pub const ATLAS_WIDTH: u32 = 2048;
+pub const ATLAS_HEIGHT: u32 = 2048;
 
 type DescriptorSet0 = AllocatedUniform<StaticGeometry>;
 type DescriptorSet1 =
