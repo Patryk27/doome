@@ -14,6 +14,12 @@ pub enum Command {
     UnlockInput,
     // list-entities
     ListEntities,
+    // Displays the position of a given entity
+    //  Example: position player
+    //  Example: pos player
+    Position {
+        entity: EntityOrPlayer,
+    },
     // Example: move player 0,0,0
     Move {
         entity: EntityOrPlayer,
@@ -23,6 +29,11 @@ pub enum Command {
     SetHealth {
         entity: EntityOrPlayer,
         health: f32,
+    },
+    /// Spawns a moth monster at a given position
+    /// Example: spawn-moth-monster 0,0,0
+    SpawnMothMonster {
+        position: Vec3,
     },
 }
 
@@ -45,6 +56,12 @@ impl FromStr for Command {
             "lock-input" => Ok(Command::LockInput),
             "unlock-input" => Ok(Command::UnlockInput),
             "list-entities" => Ok(Command::ListEntities),
+            "pos" | "position" => {
+                let entity = parts.next().context("No entity")?;
+                let entity = entity.parse().context("Invalid entity")?;
+
+                Ok(Command::Position { entity })
+            }
             "move" => {
                 let entity = parts.next().context("Missing entity")?;
                 let entity = entity.parse()?;
@@ -62,6 +79,12 @@ impl FromStr for Command {
                 let health = health.parse()?;
 
                 Ok(Command::SetHealth { entity, health })
+            }
+            "spawn-moth-monster" => {
+                let position = parts.next().context("Missing position")?;
+                let position = parse_vec3(position)?;
+
+                Ok(Command::SpawnMothMonster { position })
             }
             _ => Err(anyhow!("Failed to parse command: {s}")),
         }

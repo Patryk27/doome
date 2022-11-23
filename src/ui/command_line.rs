@@ -10,7 +10,12 @@ use crate::commands::{Command, CommandOutput};
 pub struct CommandLine {
     is_shown: bool,
     current: String,
-    buffer: Vec<String>,
+    buffer: Vec<Line>,
+}
+
+pub struct Line {
+    pub text: String,
+    pub was_input: bool,
 }
 
 pub fn setup(mut commands: Commands) {
@@ -37,7 +42,10 @@ pub fn update(
     }
 
     for ev in outputs.iter() {
-        cmd_line.buffer.push(ev.0.clone());
+        cmd_line.buffer.push(Line {
+            text: ev.0.clone(),
+            was_input: false,
+        });
     }
 
     if keys.just_pressed(KeyCode::Grave) {
@@ -48,6 +56,12 @@ pub fn update(
             commands.send(Command::LockInput);
         } else {
             commands.send(Command::UnlockInput);
+        }
+    }
+
+    if keys.just_pressed(KeyCode::Up) {
+        if let Some(cmd) = cmd_line.buffer.iter().rev().find(|x| x.was_input) {
+            cmd_line.current = cmd.text.clone();
         }
     }
 
@@ -63,13 +77,19 @@ pub fn update(
     if keys.just_pressed(KeyCode::Return) {
         match cmd_line.current.parse::<Command>() {
             Ok(cmd) => {
-                cmd_line.buffer.push(cmd_line.current.clone());
+                cmd_line.buffer.push(Line {
+                    text: cmd_line.current.clone(),
+                    was_input: true,
+                });
                 cmd_line.current.clear();
                 commands.send(cmd);
             }
             Err(e) => {
                 log::error!("Invalid command: {e:?}");
-                cmd_line.buffer.push(format!("Error: {}", e));
+                cmd_line.buffer.push(Line {
+                    text: format!("Error: {}", e),
+                    was_input: false,
+                });
                 cmd_line.current.clear();
             }
         }
@@ -96,6 +116,6 @@ pub fn render(
             break;
         }
 
-        canvas.text(0, HEIGHT - 15 * (i + 2) as u16, line, false);
+        canvas.text(0, HEIGHT - 15 * (i + 2) as u16, &line.text, false);
     }
 }

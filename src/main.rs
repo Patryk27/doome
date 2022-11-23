@@ -2,6 +2,7 @@
 
 mod charon;
 mod commands;
+mod entities;
 mod explosions;
 mod interaction;
 mod levels;
@@ -124,7 +125,6 @@ fn process_movement(
 
     let (player, mut body, mut transform) = player.single_mut();
     let delta = time.delta_seconds();
-
 
     if input_lock.is_locked {
         return;

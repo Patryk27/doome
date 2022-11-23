@@ -14,6 +14,7 @@ use glam::vec3;
 use indoc::indoc;
 
 use super::utils::*;
+use crate::entities::spawn_moth_monster;
 use crate::explosions::spawn_explosion;
 use crate::ui::{Text, TypewriterPrint};
 
@@ -107,29 +108,11 @@ pub fn init(
 
     // ------- //
     // Monster //
-    let moth_model = assets.load_model("moth_monster");
-
-    commands.spawn((
-        Enemy::new(
-            Shooter::default()
-                .with_cooldown(1.0)
-                .with_damage(10.0)
-                .with_speed(10.0)
-                .with_model(assets.load_model("fireball")),
-        ),
-        moth_model,
-        Material::default().with_uv_transparency(),
-        GeometryType::Dynamic,
-        Transform::from_translation(vec3(0.0, 0.0, ELEPHANT_Z + 1.0)),
-        Billboard,
-        Health::new(100.0),
-        RayCast {
-            origin: Vec2::ZERO,
-            direction: Vec2::NEG_Y * 20.0,
-            hit: None,
-        },
-        Collider::circle(0.5),
-    ));
+    spawn_moth_monster(
+        &mut commands,
+        &assets,
+        vec3(0.0, 0.0, ELEPHANT_Z + 1.0),
+    );
 
     //--------------------- //
     // Test model animation //
