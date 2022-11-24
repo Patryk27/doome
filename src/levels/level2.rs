@@ -79,7 +79,7 @@ pub fn init(
                 lvl.model("wall")
                     .with_translation(pos + vec3(0.0, 0.0, z))
                     .with_rotation(Quat::from_rotation_y(nf - PI / 2.0))
-                    .with_scale(vec3(2.5, 1.25 * 5.0, 1.0))
+                    .with_scale(vec3(2.0, 1.25 * 5.0, 1.0))
                     .with_material(
                         Material::default()
                             .with_color(Color::hex(0xffffff))
@@ -96,7 +96,7 @@ pub fn init(
             lvl.model("wall")
                 .with_translation(pos + vec3(0.0, 2.5, 0.0))
                 .with_rotation(Quat::from_rotation_y(nf - PI / 2.0))
-                .with_scale(vec3(2.5, 1.25 * 5.0, 1.0))
+                .with_scale(vec3(3.0, 1.25 * 5.0, 1.0))
                 .with_material(
                     Material::default()
                         .with_color(Color::hex(0xffffff))
@@ -160,7 +160,7 @@ pub fn init(
         .model("cell")
         .dynamic()
         .with_translation(vec3(-8.52, 0.0, 0.0))
-        .with_scale(vec3(1.0, 1.5, 2.5))
+        .with_scale(vec3(1.0, 1.5, 3.0))
         .with_material(
             Material::default()
                 .with_color(Color::hex(0xffffff) * 0.75)
@@ -208,7 +208,7 @@ pub fn init(
     // -----
 
     LevelLoader::new(include_str!("../../assets/levels/level2.tmj"))
-        .offset(-15, 0)
+        .offset(-15, -1)
         .load(&mut lvl);
 
     // -----
@@ -249,6 +249,7 @@ enum LevelStage {
 
 pub fn process(
     time: Res<Time>,
+    assets: Res<Assets>,
     mut commands: Commands,
     mut level: Query<&mut Level>,
     mut collisions: EventReader<Collision>,
@@ -256,6 +257,7 @@ pub fn process(
     mut lights: Query<&mut Light>,
     mut print_tx: EventWriter<TypewriterPrint>,
     mut msg_tx: EventWriter<Message>,
+    mut recalc_nav_data_tx: EventWriter<RecalculateNavData>,
 ) {
     let Ok(mut level) = level.get_single_mut() else { return };
     let t = time.elapsed_seconds();
@@ -337,6 +339,14 @@ pub fn process(
                 commands.entity(ent_sl0).insert(LightFade::fade_out(0.35));
                 commands.entity(ent_sl1).insert(LightFade::fade_in(0.35));
                 commands.entity(ent_lamp).despawn();
+
+                recalc_nav_data_tx.send(RecalculateNavData);
+
+                MothMonster::spawn(
+                    &mut commands,
+                    &assets,
+                    vec3(-20.0, 0.0, 0.0),
+                );
             }
 
             if gate_timer.finished() {
