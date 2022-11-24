@@ -1,3 +1,4 @@
+use std::fmt;
 use std::str::FromStr;
 
 use anyhow::{anyhow, Context};
@@ -42,7 +43,10 @@ pub enum Command {
         position: Vec3,
     },
     Despawn {
-        entity: Entity,
+        entity: EntityHandle,
+    },
+    Kill {
+        entity: EntityHandle,
     },
 }
 
@@ -57,6 +61,9 @@ pub enum EntityOrPlayer {
     Entity(Entity),
     Player,
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct EntityHandle(pub Entity);
 
 impl FromStr for Command {
     type Err = anyhow::Error;
@@ -117,11 +124,14 @@ impl FromStr for Command {
                 })
             }
             "despawn" => {
-                let entity: u64 =
-                    parts.next().context("Missing entity")?.parse()?;
-                let entity = Entity::from_bits(entity);
+                let entity = parts.next().context("Missing entity")?.parse()?;
 
                 Ok(Command::Despawn { entity })
+            }
+            "kill" => {
+                let entity = parts.next().context("Missing entity")?.parse()?;
+
+                Ok(Command::Kill { entity })
             }
             _ => Err(anyhow!("Failed to parse command: {s}")),
         }
@@ -161,5 +171,32 @@ impl FromStr for Spawnable {
             "heart" => Ok(Spawnable::Heart),
             _ => Err(anyhow!("Invalid spawnable: {s}")),
         }
+    }
+}
+
+impl FromStr for EntityHandle {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut parts = s.splitn(2, 'v');
+
+        let index: u64 = parts.next().context("Missing index")?.parse()?;
+        let generation: u64 =
+            parts.next().context("Missing generation")?.parse()?;
+
+        let entity = Entity::from_bits(index | (generation << 32));
+
+        Ok(Self(entity))
+    }
+}
+
+impl fmt::Display for EntityHandle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let bits = self.0.to_bits();
+
+        let index = bits & 0xFFFF_FFFF;
+        let generation = bits >> 32;
+
+        write!(f, "{}v{}", index, generation)
     }
 }

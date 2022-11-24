@@ -1,6 +1,6 @@
 use bevy::app::AppExit;
 use bevy::prelude::*;
-use doome_bevy::health::Health;
+use doome_bevy::health::{Death, Health};
 use doome_bevy::prelude::{Assets, Player};
 
 use crate::InputLock;
@@ -32,6 +32,7 @@ fn handle_commands(
     player: Query<(Entity, &Player)>,
     all_entities: Query<Entity>,
     mut exit: EventWriter<AppExit>,
+    mut deaths: EventWriter<Death>,
 ) {
     for cmd in game_commands.iter().copied() {
         log::info!("Handling command: {cmd:?}");
@@ -99,11 +100,14 @@ fn handle_commands(
 
                 output.send(CommandOutput(format!(
                     "Spawned {spawnable:?}: {}",
-                    entity.to_bits()
+                    EntityHandle(entity)
                 )));
             }
             Command::Despawn { entity } => {
-                commands.entity(entity).despawn();
+                commands.entity(entity.0).despawn();
+            }
+            Command::Kill { entity } => {
+                deaths.send(Death(entity.0));
             }
         }
     }
