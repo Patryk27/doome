@@ -82,6 +82,7 @@ impl Shooter {
             Material::default().with_uv_transparency().emissive(),
             Collider::circle(self.collider_radius),
             Body {
+                acceleration: Vec2::ZERO,
                 velocity: graphical_to_physical(
                     forward.normalize() * self.bullet_speed,
                 ),

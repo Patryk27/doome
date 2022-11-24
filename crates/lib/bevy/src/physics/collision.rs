@@ -6,6 +6,8 @@ use super::events::Collision;
 use super::PhysicsEnabled;
 use crate::convert::physical_to_graphical;
 
+const MIN_VELOCITY: f32 = 0.5;
+
 pub fn resolve_collisions(
     time: Res<Time>,
     physics_enabled: Res<PhysicsEnabled>,
@@ -16,13 +18,37 @@ pub fn resolve_collisions(
 ) {
     let delta = time.delta_seconds();
 
-    for (active_entity, body, active_entity_collider) in
+    for (active_entity, mut body, active_entity_collider) in
         bodies_with_colliders.iter_mut()
     {
+        let body = body.as_mut();
+
         // SAFETY: This is safe, because we will validate that the entities are different.
         let mut active_entity_transform =
             unsafe { transforms.get_unchecked(active_entity).unwrap() };
 
+        if active_entity_transform.translation.is_nan() {
+            log::warn!("body.velocity = {:?}", body.velocity);
+            log::warn!("body.acceleration = {:?}", body.acceleration);
+            panic!(
+                "active_entity_transform.translation = {:?}",
+                active_entity_transform.translation
+            );
+        }
+
+        if body.acceleration.is_nan() {
+            log::warn!("body.velocity = {:?}", body.velocity);
+            log::warn!("body.acceleration = {:?}", body.acceleration);
+            panic!("body.acceleration = {:?}", body.acceleration);
+        }
+
+        if body.velocity.is_nan() {
+            log::warn!("body.velocity = {:?}", body.velocity);
+            log::warn!("body.acceleration = {:?}", body.acceleration);
+            panic!("body.velocity = {:?}", body.velocity);
+        }
+
+        body.velocity += body.acceleration * delta;
         active_entity_transform.translation +=
             physical_to_graphical(body.velocity) * delta;
 
@@ -61,6 +87,16 @@ pub fn resolve_collisions(
                 if body.body_type.is_kinematic() {
                     active_entity_transform.translation -=
                         physical_to_graphical(mtv);
+
+                    // TODO: Why would this now cause a NAN???
+                    // let mtv_component = vector_decompose(body.velocity, mtv);
+                    // let mtv_component = mtv * mtv_component;
+
+                    body.velocity *= 0.75;
+
+                    if body.velocity.length() < MIN_VELOCITY {
+                        body.velocity = Vec2::ZERO;
+                    }
                 }
             }
         }

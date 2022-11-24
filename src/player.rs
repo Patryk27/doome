@@ -13,6 +13,7 @@ pub fn spawn(mut commands: Commands) {
         Player::new(shooter),
         Transform::default(),
         Body {
+            acceleration: Vec2::ZERO,
             velocity: Vec2::ZERO,
             body_type: BodyType::Kinematic,
         },
@@ -31,6 +32,8 @@ pub fn process_movement(
     const MOUSE_ROTATION_SENSITIVITY: f32 = 0.5;
     const PLANAR_MOVEMENT_SPEED: f32 = 7.5;
     const ROTATION_SPEED: f32 = 2.0;
+    const ACCELERATION_SPEED: f32 = 8.0;
+    const BRAKING_SPEED: f32 = 12.0;
 
     let (player, mut body, mut transform) = player.single_mut();
     let delta = time.delta_seconds();
@@ -48,11 +51,13 @@ pub fn process_movement(
         );
     }
 
-    body.velocity = Vec2::ZERO;
+    let mut desired_velocity = Vec2::ZERO;
+
+    body.acceleration = Vec2::ZERO;
 
     if keys.pressed(KeyCode::W) || keys.pressed(KeyCode::S) {
         let sign = if keys.pressed(KeyCode::W) { 1.0 } else { -1.0 };
-        body.velocity += graphical_to_physical(transform.forward() * sign);
+        desired_velocity += graphical_to_physical(transform.forward() * sign);
     }
 
     if keys.pressed(KeyCode::Comma) || keys.pressed(KeyCode::Period) {
@@ -67,12 +72,22 @@ pub fn process_movement(
 
     if keys.pressed(KeyCode::A) || keys.pressed(KeyCode::D) {
         let sign = if keys.pressed(KeyCode::A) { -1.0 } else { 1.0 };
-        body.velocity += graphical_to_physical(transform.left() * sign);
+        desired_velocity += graphical_to_physical(transform.left() * sign);
     }
 
-    body.velocity = body.velocity.normalize_or_zero() * PLANAR_MOVEMENT_SPEED;
+    let desired_velocity =
+        desired_velocity.normalize_or_zero() * PLANAR_MOVEMENT_SPEED;
+
+    if desired_velocity.length() > 0.0 {
+        let diff = desired_velocity - body.velocity;
+        body.acceleration = diff * ACCELERATION_SPEED;
+    } else {
+        body.acceleration =
+            -body.velocity.clamp_length_max(1.0) * BRAKING_SPEED;
+    }
 
     if !player.can_move {
-        body.velocity = Default::default();
+        body.acceleration = Vec2::ZERO;
+        body.velocity = Vec2::ZERO;
     }
 }

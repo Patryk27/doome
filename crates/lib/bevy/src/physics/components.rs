@@ -3,7 +3,7 @@ use doome_geo::Polygon;
 
 use crate::convert::{graphical_to_physical, physical_to_graphical};
 
-const CIRCLE_POINTS: usize = 16;
+const CIRCLE_POINTS: usize = 32;
 
 #[derive(Component)]
 pub struct RayCast {
@@ -78,6 +78,7 @@ impl Collider {
 
 #[derive(Component)]
 pub struct Body {
+    pub acceleration: Vec2,
     pub velocity: Vec2,
     pub body_type: BodyType,
 }
