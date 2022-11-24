@@ -48,6 +48,7 @@ pub enum Command {
     Kill {
         entity: EntityHandle,
     },
+    SyncNavData,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -133,6 +134,7 @@ impl FromStr for Command {
 
                 Ok(Command::Kill { entity })
             }
+            "sync-nav-data" => Ok(Command::SyncNavData),
             _ => Err(anyhow!("Failed to parse command: {s}")),
         }
     }

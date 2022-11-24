@@ -18,17 +18,20 @@ impl Plugin for CommandsPlugin {
 pub struct CommandOutput(pub String);
 
 fn handle_commands(
+    mut game_commands: EventReader<Command>,
     mut commands: Commands,
     assets: Res<Assets>,
-    mut game_commands: EventReader<Command>,
-    mut output: EventWriter<CommandOutput>,
     mut input_lock: ResMut<InputLock>,
+    // Queries
     mut transforms: Query<&mut Transform>,
     mut healths: Query<&mut Health>,
     player: Query<(Entity, &Player)>,
     all_entities: Query<Entity>,
+    // Even writers
+    mut output: EventWriter<CommandOutput>,
     mut exit: EventWriter<AppExit>,
     mut deaths: EventWriter<Death>,
+    mut sync_nav_data: EventWriter<RecalculateNavData>,
 ) {
     for cmd in game_commands.iter().copied() {
         log::info!("Handling command: {cmd:?}");
@@ -98,6 +101,9 @@ fn handle_commands(
             }
             Command::Kill { entity } => {
                 deaths.send(Death(entity.0));
+            }
+            Command::SyncNavData => {
+                sync_nav_data.send(RecalculateNavData);
             }
         }
     }
