@@ -27,6 +27,7 @@ fn handle_commands(
     mut input_lock: ResMut<InputLock>,
     // Queries
     mut transforms: Query<&mut Transform>,
+    colliders: Query<&mut Collider>,
     mut healths: Query<&mut Health>,
     player: Query<(Entity, &Player)>,
     all_entities: Query<Entity>,
@@ -115,6 +116,44 @@ fn handle_commands(
                 } else {
                     output.send(CommandOutput("Physics disabled".to_string()));
                 }
+            }
+            Command::DumpPhysics => {
+                use std::fmt::Write;
+
+                let mut n = 0;
+                let mut lines = String::new();
+                for entity in all_entities.iter() {
+                    let mut points = "{polygon}(".to_string();
+
+                    let Ok(transform) = transforms.get(entity) else { continue };
+                    let Ok(collider) = colliders.get(entity) else { continue };
+
+                    let polygon = collider.to_polygon(transform);
+
+                    let mut is_first = true;
+                    for point in polygon.points() {
+                        writeln!(
+                            lines,
+                            "a_{{{n}}} = ({}, {})",
+                            point.x, point.y
+                        )
+                        .unwrap();
+
+                        if is_first {
+                            is_first = false;
+                        } else {
+                            points.push_str(", ");
+                        }
+
+                        write!(points, "a_{{{n}}}").unwrap();
+
+                        n += 1;
+                    }
+
+                    writeln!(lines, "{points})").unwrap();
+                }
+
+                std::fs::write("physics_dump", lines).unwrap();
             }
         }
     }

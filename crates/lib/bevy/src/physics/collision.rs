@@ -93,6 +93,7 @@ pub fn resolve_collisions(
                         let mtv_component =
                             vector_decompose(body.velocity, mtv);
                         let mtv_component = mtv * mtv_component;
+
                         body.velocity -= mtv_component;
                     }
 

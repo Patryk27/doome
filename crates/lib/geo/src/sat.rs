@@ -10,24 +10,26 @@ use crate::Polygon;
 /// Returns the minimum translation vector required to resolve the collision, if such occurred,
 /// otherwise returns None.
 pub fn resolve_sat(a: &Polygon, b: &Polygon) -> Option<Vec2> {
-    let all_axes: Vec<Vec2> = iter_separation_axes(a)
-        .chain(iter_separation_axes(b))
-        .collect();
+    let all_axes = iter_separation_axes(a).chain(iter_separation_axes(b));
 
-    let mut mtvs = Vec::with_capacity(all_axes.len());
+    let mut min_overlap = std::f32::MAX;
+    let mut min_mtv = Vec2::ZERO;
+
     for axis in all_axes {
         let a_vertices = project_vertices_onto(a.points(), axis);
         let b_vertices = project_vertices_onto(b.points(), axis);
 
         // If there's no overlap we'll early return None
-        mtvs.push(resolve_axis_projections(axis, &a_vertices, &b_vertices)?);
+        let (mtv, overlap) =
+            resolve_axis_projections(axis, &a_vertices, &b_vertices)?;
+
+        if overlap < min_overlap {
+            min_overlap = overlap;
+            min_mtv = mtv;
+        }
     }
 
-    mtvs.into_iter().min_by(|a, b| {
-        a.length()
-            .partial_cmp(&b.length())
-            .unwrap_or(std::cmp::Ordering::Equal)
-    })
+    Some(min_mtv)
 }
 
 fn iter_separation_axes(poly: &Polygon) -> impl Iterator<Item = Vec2> + '_ {
@@ -40,14 +42,13 @@ fn iter_separation_axes(poly: &Polygon) -> impl Iterator<Item = Vec2> + '_ {
 /// otherwise returns None
 fn resolve_axis_projections(
     axis: Vec2,
-    a: &[Vec2],
-    b: &[Vec2],
-) -> Option<Vec2> {
-    let a_min = a.iter().map(|v| v.dot(axis)).fold(f32::NAN, f32::min);
-    let a_max = a.iter().map(|v| v.dot(axis)).fold(f32::NAN, f32::max);
-
-    let b_min = b.iter().map(|v| v.dot(axis)).fold(f32::NAN, f32::min);
-    let b_max = b.iter().map(|v| v.dot(axis)).fold(f32::NAN, f32::max);
+    a: &[f32],
+    b: &[f32],
+) -> Option<(Vec2, f32)> {
+    let a_min = a.iter().copied().fold(f32::NAN, f32::min);
+    let a_max = a.iter().copied().fold(f32::NAN, f32::max);
+    let b_min = b.iter().copied().fold(f32::NAN, f32::min);
+    let b_max = b.iter().copied().fold(f32::NAN, f32::max);
 
     if a_max < b_min || b_max < a_min {
         None
@@ -57,13 +58,10 @@ fn resolve_axis_projections(
 
         let overlap = a_overlap.min(b_overlap);
 
-        Some(axis * overlap)
+        Some((axis * overlap, overlap))
     }
 }
 
-fn project_vertices_onto(vertices: &[Vec2], axis: Vec2) -> Vec<Vec2> {
-    vertices
-        .iter()
-        .map(|v| axis * v.dot(axis))
-        .collect::<Vec<_>>()
+fn project_vertices_onto(vertices: &[Vec2], axis: Vec2) -> Vec<f32> {
+    vertices.iter().map(|v| axis.dot(*v)).collect::<Vec<_>>()
 }

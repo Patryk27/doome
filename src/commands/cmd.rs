@@ -50,6 +50,7 @@ pub enum Command {
     },
     SyncNavData,
     NoClip,
+    DumpPhysics,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -137,6 +138,7 @@ impl FromStr for Command {
             }
             "sync-nav-data" => Ok(Command::SyncNavData),
             "noclip" => Ok(Command::NoClip),
+            "dump-physics" => Ok(Command::DumpPhysics),
             _ => Err(anyhow!("Failed to parse command: {s}")),
         }
     }

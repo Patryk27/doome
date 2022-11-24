@@ -17,7 +17,7 @@ pub fn spawn(mut commands: Commands) {
             velocity: Vec2::ZERO,
             body_type: BodyType::Kinematic,
         },
-        Collider::circle(0.5, 64),
+        Collider::circle(0.5, 6),
         Health::new(100.0),
     ));
 }

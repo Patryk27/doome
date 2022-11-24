@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use glam::Vec2;
 
 /// A 2D convex polygon
@@ -35,7 +37,7 @@ impl Polygon {
 
     pub fn circle(radius: f32, num_points: usize) -> Self {
         let mut points = Vec::with_capacity(num_points);
-        let angle = 2.0 * std::f32::consts::PI / num_points as f32;
+        let angle = 2.0 * PI / num_points as f32;
         for i in 0..num_points {
             let angle = angle * i as f32;
             let x = radius * angle.cos();
