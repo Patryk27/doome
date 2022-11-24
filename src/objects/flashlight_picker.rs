@@ -29,7 +29,7 @@ impl FlashlightPicker {
                     .with_color(Color::hex(0xffffff))
                     .with_uv_transparency(),
                 GeometryType::Dynamic,
-                Collider::circle(1.25),
+                Collider::circle(1.25, 6),
             ))
             .id()
     }

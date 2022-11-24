@@ -7,6 +7,7 @@ use super::PhysicsEnabled;
 use crate::convert::physical_to_graphical;
 
 const MIN_VELOCITY: f32 = 0.5;
+const MIN_MTV_LENGTH_TO_DECOMPOSE: f32 = 0.001;
 
 pub fn resolve_collisions(
     time: Res<Time>,
@@ -88,11 +89,12 @@ pub fn resolve_collisions(
                     active_entity_transform.translation -=
                         physical_to_graphical(mtv);
 
-                    // TODO: Why would this now cause a NAN???
-                    // let mtv_component = vector_decompose(body.velocity, mtv);
-                    // let mtv_component = mtv * mtv_component;
-
-                    body.velocity *= 0.75;
+                    if mtv.length() > MIN_MTV_LENGTH_TO_DECOMPOSE {
+                        let mtv_component =
+                            vector_decompose(body.velocity, mtv);
+                        let mtv_component = mtv * mtv_component;
+                        body.velocity -= mtv_component;
+                    }
 
                     if body.velocity.length() < MIN_VELOCITY {
                         body.velocity = Vec2::ZERO;

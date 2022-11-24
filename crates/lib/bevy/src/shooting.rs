@@ -80,7 +80,7 @@ impl Shooter {
         let mut cmds = commands.spawn((
             bullet_transform,
             Material::default().with_uv_transparency().emissive(),
-            Collider::circle(self.collider_radius),
+            Collider::circle(self.collider_radius, 6),
             Body {
                 acceleration: Vec2::ZERO,
                 velocity: graphical_to_physical(

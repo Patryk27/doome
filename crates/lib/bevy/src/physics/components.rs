@@ -3,8 +3,6 @@ use doome_geo::Polygon;
 
 use crate::convert::{graphical_to_physical, physical_to_graphical};
 
-const CIRCLE_POINTS: usize = 32;
-
 #[derive(Component)]
 pub struct RayCast {
     pub origin: Vec2,
@@ -45,9 +43,9 @@ pub struct Collider {
 }
 
 impl Collider {
-    pub fn circle(radius: f32) -> Self {
+    pub fn circle(radius: f32, n: usize) -> Self {
         Self {
-            polygon: Polygon::circle(radius, CIRCLE_POINTS),
+            polygon: Polygon::circle(radius, n),
             collision_mask: u32::MAX,
         }
     }

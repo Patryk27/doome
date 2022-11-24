@@ -30,7 +30,7 @@ impl MothMonster {
                     direction: Vec2::NEG_Y * 20.0,
                     hit: None,
                 },
-                Collider::circle(0.5),
+                Collider::circle(0.5, 6),
             ))
             .id()
     }
