@@ -58,13 +58,13 @@ pub fn main_fs(
     output: &mut Vec4,
 ) {
     let frag_coord = vec2(pos.x / constants.width, pos.y / constants.height);
-    let frag_coord = crt_curve_uv(frag_coord);
+    // let frag_coord = crt_curve_uv(frag_coord);
 
     let color: Vec4 = tex.sample_by_lod(*sampler, frag_coord, 0.0);
     let mut color = color.xyz();
 
-    vignette(&mut color, frag_coord);
-    scanline(&mut color, constants.time, frag_coord);
+    // vignette(&mut color, frag_coord);
+    // scanline(&mut color, constants.time, frag_coord);
 
     *output = color.extend(1.0);
 }

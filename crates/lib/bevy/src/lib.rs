@@ -24,7 +24,13 @@ pub mod prelude {
     pub use glam::*;
 
     pub use crate::assets::*;
+    pub use crate::billboard::*;
     pub use crate::components::*;
+    pub use crate::enemies::*;
+    pub use crate::health::*;
     pub use crate::physics::components::*;
+    pub use crate::physics::events::*;
     pub use crate::player::*;
+    pub use crate::shooting::*;
+    pub use crate::simple_animations::*;
 }

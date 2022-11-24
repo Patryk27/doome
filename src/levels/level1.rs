@@ -1,19 +1,9 @@
 use std::f32::consts::PI;
 
-use bevy::prelude::*;
-use doome_bevy::assets::Assets;
-use doome_bevy::components::*;
-use doome_bevy::health::Health;
-use doome_bevy::physics::components::{Body, BodyType, Collider};
-use doome_bevy::player::Player;
-use doome_bevy::shooting::Shooter;
-use glam::vec3;
 use indoc::indoc;
 
 use super::utils::*;
-use crate::entities::{spawn_heart, spawn_moth_monster};
-use crate::explosions::spawn_explosion;
-use crate::ui::{Text, TypewriterPrint};
+use crate::prelude::*;
 
 const INTRO_TEXT: &str = indoc! {r#"
     Hello, Neo.
@@ -81,47 +71,25 @@ const OUTRO_TEXT: &str = indoc! {r#"
 const MAIN_CENTER_Z: f32 = (21.0 + 37.0) / 2.0;
 const ELEPHANT_Z: f32 = MAIN_CENTER_Z + 3.0;
 
-pub fn init(mut commands: Commands, assets: Res<Assets>) {
-    // ------ //
-    // Player //
-    let player_shooter = Shooter::default()
-        .with_speed(20.0)
-        .with_cooldown(0.2)
-        .with_damage(30.0);
-    commands.spawn((
-        Player::new(player_shooter),
-        Transform::from_rotation(Quat::from_rotation_x(PI)),
-        Body {
-            velocity: Vec2::ZERO,
-            body_type: BodyType::Kinematic,
-        },
-        Collider::circle(0.5),
-        Health::new(100.0),
-    ));
+pub fn init(
+    mut commands: Commands,
+    assets: Res<Assets>,
+    mut enter_levels: EventReader<EnterLevel>,
+    mut player: Query<&mut Transform, With<Player>>,
+) {
+    if !enter_levels.iter().any(|level| *level == EnterLevel::l1()) {
+        return;
+    }
 
-    // ------- //
-    // Monster //
-    spawn_moth_monster(
-        &mut commands,
-        &assets,
-        vec3(0.0, 0.0, ELEPHANT_Z + 1.0),
-    );
+    // -----
 
-    //--------------------- //
-    // Test model animation //
+    *player.single_mut() =
+        Transform::default().with_rotation(Quat::from_rotation_x(PI));
 
-    let transform =
-        Transform::from_translation(vec3(0.0, 1.0, ELEPHANT_Z - 6.0))
-            .with_scale(Vec3::ONE * 6.0);
-    spawn_explosion(&mut commands, &assets, transform);
-
-    //------ //
-    // Heart //
-    spawn_heart(&mut commands, &assets, vec3(0.0, 1.5, ELEPHANT_Z - 3.0));
+    // -----
 
     let mut lvl = LevelBuilder::new(&mut commands, &assets);
 
-    // Corridor
     lvl.floor(-1, -1, 1, 20).spawn();
     lvl.wall(1, -1, 1, 20, 1).spawn();
     lvl.wall(-1, -1, 1, -1, 2).spawn();
@@ -171,7 +139,8 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
         .insert(LightFade::fade_in_delayed(3.5, 0.1))
         .id();
 
-    // Main
+    // -----
+
     lvl.floor(-8, 21, 8, 37).spawn();
     lvl.wall(-8, 37, 8, 37, 0).spawn();
     lvl.wall(8, 37, 8, 21, 1).spawn();
@@ -214,7 +183,7 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
     });
 }
 
-#[derive(Resource)]
+#[derive(Component)]
 pub struct Level {
     stage: LevelStage,
 }
@@ -265,12 +234,14 @@ pub fn process(
     time: Res<Time>,
     keys: Res<Input<KeyCode>>,
     mut commands: Commands,
-    mut level: ResMut<Level>,
+    mut level: Query<&mut Level>,
     mut player: Query<&mut Player>,
     camera: Query<&Camera>,
     mut print_tx: EventWriter<TypewriterPrint>,
     mut visibilities: Query<&mut Visibility>,
 ) {
+    let Ok(mut level) = level.get_single_mut() else { return };
+
     match &mut level.stage {
         LevelStage::CorridorIntro {
             tt,

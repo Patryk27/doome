@@ -18,6 +18,14 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         Self { commands, assets }
     }
 
+    pub fn commands(&mut self) -> &mut Commands<'w, 's> {
+        &mut self.commands
+    }
+
+    pub fn assets(&self) -> &'p Assets {
+        &self.assets
+    }
+
     pub fn floor<'a>(
         &'a mut self,
         x1: i32,
@@ -196,9 +204,9 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
 
     pub fn complete<T>(self, level: T)
     where
-        T: Resource,
+        T: Component,
     {
-        self.commands.insert_resource(level);
+        self.commands.spawn(level);
     }
 }
 

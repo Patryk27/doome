@@ -39,15 +39,15 @@ impl GeometryIndexer {
         }
 
         let (bvh, tt_bvh) = Self::measure(|| Bvh::build(geometry));
-        let (lbvh, tt_lbvh) = Self::measure(|| FlatBvh::build(bvh));
+        let (fbvh, tt_fbvh) = Self::measure(|| FlatBvh::build(bvh));
 
         let ((index, index_len), tt_serialize) =
-            Self::measure(|| serializer::serialize(lbvh));
+            Self::measure(|| serializer::serialize(fbvh));
 
         log::info!(
-            "Geometry indexed; tt-bvh = {:?}, tt-lbvh = {:?}, tt-serialize = {:?}, index-size = {}",
+            "Geometry indexed; tt-bvh = {:?}, tt-fbvh = {:?}, tt-serialize = {:?}, index-size = {}",
             tt_bvh,
-            tt_lbvh,
+            tt_fbvh,
             tt_serialize,
             index_len,
         );

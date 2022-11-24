@@ -5,9 +5,9 @@ use doome_bevy::health::Death;
 
 use crate::explosions::spawn_explosion;
 
-pub struct Charon;
+pub struct CharonPlugin;
 
-impl Plugin for Charon {
+impl Plugin for CharonPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(handle_enemy_deaths);
     }

@@ -141,7 +141,7 @@ impl TypewriterPrint {
 pub fn update(
     time: Res<Time>,
     mut state: ResMut<Typewriter>,
-    mut print: EventReader<TypewriterPrint>,
+    mut events: EventReader<TypewriterPrint>,
 ) {
     if let Typewriter::Working {
         text,
@@ -172,9 +172,9 @@ pub fn update(
         }
     }
 
-    for print in print.iter() {
+    for event in events.iter() {
         *state = Typewriter::Working {
-            text: print.text.clone(),
+            text: event.text.clone(),
             layout: Default::default(),
             tt: Default::default(),
             next_layout_at: Default::default(),

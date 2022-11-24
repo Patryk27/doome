@@ -1,9 +1,11 @@
+use doome_shader_common::STATIC_GEOMETRY_INDEX_SIZE;
+
 use super::*;
 
-pub fn serialize(lbvh: FlatBvh) -> (StaticGeometryIndex, usize) {
+pub fn serialize(fbvh: FlatBvh) -> (StaticGeometryIndex, usize) {
     let mut out = Vec::new();
 
-    for node in lbvh {
+    for node in fbvh {
         let v1;
         let v2;
 
@@ -11,8 +13,12 @@ pub fn serialize(lbvh: FlatBvh) -> (StaticGeometryIndex, usize) {
             LinearBvhNode::Leaf { triangle, goto_id } => {
                 let goto_ptr = goto_id.map(|id| id * 2).unwrap_or_default();
 
-                v1 = vec4(0.0, 0.0, 0.0, triangle.get() as _);
-                v2 = vec4(0.0, 0.0, 0.0, goto_ptr as _);
+                let info = 1
+                    | ((triangle.get() as u32) << 1)
+                    | ((goto_ptr as u32) << 16);
+
+                v1 = vec4(0.0, 0.0, 0.0, f32::from_bits(info));
+                v2 = vec4(0.0, 0.0, 0.0, 0.0);
             }
 
             LinearBvhNode::NonLeaf {
@@ -26,8 +32,12 @@ pub fn serialize(lbvh: FlatBvh) -> (StaticGeometryIndex, usize) {
                 let on_miss_goto_ptr =
                     on_miss_goto_id.map(|id| id * 2).unwrap_or_default();
 
-                v1 = bb.min().extend(on_hit_goto_ptr as _);
-                v2 = bb.max().extend(on_miss_goto_ptr as _);
+                let info = 0
+                    | ((on_hit_goto_ptr as u32) << 1)
+                    | ((on_miss_goto_ptr as u32) << 16);
+
+                v1 = bb.min().extend(f32::from_bits(info));
+                v2 = bb.max().extend(0.0);
             }
         }
 
@@ -39,7 +49,7 @@ pub fn serialize(lbvh: FlatBvh) -> (StaticGeometryIndex, usize) {
 
     // ----
 
-    while out.len() < 4096 {
+    while out.len() < STATIC_GEOMETRY_INDEX_SIZE {
         out.push(vec4(0.0, 0.0, 0.0, 0.0));
     }
 

@@ -73,10 +73,14 @@ impl Ray {
         loop {
             let v1 = world.static_geo_index.read(ptr);
             let v2 = world.static_geo_index.read(ptr + 1);
-            let is_leaf = v1.xyz() == v2.xyz();
+
+            let info = v1.w.to_bits();
+            let is_leaf = info & 1 == 1;
+            let i1 = info << 16 >> 17;
+            let i2 = info >> 16;
 
             if is_leaf {
-                let tri_id = TriangleId::new_static(v1.w as _);
+                let tri_id = TriangleId::new_static(i1 as usize);
                 let tri = world.static_geo.get(tri_id);
                 let hit = tri.hit(self, false);
 
@@ -84,14 +88,14 @@ impl Ray {
                     return true;
                 }
 
-                ptr = v2.w as _;
+                ptr = i2 as usize;
             } else {
                 let at = self.hits_box_at(v1.xyz(), v2.xyz());
 
                 if at < distance {
-                    ptr = v1.w as _;
+                    ptr = i1 as usize;
                 } else {
-                    ptr = v2.w as _;
+                    ptr = i2 as usize;
                 }
             }
 
@@ -134,10 +138,14 @@ impl Ray {
         loop {
             let v1 = world.static_geo_index.read(ptr);
             let v2 = world.static_geo_index.read(ptr + 1);
-            let is_leaf = v1.xyz() == v2.xyz();
+
+            let info = v1.w.to_bits();
+            let is_leaf = info & 1 == 1;
+            let i1 = info << 16 >> 17;
+            let i2 = info >> 16;
 
             if is_leaf {
-                let tri_id = TriangleId::new_static(v1.w as _);
+                let tri_id = TriangleId::new_static(i1 as usize);
                 let tri = world.static_geo.get(tri_id);
                 let curr_hit = tri.hit(self, culling);
 
@@ -146,14 +154,14 @@ impl Ray {
                     hit.tri_id = tri_id.into_any();
                 }
 
-                ptr = v2.w as _;
+                ptr = i2 as usize;
             } else {
                 let at = self.hits_box_at(v1.xyz(), v2.xyz());
 
                 if at < hit.t {
-                    ptr = v1.w as _;
+                    ptr = i1 as usize;
                 } else {
-                    ptr = v2.w as _;
+                    ptr = i2 as usize;
                 }
             }
 
@@ -169,7 +177,6 @@ impl Ray {
         const ST_FIRST_HIT: usize = 0;
         const ST_REFLECTED: usize = 1;
         const ST_TRANSPARENT: usize = 2;
-        const ST_REFLECTED_AND_TRANSPARENT: usize = 3;
 
         let mut state = ST_FIRST_HIT;
         let mut state_vars = Mat4::default();
@@ -213,43 +220,23 @@ impl Ray {
 
                         self.origin = hit.point;
                         self.direction = reflection_dir.normalize();
-                    }
+                    } else if hit.alpha < 1.0 {
+                        state = ST_TRANSPARENT;
+                        state_vars.x_axis = vec4(hit.alpha, 0.0, 0.0, 0.0);
 
-                    if hit.alpha < 1.0 {
-                        if state == ST_REFLECTED {
-                            state = ST_REFLECTED_AND_TRANSPARENT;
-                            state_vars.y_axis = hit.point.extend(0.0);
-                            state_vars.w_axis = vec4(hit.alpha, 0.0, 0.0, 0.0);
-                        } else {
-                            state = ST_TRANSPARENT;
-                            state_vars.x_axis = vec4(hit.alpha, 0.0, 0.0, 0.0);
-
-                            self.origin = hit.point + 0.1 * self.direction;
-                        }
-                    }
-
-                    if state == ST_FIRST_HIT {
+                        self.origin = hit.point + 0.1 * self.direction;
+                    } else {
                         break;
                     }
                 }
 
-                ST_REFLECTED | ST_REFLECTED_AND_TRANSPARENT => {
+                ST_REFLECTED => {
                     *color += (hit_color
                         * state_vars.x_axis.xyz()
                         * state_vars.x_axis.w)
                         .extend(0.0);
 
-                    if state == ST_REFLECTED_AND_TRANSPARENT {
-                        state = ST_TRANSPARENT;
-                        state_vars.x_axis = state_vars.w_axis;
-
-                        self.direction = state_vars.z_axis.truncate();
-
-                        self.origin =
-                            state_vars.y_axis.truncate() + 0.1 * self.direction;
-                    } else {
-                        break;
-                    }
+                    break;
                 }
 
                 ST_TRANSPARENT => {

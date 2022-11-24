@@ -7,6 +7,7 @@ use bevy::prelude::*;
 use doome_engine::{HEIGHT, WIDTH};
 use doome_raytracer as rt;
 use glam::{vec2, vec3};
+use instant::Instant;
 
 use self::geometry_manager::*;
 use self::materials_manager::*;
@@ -157,7 +158,7 @@ fn sync_lights(
             LightKind::Point => {
                 ctxt.lights.push(rt::Light::point(
                     position,
-                    vec3(color.r, color.g, color.b),
+                    color.into_vec3(),
                     light.intensity,
                 ));
             }
@@ -166,7 +167,7 @@ fn sync_lights(
                     position,
                     point_at,
                     angle,
-                    vec3(color.r, color.g, color.b),
+                    color.into_vec3(),
                     light.intensity,
                 ));
             }
@@ -198,6 +199,8 @@ fn render(
 
     let intermediate_texture = &renderer.intermediate_output_texture_view;
     let sse_texture = &renderer.sse_output_texture_view;
+
+    let tt = Instant::now();
 
     let DoomeRenderer {
         raytracer,
@@ -262,6 +265,8 @@ fn render(
 
     renderer_state.queue.submit(vec![encoder.finish()]);
     current_texture.present();
+
+    log::trace!("raytracing-tt={:?}", tt.elapsed());
 }
 
 fn sync_deleted_geometry(

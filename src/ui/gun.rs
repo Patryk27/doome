@@ -9,7 +9,7 @@ use doome_bevy::player::Player;
 use doome_engine::Canvas;
 use image::RgbaImage;
 
-use crate::InputLock;
+use super::InputLock;
 
 const GUN_OFFSET_Y: u16 = 16;
 

@@ -24,11 +24,11 @@ impl Plugin for BulletsPlugin {
 
 fn collide_and_apply_damage(
     mut commands: Commands,
-    mut collision_events: EventReader<Collision>,
+    mut collisions: EventReader<Collision>,
     mut health: Query<&mut Health>,
     bullets: Query<&Bullet>,
 ) {
-    for collision in collision_events.iter() {
+    for collision in collisions.iter() {
         if let Ok(bullet) = bullets.get(collision.entity_a) {
             if is_a_bullet(&bullets, collision.entity_b) {
                 continue;

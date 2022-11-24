@@ -1,3 +1,4 @@
+mod messages;
 mod text;
 mod typewriter;
 
@@ -14,6 +15,7 @@ use doome_bevy::text::TextEngine;
 use doome_engine::{Canvas, HEIGHT, WIDTH};
 use glam::{vec2, Vec3Swizzles};
 
+pub use self::messages::*;
 pub use self::text::*;
 pub use self::typewriter::*;
 
@@ -35,6 +37,11 @@ impl Plugin for UiPlugin {
         app.insert_resource(Typewriter::Idle)
             .add_event::<TypewriterPrint>()
             .add_system(typewriter::update);
+
+        // Messages
+        app.insert_resource(Messages::default())
+            .add_event::<Message>()
+            .add_system(messages::update);
 
         // Setups
         app.add_startup_system(command_line::setup);
@@ -60,6 +67,11 @@ impl Plugin for UiPlugin {
     }
 }
 
+#[derive(Resource)]
+pub struct InputLock {
+    pub is_locked: bool,
+}
+
 fn clear(mut renderer: ResMut<DoomeRenderer>, text_engine: Res<TextEngine>) {
     let frame = &mut renderer.pixels.image_data;
     let mut canvas = Canvas::new_text(&text_engine, frame);
@@ -71,18 +83,14 @@ fn render_texts(
     mut renderer: ResMut<DoomeRenderer>,
     text_engine: Res<TextEngine>,
     typewriter: Res<Typewriter>,
+    messages: Res<Messages>,
     texts: Query<(&Text, &Transform, Option<&Visibility>)>,
 ) {
     let frame = &mut renderer.pixels.image_data;
     let mut canvas = Canvas::new_text(&text_engine, frame);
 
-    // ---------- //
-    // Typewriter //
-
     typewriter.render(&mut canvas);
-
-    // ------//
-    // Texts //
+    messages.render(&mut canvas);
 
     for (text, transform, visibility) in texts.iter() {
         let is_visible = visibility.map_or(true, |vis| vis.is_visible);

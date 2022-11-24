@@ -1,38 +1,30 @@
 use std::f32::consts::PI;
 use std::time::Duration;
 
-use bevy::prelude::*;
-use doome_bevy::billboard::Billboard;
-use doome_bevy::enemies::Enemy;
-use doome_bevy::health::Health;
-use doome_bevy::prelude::*;
-use doome_bevy::shooting::Shooter;
-
 use super::utils::LevelBuilder;
-use crate::ui::TypewriterPrint;
+use crate::prelude::*;
 
-pub fn init(mut commands: Commands, assets: Res<Assets>) {
-    let player_shooter = Shooter::default()
-        .with_speed(20.0)
-        .with_cooldown(0.2)
-        .with_damage(30.0);
+pub fn init(
+    mut commands: Commands,
+    assets: Res<Assets>,
+    mut enter_levels: EventReader<EnterLevel>,
+    mut player: Query<(&mut Player, &mut Transform)>,
+) {
+    if !enter_levels.iter().any(|level| *level == EnterLevel::l2()) {
+        return;
+    }
 
-    let mut player = Player::new(player_shooter);
+    // -----
+
+    let (mut player, mut player_xform) = player.single_mut();
 
     player.can_move = true;
 
-    commands.spawn((
-        player,
-        Transform::default()
-            .with_translation(vec3(0.0, 0.0, -8.0))
-            .with_rotation(Quat::from_rotation_x(PI)),
-        Body {
-            velocity: Vec2::ZERO,
-            body_type: BodyType::Kinematic,
-        },
-        Collider::circle(0.5),
-        Health::new(100.0),
-    ));
+    *player_xform = Transform::default()
+        .with_translation(vec3(0.0, 0.0, -8.0))
+        .with_rotation(Quat::from_rotation_x(PI));
+
+    // -----
 
     let mut lvl = LevelBuilder::new(&mut commands, &assets);
 
@@ -49,35 +41,19 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
         )
         .spawn();
 
-    lvl.model("floor")
-        .with_translation(vec3(0.0, 0.0, 0.0))
-        .with_scale(vec3(15.0, 1.0, 15.0))
-        .with_material(
-            Material::default()
-                .with_color(Color::hex(0xffffff))
-                .with_texture(assets.load_texture("floor.stone.mossy"))
-                .with_uv_divisor(12, 12)
-                .without_casting_shadows(),
-        )
-        .spawn();
-
-    let ent_water = lvl
-        .model("floor.hexagon")
-        .dynamic()
+    lvl.model("floor.hexagon")
         .with_translation(vec3(0.0, 0.1, 0.0))
         .with_scale(vec3(13.0, 1.0, 13.0))
         .with_material(
             Material::default()
-                .with_alpha(0.45)
                 .with_color(Color::hex(0xffffff) * 0.75)
                 .with_reflectivity(0.25)
                 .with_reflection_color(Color::hex(0xffffff))
-                .with_texture(assets.load_texture("water.mossy"))
+                .with_texture(assets.load_texture("floor.stone.mossy.water"))
                 .without_casting_shadows()
                 .with_uv_divisor(12, 12),
         )
-        .spawn()
-        .id();
+        .spawn();
 
     lvl.model("table")
         .with_translation(vec3(0.0, 0.0, 0.0))
@@ -106,7 +82,6 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
             }
 
             lvl.model("wall")
-                .dynamic()
                 .with_translation(pos + vec3(0.0, 3.0, 0.0))
                 .with_rotation(Quat::from_rotation_y(nf - PI / 2.0))
                 .with_scale(vec3(2.0, 6.0, 1.0))
@@ -122,7 +97,7 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
         if n == 2 {
             lvl.model("floor") // hehe
                 .dynamic()
-                .with_translation(pos + vec3(-0.2, 3.5, -0.2))
+                .with_translation(pos + vec3(-0.2, 2.5, -0.2))
                 .with_scale(vec3(1.0, 1.0, 1.0))
                 .with_rotation(
                     Quat::from_rotation_x(-PI / 2.0)
@@ -197,18 +172,15 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
         .spawn()
         .id();
 
-    let ent_l0 = lvl
-        .point_light(vec3(0.0, 10.0, 0.0), Color::hex(0xffffff) * 0.015)
-        .id();
-
     let ent_sl0 = lvl
         .spot_light(
             vec3(0.0, 8.0, 0.0),
             vec3(0.0, 0.0, 0.0),
             PI / 3.0,
-            Color::hex(0xffffff),
-            1.0,
+            Color::hex(0xffffff) * 0.75,
+            0.0,
         )
+        .insert(LightFade::fade_in(1.5))
         .id();
 
     let ent_sl1 = lvl
@@ -221,39 +193,41 @@ pub fn init(mut commands: Commands, assets: Res<Assets>) {
         )
         .id();
 
+    let ent_flashlight = FlashlightPicker::spawn(
+        lvl.assets(),
+        lvl.commands(),
+        vec3(-6.8, 0.0, 0.5),
+    );
+
     // -----
 
     lvl.complete(Level {
-        ent_water,
         ent_cell,
         ent_lamp,
-        ent_l0,
         ent_sl0,
         ent_sl1,
-        stage: LevelStage::Intro0 {
-            txt_rise_timer: Timer::new(
-                Duration::from_secs(10),
-                TimerMode::Once,
-            ),
-        },
+        ent_flashlight,
+        stage: LevelStage::AwaitingFlashlightPickup,
     });
 }
 
-#[derive(Resource)]
+#[derive(Component)]
 pub struct Level {
-    ent_water: Entity,
     ent_cell: Entity,
     ent_lamp: Entity,
-    ent_l0: Entity,
     ent_sl0: Entity,
     ent_sl1: Entity,
+    ent_flashlight: Entity,
     stage: LevelStage,
 }
 
 enum LevelStage {
+    AwaitingFlashlightPickup,
+
     Intro0 {
         txt_rise_timer: Timer,
     },
+
     Intro1 {
         light_timer: Timer,
         gate_timer: Timer,
@@ -263,23 +237,17 @@ enum LevelStage {
 
 pub fn process(
     time: Res<Time>,
-    assets: Res<Assets>,
     mut commands: Commands,
-    mut level: ResMut<Level>,
+    mut level: Query<&mut Level>,
+    mut collisions: EventReader<Collision>,
     mut transforms: Query<&mut Transform>,
     mut lights: Query<&mut Light>,
     mut print_tx: EventWriter<TypewriterPrint>,
+    mut msg_tx: EventWriter<Message>,
 ) {
+    let Ok(mut level) = level.get_single_mut() else { return };
     let t = time.elapsed_seconds();
     let dt = time.delta();
-
-    // -----
-
-    transforms.get_mut(level.ent_water).unwrap().translation = vec3(
-        (t * 1.1).sin(),
-        0.04 + t.sin().abs() / 15.0,
-        (t / 1.5).cos(),
-    );
 
     // -----
 
@@ -299,6 +267,24 @@ pub fn process(
     let ent_sl1 = level.ent_sl1;
 
     match &mut level.stage {
+        LevelStage::AwaitingFlashlightPickup => {
+            for collision in collisions.iter() {
+                if collision.collides_with(level.ent_flashlight) {
+                    commands.entity(level.ent_flashlight).despawn();
+                    msg_tx.send(Message::new("Picked: flashlight"));
+
+                    Flashlight::spawn(&mut commands);
+
+                    level.stage = LevelStage::Intro0 {
+                        txt_rise_timer: Timer::new(
+                            Duration::from_secs(5),
+                            TimerMode::Once,
+                        ),
+                    };
+                }
+            }
+        }
+
         LevelStage::Intro0 { txt_rise_timer } => {
             txt_rise_timer.tick(dt);
 

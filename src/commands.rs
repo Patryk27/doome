@@ -1,15 +1,9 @@
-use bevy::app::AppExit;
-use bevy::prelude::*;
-use doome_bevy::health::{Death, Health};
-use doome_bevy::prelude::{Assets, Player};
-
-use crate::InputLock;
-
 mod cmd;
 
-pub use self::cmd::*;
+use bevy::app::AppExit;
 
-pub struct CommandOutput(pub String);
+pub use self::cmd::*;
+use crate::prelude::*;
 
 pub struct CommandsPlugin;
 
@@ -20,6 +14,8 @@ impl Plugin for CommandsPlugin {
         app.add_system(handle_commands);
     }
 }
+
+pub struct CommandOutput(pub String);
 
 fn handle_commands(
     mut commands: Commands,
@@ -85,17 +81,11 @@ fn handle_commands(
             } => {
                 let entity = match spawnable {
                     Spawnable::MothMonster => {
-                        crate::entities::spawn_moth_monster(
-                            &mut commands,
-                            &assets,
-                            position,
-                        )
+                        MothMonster::spawn(&mut commands, &assets, position)
                     }
-                    Spawnable::Heart => crate::entities::spawn_heart(
-                        &mut commands,
-                        &assets,
-                        position,
-                    ),
+                    Spawnable::Heart => {
+                        Heart::spawn(&mut commands, &assets, position)
+                    }
                 };
 
                 output.send(CommandOutput(format!(

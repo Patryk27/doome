@@ -3,7 +3,7 @@ use crate::*;
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct StaticGeometryIndex {
-    data: [Vec4; 4096],
+    data: [Vec4; STATIC_GEOMETRY_INDEX_SIZE],
 }
 
 impl StaticGeometryIndex {
@@ -14,7 +14,7 @@ impl StaticGeometryIndex {
 
 #[cfg(not(target_arch = "spirv"))]
 impl StaticGeometryIndex {
-    pub fn new(data: [Vec4; 4096]) -> Self {
+    pub fn new(data: [Vec4; STATIC_GEOMETRY_INDEX_SIZE]) -> Self {
         Self { data }
     }
 }
