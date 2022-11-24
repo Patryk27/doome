@@ -84,7 +84,7 @@ pub fn init(
     // -----
 
     *player.single_mut() =
-        Transform::default().with_rotation(Quat::from_rotation_x(PI));
+        Transform::default().with_rotation(Quat::from_rotation_y(PI));
 
     // -----
 
@@ -294,7 +294,7 @@ pub fn process(
 
                 let main_sl0 = lvl
                     .spot_light(
-                        vec3(-8.4, 2.5, ELEPHANT_Z - 8.4),
+                        vec3(-8.4, 2.0, ELEPHANT_Z - 8.4),
                         vec3(0.0, 0.0, ELEPHANT_Z),
                         PI / 3.0,
                         Color::hex(0xffffff),
@@ -305,7 +305,7 @@ pub fn process(
 
                 let main_sl1 = lvl
                     .spot_light(
-                        vec3(8.4, 2.5, ELEPHANT_Z - 8.4),
+                        vec3(8.4, 2.0, ELEPHANT_Z - 8.4),
                         vec3(0.0, 0.0, ELEPHANT_Z),
                         PI / 3.0,
                         Color::hex(0xffffff),
@@ -338,6 +338,10 @@ pub fn process(
             level_builder(&mut commands, &assets)
                 .ceiling(-8, 18, 8, 37)
                 .dynamic()
+                .alter_material(|mat| {
+                    mat.with_reflectivity(0.25)
+                        .with_reflection_color(Color::hex(0xffffff))
+                })
                 .spawn();
 
             level.stage = LevelStage::MainIntro1 {

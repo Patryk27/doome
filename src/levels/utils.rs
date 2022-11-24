@@ -299,6 +299,14 @@ impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
         self
     }
 
+    pub fn alter_material(
+        mut self,
+        f: impl FnOnce(Material) -> Material,
+    ) -> Self {
+        self.material = self.material.map(f);
+        self
+    }
+
     pub fn with_collider(mut self, val: Collider) -> Self {
         self.collider = Some(val);
         self

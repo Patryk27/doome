@@ -287,6 +287,8 @@ pub fn process(
 
                     Flashlight::spawn(&mut commands);
 
+                    commands.entity(level.ent_cell).remove::<Collider>();
+
                     level.stage = LevelStage::Intro0 {
                         txt_rise_timer: Timer::new(
                             Duration::from_secs(5),

@@ -29,7 +29,7 @@ impl Flashlight {
         let Ok(camera) = camera.get_single() else { return };
         let Ok((mut fl_transform, mut fl_light, _)) = flashlight.get_single_mut() else { return };
 
-        fl_transform.translation = camera.origin + vec3(0.0, -1.0, 0.0);
+        fl_transform.translation = camera.origin + vec3(0.0, -0.1, 0.0);
 
         *fl_light.point_at_mut().unwrap() = camera.look_at;
     }
