@@ -167,7 +167,7 @@ pub fn init(
                 .with_uv_divisor(2, 1)
                 .with_uv_transparency(),
         )
-        .with_collider(Collider::line(vec2(-1.0, 0.0), vec2(1.0, 0.0)))
+        .with_collider(Collider::line(vec2(0.0, -1.0), vec2(0.0, 1.0)))
         .spawn()
         .id();
 
