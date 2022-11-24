@@ -30,11 +30,26 @@ pub enum Command {
         entity: EntityOrPlayer,
         health: f32,
     },
+    // Example: heal player 20
+    Heal {
+        entity: EntityOrPlayer,
+        amount: f32,
+    },
     /// Spawns a moth monster at a given position
-    /// Example: spawn-moth-monster 0,0,0
-    SpawnMothMonster {
+    /// Example: spawn moth-monster 0,0,0
+    Spawn {
+        spawnable: Spawnable,
         position: Vec3,
     },
+    Despawn {
+        entity: Entity,
+    },
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Spawnable {
+    MothMonster,
+    Heart,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -80,11 +95,33 @@ impl FromStr for Command {
 
                 Ok(Command::SetHealth { entity, health })
             }
-            "spawn-moth-monster" => {
+            "heal" => {
+                let entity = parts.next().context("Missing entity")?;
+                let entity = entity.parse()?;
+
+                let amount = parts.next().context("Missing amount")?;
+                let amount = amount.parse()?;
+
+                Ok(Command::Heal { entity, amount })
+            }
+            "spawn" => {
+                let spawnable = parts.next().context("Missing spawnable")?;
+                let spawnable = spawnable.parse()?;
+
                 let position = parts.next().context("Missing position")?;
                 let position = parse_vec3(position)?;
 
-                Ok(Command::SpawnMothMonster { position })
+                Ok(Command::Spawn {
+                    spawnable,
+                    position,
+                })
+            }
+            "despawn" => {
+                let entity: u64 =
+                    parts.next().context("Missing entity")?.parse()?;
+                let entity = Entity::from_bits(entity);
+
+                Ok(Command::Despawn { entity })
             }
             _ => Err(anyhow!("Failed to parse command: {s}")),
         }
@@ -111,6 +148,18 @@ impl FromStr for EntityOrPlayer {
                 let entity: u64 = s.parse().context("Invalid entity")?;
                 Ok(EntityOrPlayer::Entity(Entity::from_bits(entity)))
             }
+        }
+    }
+}
+
+impl FromStr for Spawnable {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "moth-monster" => Ok(Spawnable::MothMonster),
+            "heart" => Ok(Spawnable::Heart),
+            _ => Err(anyhow!("Invalid spawnable: {s}")),
         }
     }
 }

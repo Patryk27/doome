@@ -14,7 +14,7 @@ use glam::vec3;
 use indoc::indoc;
 
 use super::utils::*;
-use crate::entities::spawn_moth_monster;
+use crate::entities::{spawn_heart, spawn_moth_monster};
 use crate::explosions::spawn_explosion;
 use crate::ui::{Text, TypewriterPrint};
 
@@ -124,26 +124,7 @@ pub fn init(
 
     //------ //
     // Heart //
-    let heart_model = assets.load_model("heart");
-
-    commands.spawn((
-        heart_model,
-        Transform::from_translation(vec3(0.0, 1.5, ELEPHANT_Z - 3.0)),
-        Rotate {
-            inverted: false,
-            speed: 0.4,
-        },
-        Float {
-            anchor: vec3(0.0, 1.5, ELEPHANT_Z - 3.0),
-            amplitude: 0.5,
-            speed: 1.0,
-        },
-        GeometryType::Dynamic,
-        Material::default()
-            .with_reflectivity(1.0)
-            .with_color(Color::hex(0x000000))
-            .with_reflection_color(Color::hex(0xf12421)),
-    ));
+    spawn_heart(&mut commands, &assets, vec3(0.0, 1.5, ELEPHANT_Z - 3.0));
 
     let mut lvl = LevelBuilder::new(&mut commands, &assets);
 

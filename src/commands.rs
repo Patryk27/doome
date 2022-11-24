@@ -48,52 +48,76 @@ fn handle_commands(
             }
             Command::ListEntities => {
                 for entity in all_entities.iter() {
-                    output.send(CommandOutput(format!("{:?}", entity)));
+                    output.send(CommandOutput(format!("{}", entity.to_bits())));
                 }
             }
-            Command::Position { entity } => match entity {
-                EntityOrPlayer::Player => {
-                    let (player_entity, _) = player.single();
-                    let transform = transforms.get(player_entity).unwrap();
-                    output.send(CommandOutput(format!(
-                        "{}",
-                        transform.translation
-                    )));
-                }
-                _ => todo!(),
-            },
-            Command::Move { entity, position } => match entity {
-                EntityOrPlayer::Player => {
-                    let (player, _) = player.single();
-                    let mut transform = transforms.get_mut(player).unwrap();
+            Command::Position { entity } => {
+                let entity = resolve_entity(entity, &player);
+                let transform = transforms.get(entity).unwrap();
 
-                    transform.translation = position;
-                }
-                EntityOrPlayer::Entity(_) => todo!(),
-            },
-            Command::SetHealth { entity, health } => match entity {
-                EntityOrPlayer::Player => {
-                    let (player, _) = player.single();
-                    let mut health_component = healths.get_mut(player).unwrap();
+                output
+                    .send(CommandOutput(format!("{}", transform.translation)));
+            }
+            Command::Move { entity, position } => {
+                let entity = resolve_entity(entity, &player);
+                let mut transform = transforms.get_mut(entity).unwrap();
 
-                    health_component.val = health;
-                }
-                EntityOrPlayer::Entity(_) => todo!(),
-            },
-            Command::SpawnMothMonster { position } => {
-                let entity = crate::entities::spawn_moth_monster(
-                    &mut commands,
-                    &assets,
-                    position,
-                );
+                transform.translation = position;
+            }
+            Command::SetHealth { entity, health } => {
+                let entity = resolve_entity(entity, &player);
+
+                let mut health_component = healths.get_mut(entity).unwrap();
+
+                health_component.val = health;
+            }
+            Command::Heal { entity, amount } => {
+                let entity = resolve_entity(entity, &player);
+
+                let mut health_component = healths.get_mut(entity).unwrap();
+
+                health_component.val += amount;
+            }
+            Command::Spawn {
+                spawnable,
+                position,
+            } => {
+                let entity = match spawnable {
+                    Spawnable::MothMonster => {
+                        crate::entities::spawn_moth_monster(
+                            &mut commands,
+                            &assets,
+                            position,
+                        )
+                    }
+                    Spawnable::Heart => crate::entities::spawn_heart(
+                        &mut commands,
+                        &assets,
+                        position,
+                    ),
+                };
 
                 output.send(CommandOutput(format!(
-                    "Spawned moth monster: {:?}",
-                    entity
+                    "Spawned {spawnable:?}: {}",
+                    entity.to_bits()
                 )));
-            } // unhandled => {
-              //     log::warn!("Unhandled command: {:?}", unhandled);
-              // }
+            }
+            Command::Despawn { entity } => {
+                commands.entity(entity).despawn();
+            }
         }
+    }
+}
+
+fn resolve_entity(
+    entity: EntityOrPlayer,
+    player: &Query<(Entity, &Player)>,
+) -> Entity {
+    match entity {
+        EntityOrPlayer::Player => {
+            let (player_entity, _) = player.single();
+            player_entity
+        }
+        EntityOrPlayer::Entity(entity) => entity,
     }
 }
