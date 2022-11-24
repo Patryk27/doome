@@ -1,7 +1,9 @@
 #![allow(clippy::type_complexity, clippy::too_many_arguments)]
 #![feature(map_first_last)]
 
-mod camera;
+#[macro_use]
+mod utils;
+
 mod charon;
 mod commands;
 mod explosions;
@@ -23,16 +25,12 @@ mod prelude {
     pub use crate::units::*;
 }
 
-use bevy::app::AppExit;
 use bevy::prelude::*;
-use bevy::window::CursorGrabMode;
 use doome_bevy::assets::Assets;
 use doome_bevy::text::TextEngine;
 use doome_engine::{HEIGHT, WIDTH};
 
-use self::levels::EnterLevel;
 use self::objects::Flashlight;
-use self::ui::InputLock;
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
 //       ideally we'd remove them before including them in the binary. Perhaps a custom proc macro?
@@ -49,12 +47,8 @@ fn main() {
     let assets = Assets::init("assets").unwrap();
 
     App::new()
-        .add_event::<EnterLevel>()
-        //
-        .insert_resource(InputLock { is_locked: false })
-        .insert_resource(assets)
-        .insert_resource(TextEngine::default())
-        // Bevy plugins
+        // ==== //
+        // bevy //
         .add_plugin(bevy::log::LogPlugin::default())
         .add_plugin(bevy::core::CorePlugin::default())
         .add_plugin(bevy::time::TimePlugin::default())
@@ -74,7 +68,10 @@ fn main() {
         .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
         .add_plugin(bevy::winit::WinitPlugin::default())
-        // Internal plugins
+        // ========== //
+        // doome_bevy //
+        .insert_resource(assets)
+        .insert_resource(TextEngine::default())
         .add_plugin(doome_bevy::renderer::RendererPlugin)
         .add_plugin(doome_bevy::doome::DoomePlugin)
         .add_plugin(doome_bevy::physics::PhysicsPlugin::default())
@@ -83,39 +80,21 @@ fn main() {
         .add_plugin(doome_bevy::billboard::BillboardPlugin)
         .add_plugin(doome_bevy::bullets::BulletsPlugin)
         .add_plugin(doome_bevy::health::HealthPlugin)
-        // Game plugins
-        .add_plugin(ui::UiPlugin)
-        .add_plugin(charon::CharonPlugin)
-        .add_plugin(commands::CommandsPlugin)
-        // Misc systems
-        .add_startup_system(hide_cursor)
-        .add_startup_system(player::spawn)
-        .add_startup_system(levels::start)
         .add_system(doome_bevy::simple_animations::rotate)
         .add_system(doome_bevy::simple_animations::float)
         .add_system(doome_bevy::model_animation::animate)
-        .add_system(quit_on_exit)
+        // ===== //
+        // doome //
+        .add_startup_system(player::spawn)
+        .add_plugin(charon::CharonPlugin)
+        .add_plugin(commands::CommandsPlugin)
+        .add_plugin(levels::LevelsPlugin)
+        .add_plugin(ui::UiPlugin)
+        .add_system(explosions::update)
         .add_system(player::process_movement)
-        .add_system(camera::sync_with_player)
-        .add_system(Flashlight::sync_with_player)
-        .add_system(explosions::update_explosions)
-        .add_system(camera::sync_with_player)
-        .add_system(levels::level1::init)
-        .add_system(levels::level1::process)
-        .add_system(levels::level2::init)
-        .add_system(levels::level2::process)
+        .add_system(player::sync_camera.after(player::process_movement))
+        .add_system(
+            Flashlight::sync_with_player.after(player::process_movement),
+        )
         .run();
-}
-
-fn hide_cursor(mut windows: ResMut<Windows>) {
-    let window = windows.get_primary_mut().unwrap();
-
-    window.set_cursor_grab_mode(CursorGrabMode::Confined);
-    window.set_cursor_visibility(false);
-}
-
-fn quit_on_exit(keys: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
-    if keys.just_pressed(KeyCode::Escape) {
-        exit.send(AppExit);
-    }
 }

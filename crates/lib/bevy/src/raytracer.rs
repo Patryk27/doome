@@ -30,7 +30,7 @@ impl Plugin for DoomeRaytracerPlugin {
                 PI / 2.0,
             );
 
-            DoomeRaytracerState {
+            State {
                 geometry: Default::default(),
                 camera,
                 lights: Default::default(),
@@ -39,28 +39,60 @@ impl Plugin for DoomeRaytracerPlugin {
         };
 
         app.insert_resource(state)
-            .add_system_to_stage(CoreStage::PreUpdate, sync_created_geometry)
-            .add_system(sync_updated_geometry)
-            .add_system(sync_lights)
-            .add_system(sync_camera)
-            .add_system(render)
-            .add_system_to_stage(CoreStage::PostUpdate, sync_deleted_geometry);
+            .add_stage_after(
+                CoreStage::Update,
+                DoomeRaytracingStage,
+                SystemStage::parallel(),
+            )
+            .add_system_to_stage(DoomeRaytracingStage, sync_deleted_geometry)
+            .add_system_to_stage(
+                DoomeRaytracingStage,
+                sync_created_geometry.after(sync_deleted_geometry),
+            )
+            .add_system_to_stage(
+                DoomeRaytracingStage,
+                sync_updated_geometry.after(sync_deleted_geometry),
+            )
+            .add_system_to_stage(DoomeRaytracingStage, sync_lights)
+            .add_system_to_stage(DoomeRaytracingStage, sync_camera)
+            .add_system_to_stage(
+                CoreStage::PostUpdate,
+                render
+                    .after(sync_deleted_geometry)
+                    .after(sync_created_geometry)
+                    .after(sync_updated_geometry)
+                    .after(sync_lights)
+                    .after(sync_camera),
+            );
 
         app.world.spawn(Camera::default());
     }
 }
 
+#[derive(StageLabel)]
+pub struct DoomeRaytracingStage;
+
 #[derive(Resource)]
-struct DoomeRaytracerState {
+struct State {
     geometry: GeometryManager,
     camera: rt::Camera,
     lights: rt::Lights,
     materials: MaterialsManager,
 }
 
+fn sync_deleted_geometry(
+    mut state: ResMut<State>,
+    removed_entities: RemovedComponents<Synced>,
+) {
+    for entity in removed_entities.iter() {
+        state.geometry.free(entity);
+        state.materials.free(entity);
+    }
+}
+
 fn sync_created_geometry(
     mut commands: Commands,
-    mut ctxt: ResMut<DoomeRaytracerState>,
+    mut state: ResMut<State>,
     assets: Res<Assets>,
     models: Query<
         (
@@ -73,7 +105,7 @@ fn sync_created_geometry(
         Added<AssetHandle<Model>>,
     >,
 ) {
-    let ctxt = &mut *ctxt;
+    let state = &mut *state;
 
     for (entity, &geo_type, model, &xform, mat) in models.iter() {
         let model = assets.model(*model);
@@ -85,10 +117,11 @@ fn sync_created_geometry(
             mat.map(|mat| mat.merge_with(base_mat)).unwrap_or(base_mat)
         };
 
-        let mat_id = ctxt.materials.alloc(entity, mat.materialize());
+        let mat_id = state.materials.alloc(entity, mat.materialize());
         let tex = mat.texture.map(|tex_id| assets.texture(tex_id));
 
-        ctxt.geometry
+        state
+            .geometry
             .builder()
             .add_model(entity, geo_type, model, xform, mat, mat_id, tex);
 
@@ -97,7 +130,7 @@ fn sync_created_geometry(
 }
 
 fn sync_updated_geometry(
-    mut ctxt: ResMut<DoomeRaytracerState>,
+    mut state: ResMut<State>,
     assets: Res<Assets>,
     models: Query<
         (
@@ -114,8 +147,8 @@ fn sync_updated_geometry(
         )>,
     >,
 ) {
-    let ctxt = &mut *ctxt;
-    let mut geo = ctxt.geometry.updater();
+    let state = &mut *state;
+    let mut geo = state.geometry.updater();
 
     for (entity, &geo_type, model, &xform, mat) in models.iter() {
         if geo_type == GeometryType::Static {
@@ -133,7 +166,7 @@ fn sync_updated_geometry(
         };
 
         // TODO wasteful
-        let mat_id = ctxt.materials.alloc(entity, mat.materialize());
+        let mat_id = state.materials.alloc(entity, mat.materialize());
         let tex = mat.texture.map(|tex_id| assets.texture(tex_id));
 
         geo.update_model(entity, model, xform, mat, mat_id, tex);
@@ -142,10 +175,10 @@ fn sync_updated_geometry(
 
 // TODO doing this each frame feels wonky
 fn sync_lights(
-    mut ctxt: ResMut<DoomeRaytracerState>,
+    mut state: ResMut<State>,
     lights: Query<(&Light, &Transform, &Color)>,
 ) {
-    ctxt.lights = Default::default();
+    state.lights = Default::default();
 
     let lights = lights
         .iter()
@@ -156,14 +189,14 @@ fn sync_lights(
 
         match light.kind {
             LightKind::Point => {
-                ctxt.lights.push(rt::Light::point(
+                state.lights.push(rt::Light::point(
                     position,
                     color.into_vec3(),
                     light.intensity,
                 ));
             }
             LightKind::Spot { point_at, angle } => {
-                ctxt.lights.push(rt::Light::spot(
+                state.lights.push(rt::Light::spot(
                     position,
                     point_at,
                     angle,
@@ -176,12 +209,12 @@ fn sync_lights(
 }
 
 fn sync_camera(
-    mut ctxt: ResMut<DoomeRaytracerState>,
+    mut state: ResMut<State>,
     camera: Query<&Camera, Changed<Camera>>,
 ) {
     let Ok(camera) = camera.get_single() else { return };
 
-    ctxt.camera.update(|origin, look_at, _| {
+    state.camera.update(|origin, look_at, _| {
         *origin = camera.origin;
         *look_at = camera.look_at;
     });
@@ -191,7 +224,7 @@ fn render(
     time: Res<Time>,
     renderer: Res<DoomeRenderer>,
     renderer_state: Res<RendererState>,
-    mut raytracer_state: ResMut<DoomeRaytracerState>,
+    mut raytracer_state: ResMut<State>,
 ) {
     let Ok(current_texture) = renderer_state.surface.get_current_texture() else { return };
     let device = &renderer_state.device;
@@ -267,14 +300,4 @@ fn render(
     current_texture.present();
 
     log::trace!("raytracing-tt={:?}", tt.elapsed());
-}
-
-fn sync_deleted_geometry(
-    mut ctxt: ResMut<DoomeRaytracerState>,
-    removed_entities: RemovedComponents<Synced>,
-) {
-    for entity in removed_entities.iter() {
-        ctxt.geometry.free(entity);
-        ctxt.materials.free(entity);
-    }
 }

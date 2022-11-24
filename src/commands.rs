@@ -29,59 +29,67 @@ fn handle_commands(
     mut transforms: Query<&mut Transform>,
     colliders: Query<&mut Collider>,
     mut healths: Query<&mut Health>,
-    player: Query<(Entity, &Player)>,
+    player: Query<Entity, With<Player>>,
     all_entities: Query<Entity>,
-    // Even writers
-    mut output: EventWriter<CommandOutput>,
-    mut exit: EventWriter<AppExit>,
-    mut deaths: EventWriter<Death>,
-    mut sync_nav_data: EventWriter<RecalculateNavData>,
+    // Event writers
+    mut output_tx: EventWriter<CommandOutput>,
+    mut exit_tx: EventWriter<AppExit>,
+    mut death_tx: EventWriter<Death>,
+    mut sync_nav_data_tx: EventWriter<SyncNavData>,
+    mut goto_level_tx: EventWriter<GotoLevel>,
 ) {
     for cmd in game_commands.iter().copied() {
         log::info!("Handling command: {cmd:?}");
 
         match cmd {
             Command::Quit => {
-                exit.send(AppExit);
+                exit_tx.send(AppExit);
             }
+
             Command::LockInput => {
                 input_lock.is_locked = true;
             }
+
             Command::UnlockInput => {
                 input_lock.is_locked = false;
             }
+
             Command::ListEntities => {
                 for entity in all_entities.iter() {
-                    output.send(CommandOutput(format!("{}", entity.to_bits())));
+                    output_tx
+                        .send(CommandOutput(format!("{}", entity.to_bits())));
                 }
             }
+
             Command::Position { entity } => {
                 let entity = resolve_entity(entity, &player);
                 let transform = transforms.get(entity).unwrap();
 
-                output
+                output_tx
                     .send(CommandOutput(format!("{}", transform.translation)));
             }
+
             Command::Move { entity, position } => {
                 let entity = resolve_entity(entity, &player);
                 let mut transform = transforms.get_mut(entity).unwrap();
 
                 transform.translation = position;
             }
+
             Command::SetHealth { entity, health } => {
                 let entity = resolve_entity(entity, &player);
-
                 let mut health_component = healths.get_mut(entity).unwrap();
 
                 health_component.val = health;
             }
+
             Command::Heal { entity, amount } => {
                 let entity = resolve_entity(entity, &player);
-
                 let mut health_component = healths.get_mut(entity).unwrap();
 
                 health_component.val += amount;
             }
+
             Command::Spawn {
                 spawnable,
                 position,
@@ -95,28 +103,36 @@ fn handle_commands(
                     }
                 };
 
-                output.send(CommandOutput(format!(
+                output_tx.send(CommandOutput(format!(
                     "Spawned {spawnable:?}: {}",
                     EntityHandle(entity)
                 )));
             }
+
             Command::Despawn { entity } => {
                 commands.entity(entity.0).despawn();
             }
+
             Command::Kill { entity } => {
-                deaths.send(Death(entity.0));
+                death_tx.send(Death(entity.0));
             }
+
             Command::SyncNavData => {
-                sync_nav_data.send(RecalculateNavData);
+                sync_nav_data_tx.send(SyncNavData);
             }
+
             Command::NoClip => {
                 physics_enabled.0 = !physics_enabled.0;
+
                 if physics_enabled.0 {
-                    output.send(CommandOutput("Physics enabled".to_string()));
+                    output_tx
+                        .send(CommandOutput("Physics enabled".to_string()));
                 } else {
-                    output.send(CommandOutput("Physics disabled".to_string()));
+                    output_tx
+                        .send(CommandOutput("Physics disabled".to_string()));
                 }
             }
+
             Command::DumpPhysics => {
                 use std::fmt::Write;
 
@@ -155,19 +171,20 @@ fn handle_commands(
 
                 std::fs::write("physics_dump", lines).unwrap();
             }
+
+            Command::GotoLevel { level } => {
+                goto_level_tx.send(GotoLevel::new(level));
+            }
         }
     }
 }
 
 fn resolve_entity(
     entity: EntityOrPlayer,
-    player: &Query<(Entity, &Player)>,
+    player: &Query<Entity, With<Player>>,
 ) -> Entity {
     match entity {
-        EntityOrPlayer::Player => {
-            let (player_entity, _) = player.single();
-            player_entity
-        }
+        EntityOrPlayer::Player => player.single(),
         EntityOrPlayer::Entity(entity) => entity,
     }
 }

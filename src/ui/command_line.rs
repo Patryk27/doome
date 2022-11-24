@@ -75,21 +75,25 @@ pub fn update(
     }
 
     if keys.just_pressed(KeyCode::Return) {
-        match cmd_line.current.parse::<Command>() {
+        match cmd_line.current.trim().parse::<Command>() {
             Ok(cmd) => {
                 cmd_line.buffer.push(Line {
-                    text: cmd_line.current.clone(),
+                    text: cmd_line.current.trim().to_owned(),
                     was_input: true,
                 });
+
                 cmd_line.current.clear();
                 commands.send(cmd);
             }
+
             Err(e) => {
                 log::error!("Invalid command: {e:?}");
+
                 cmd_line.buffer.push(Line {
                     text: format!("Error: {}", e),
                     was_input: false,
                 });
+
                 cmd_line.current.clear();
             }
         }
@@ -109,13 +113,13 @@ pub fn render(
     let mut canvas = TextCanvas::new_text(&text_engine, frame);
 
     canvas.rect(0, 0, WIDTH, HEIGHT, Color::hex(0x00000066));
-    canvas.text(0, HEIGHT - 15, &cmd_line.current, false);
+    canvas.text(5, HEIGHT - 21, format!("$ {}", cmd_line.current), false);
 
     for (i, line) in cmd_line.buffer.iter().rev().enumerate() {
         if i > 10 {
             break;
         }
 
-        canvas.text(0, HEIGHT - 15 * (i + 2) as u16, &line.text, false);
+        canvas.text(5, HEIGHT - 28 - 12 * (i + 1) as u16, &line.text, false);
     }
 }

@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 
 use serde::Deserialize;
 
-use super::utils::LevelBuilder;
+use super::builder::LevelBuilder;
 use crate::prelude::*;
 
 pub struct LevelLoader {

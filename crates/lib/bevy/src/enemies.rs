@@ -26,13 +26,13 @@ impl Enemy {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct RecalculateNavData;
+pub struct SyncNavData;
 
 impl Plugin for EnemiesPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup);
-        app.add_event::<RecalculateNavData>();
-        app.add_system(recalculate_nav_data);
+        app.add_event::<SyncNavData>();
+        app.add_system(sync_nav_data);
         app.add_system(update_hivemind);
         app.add_system(update_shooting);
         app.add_system(assign_paths_to_enemies);
@@ -199,8 +199,8 @@ fn player_entity_raycast(
     }
 }
 
-fn recalculate_nav_data(
-    mut event_reader: EventReader<RecalculateNavData>,
+fn sync_nav_data(
+    mut event_reader: EventReader<SyncNavData>,
     mut hivemind: Query<&mut Hivemind>,
     walls: Query<(&Transform, &Collider), With<NavObstacle>>,
 ) {

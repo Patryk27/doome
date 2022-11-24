@@ -8,6 +8,8 @@ use doome_bevy::nav::NavObstacle;
 use doome_bevy::physics::components::Collider;
 use glam::{vec2, vec3};
 
+use super::GcAfterLevelUnloaded;
+
 pub struct LevelBuilder<'p, 'w, 's> {
     commands: &'p mut Commands<'w, 's>,
     assets: &'p Assets,
@@ -234,7 +236,7 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
     where
         T: Component,
     {
-        self.commands.spawn(level);
+        self.commands.spawn((level, GcAfterLevelUnloaded));
     }
 }
 

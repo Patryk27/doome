@@ -42,7 +42,7 @@ pub fn spawn_explosion(
     ));
 }
 
-pub fn update_explosions(
+pub fn update(
     mut commands: Commands,
     explosions: Query<(Entity, &Explosion, &ModelAnimation)>,
 ) {

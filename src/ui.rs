@@ -1,14 +1,14 @@
-mod messages;
-mod text;
-mod typewriter;
-
-// sub systems
 mod angrey;
 mod command_line;
 mod gun;
 mod health;
+mod messages;
+mod text;
+mod typewriter;
 
+use bevy::app::AppExit;
 use bevy::prelude::*;
+use bevy::window::CursorGrabMode;
 use doome_bevy::components::*;
 use doome_bevy::doome::DoomeRenderer;
 use doome_bevy::text::TextEngine;
@@ -21,18 +21,13 @@ pub use self::typewriter::*;
 
 pub struct UiPlugin;
 
-macro_rules! ordered_systems {
-    ($name:path => $($args:tt)*) => {
-        $name.pipe(ordered_systems!($($args)*))
-    };
-
-    ($name:path) => {
-        $name
-    };
-}
-
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
+        app.insert_resource(InputLock { is_locked: false });
+
+        // Miscellaneous
+        app.add_startup_system(hide_cursor).add_system(quit_on_exit);
+
         // Typewriter
         app.insert_resource(Typewriter::Idle)
             .add_event::<TypewriterPrint>()
@@ -43,25 +38,23 @@ impl Plugin for UiPlugin {
             .add_event::<Message>()
             .add_system(messages::update);
 
-        // Setups
-        app.add_startup_system(command_line::setup);
-        app.add_startup_system(gun::setup);
+        // Command line
+        app.add_startup_system(command_line::setup)
+            .add_system(command_line::update);
 
-        // Updates
-        app.add_system(command_line::update);
-
+        // Gun animation
         // TODO: Extract this stuff
-        // Gun
-        app.add_system(gun::trigger_shoot);
-        app.add_system(gun::update_gun);
+        app.add_startup_system(gun::setup)
+            .add_system(gun::trigger_shoot)
+            .add_system(gun::update_gun);
 
         // Ui rendering systems (strictly ordered)
         app.add_system(ordered_systems! {
-            clear
+            canvas_clear
             => gun::render
             => angrey::render
             => health::render
-            => render_texts
+            => canvas_render_texts
             => command_line::render
         });
     }
@@ -72,14 +65,30 @@ pub struct InputLock {
     pub is_locked: bool,
 }
 
-fn clear(mut renderer: ResMut<DoomeRenderer>, text_engine: Res<TextEngine>) {
+fn hide_cursor(mut windows: ResMut<Windows>) {
+    let window = windows.get_primary_mut().unwrap();
+
+    window.set_cursor_grab_mode(CursorGrabMode::Confined);
+    window.set_cursor_visibility(false);
+}
+
+fn quit_on_exit(keys: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
+    if keys.just_pressed(KeyCode::Escape) {
+        exit.send(AppExit);
+    }
+}
+
+fn canvas_clear(
+    mut renderer: ResMut<DoomeRenderer>,
+    text_engine: Res<TextEngine>,
+) {
     let frame = &mut renderer.pixels.image_data;
     let mut canvas = Canvas::new_text(&text_engine, frame);
 
     canvas.clear();
 }
 
-fn render_texts(
+fn canvas_render_texts(
     mut renderer: ResMut<DoomeRenderer>,
     text_engine: Res<TextEngine>,
     typewriter: Res<Typewriter>,

@@ -5,52 +5,70 @@ use anyhow::{anyhow, Context};
 use bevy::prelude::Entity;
 use glam::Vec3;
 
+use crate::prelude::*;
+
 #[derive(Debug, Clone, Copy)]
 pub enum Command {
     // quit
     Quit,
+
     // lock-input
     LockInput,
+
     // unlock-input
     UnlockInput,
+
     // list-entities
     ListEntities,
+
     // Displays the position of a given entity
     //  Example: position player
     //  Example: pos player
     Position {
         entity: EntityOrPlayer,
     },
+
     // Example: move player 0,0,0
     Move {
         entity: EntityOrPlayer,
         position: Vec3,
     },
+
     // Example: set-health player 100
     SetHealth {
         entity: EntityOrPlayer,
         health: f32,
     },
+
     // Example: heal player 20
     Heal {
         entity: EntityOrPlayer,
         amount: f32,
     },
-    /// Spawns a moth monster at a given position
-    /// Example: spawn moth-monster 0,0,0
+
+    // Spawns a moth monster at a given position
+    // Example: spawn moth-monster 0,0,0
     Spawn {
         spawnable: Spawnable,
         position: Vec3,
     },
+
     Despawn {
         entity: EntityHandle,
     },
+
     Kill {
         entity: EntityHandle,
     },
+
     SyncNavData,
     NoClip,
     DumpPhysics,
+
+    // Example: goto-level 2
+    GotoLevel {
+        level: Level,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -81,12 +99,14 @@ impl FromStr for Command {
             "lock-input" => Ok(Command::LockInput),
             "unlock-input" => Ok(Command::UnlockInput),
             "list-entities" => Ok(Command::ListEntities),
+
             "pos" | "position" => {
                 let entity = parts.next().context("No entity")?;
                 let entity = entity.parse().context("Invalid entity")?;
 
                 Ok(Command::Position { entity })
             }
+
             "move" => {
                 let entity = parts.next().context("Missing entity")?;
                 let entity = entity.parse()?;
@@ -96,6 +116,7 @@ impl FromStr for Command {
 
                 Ok(Command::Move { entity, position })
             }
+
             "set-health" => {
                 let entity = parts.next().context("Missing entity")?;
                 let entity = entity.parse()?;
@@ -105,6 +126,7 @@ impl FromStr for Command {
 
                 Ok(Command::SetHealth { entity, health })
             }
+
             "heal" => {
                 let entity = parts.next().context("Missing entity")?;
                 let entity = entity.parse()?;
@@ -114,6 +136,7 @@ impl FromStr for Command {
 
                 Ok(Command::Heal { entity, amount })
             }
+
             "spawn" => {
                 let spawnable = parts.next().context("Missing spawnable")?;
                 let spawnable = spawnable.parse()?;
@@ -126,19 +149,34 @@ impl FromStr for Command {
                     position,
                 })
             }
+
             "despawn" => {
                 let entity = parts.next().context("Missing entity")?.parse()?;
 
                 Ok(Command::Despawn { entity })
             }
+
             "kill" => {
                 let entity = parts.next().context("Missing entity")?.parse()?;
 
                 Ok(Command::Kill { entity })
             }
+
             "sync-nav-data" => Ok(Command::SyncNavData),
             "noclip" => Ok(Command::NoClip),
             "dump-physics" => Ok(Command::DumpPhysics),
+
+            "goto-level" => {
+                let level = parts
+                    .next()
+                    .context("Missing level-id")?
+                    .parse()
+                    .map_err(|err| anyhow!("{}", err))
+                    .context("Invalid level-id")?;
+
+                Ok(Command::GotoLevel { level })
+            }
+
             _ => Err(anyhow!("Failed to parse command: {s}")),
         }
     }

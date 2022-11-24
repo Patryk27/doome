@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use indoc::indoc;
 
-use super::utils::*;
+use super::builder::*;
 use crate::prelude::*;
 
 const INTRO_TEXT: &str = indoc! {r#"
@@ -74,16 +74,20 @@ const ELEPHANT_Z: f32 = MAIN_CENTER_Z + 3.0;
 pub fn init(
     mut commands: Commands,
     assets: Res<Assets>,
-    mut enter_levels: EventReader<EnterLevel>,
-    mut player: Query<&mut Transform, With<Player>>,
+    mut goto_level_rx: EventReader<GotoLevel>,
+    mut player: Query<(&mut Player, &mut Transform)>,
 ) {
-    if !enter_levels.iter().any(|level| *level == EnterLevel::l1()) {
+    if !goto_level_rx.iter().any(|level| **level == Level::l1()) {
         return;
     }
 
     // -----
 
-    *player.single_mut() =
+    let (mut player, mut player_xform) = player.single_mut();
+
+    player.can_move = false;
+
+    *player_xform =
         Transform::default().with_rotation(Quat::from_rotation_y(PI));
 
     // -----
@@ -171,7 +175,7 @@ pub fn init(
         .insert(LightFade::fade_in_delayed(4.5, 0.1))
         .id();
 
-    lvl.complete(Level {
+    lvl.complete(LevelState {
         stage: LevelStage::CorridorIntro {
             tt: 0.0,
             corr_sl0,
@@ -184,7 +188,7 @@ pub fn init(
 }
 
 #[derive(Component)]
-pub struct Level {
+pub struct LevelState {
     stage: LevelStage,
 }
 
@@ -234,10 +238,10 @@ pub fn process(
     time: Res<Time>,
     keys: Res<Input<KeyCode>>,
     mut commands: Commands,
-    mut level: Query<&mut Level>,
+    mut level: Query<&mut LevelState>,
     mut player: Query<&mut Player>,
     camera: Query<&Camera>,
-    mut print_tx: EventWriter<TypewriterPrint>,
+    mut typewriter_tx: EventWriter<TypewriterPrint>,
     mut visibilities: Query<&mut Visibility>,
 ) {
     let Ok(mut level) = level.get_single_mut() else { return };
@@ -267,7 +271,7 @@ pub fn process(
                 main_sl0: *main_sl0,
             };
 
-            print_tx.send(TypewriterPrint::new(INTRO_TEXT));
+            typewriter_tx.send(TypewriterPrint::new(INTRO_TEXT));
         }
 
         LevelStage::Corridor {
@@ -401,7 +405,7 @@ pub fn process(
                 txt_elephant_visibility.is_visible = false;
                 level.stage = LevelStage::Outro { tt: 0.0 };
                 player.single_mut().can_move = true;
-                print_tx.send(TypewriterPrint::new(OUTRO_TEXT));
+                typewriter_tx.send(TypewriterPrint::new(OUTRO_TEXT));
             }
         }
 

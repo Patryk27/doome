@@ -3,8 +3,9 @@ const LINE_HEIGHT: u16 = 12;
 
 use std::mem;
 
-use bevy::prelude::*;
 use doome_engine::{TextCanvas, HEIGHT};
+
+use crate::prelude::*;
 
 #[derive(Resource)]
 pub enum Typewriter {

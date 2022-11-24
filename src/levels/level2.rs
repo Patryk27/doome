@@ -1,17 +1,17 @@
 use std::f32::consts::PI;
 use std::time::Duration;
 
+use super::builder::LevelBuilder;
 use super::loader::LevelLoader;
-use super::utils::LevelBuilder;
 use crate::prelude::*;
 
 pub fn init(
     mut commands: Commands,
     assets: Res<Assets>,
-    mut enter_levels: EventReader<EnterLevel>,
+    mut goto_level_rx: EventReader<GotoLevel>,
     mut player: Query<(&mut Player, &mut Transform)>,
 ) {
-    if !enter_levels.iter().any(|level| *level == EnterLevel::l2()) {
+    if !goto_level_rx.iter().any(|level| **level == Level::l2()) {
         return;
     }
 
@@ -213,7 +213,7 @@ pub fn init(
 
     // -----
 
-    lvl.complete(Level {
+    lvl.complete(LevelState {
         ent_cell,
         ent_lamp,
         ent_sl0,
@@ -224,7 +224,7 @@ pub fn init(
 }
 
 #[derive(Component)]
-pub struct Level {
+pub struct LevelState {
     ent_cell: Entity,
     ent_lamp: Entity,
     ent_sl0: Entity,
@@ -251,13 +251,13 @@ pub fn process(
     time: Res<Time>,
     assets: Res<Assets>,
     mut commands: Commands,
-    mut level: Query<&mut Level>,
+    mut level: Query<&mut LevelState>,
     mut collisions: EventReader<Collision>,
     mut transforms: Query<&mut Transform>,
     mut lights: Query<&mut Light>,
-    mut print_tx: EventWriter<TypewriterPrint>,
-    mut msg_tx: EventWriter<Message>,
-    mut recalc_nav_data_tx: EventWriter<RecalculateNavData>,
+    mut typewriter_tx: EventWriter<TypewriterPrint>,
+    mut message_tx: EventWriter<Message>,
+    mut recalc_nav_data_tx: EventWriter<SyncNavData>,
 ) {
     let Ok(mut level) = level.get_single_mut() else { return };
     let t = time.elapsed_seconds();
@@ -285,7 +285,7 @@ pub fn process(
             for collision in collisions.iter() {
                 if collision.collides_with(level.ent_flashlight) {
                     commands.entity(level.ent_flashlight).despawn();
-                    msg_tx.send(Message::new("Picked: flashlight"));
+                    message_tx.send(Message::new("Picked: flashlight"));
 
                     Flashlight::spawn(&mut commands);
 
@@ -305,7 +305,7 @@ pub fn process(
             txt_rise_timer.tick(dt);
 
             if txt_rise_timer.just_finished() {
-                print_tx.send(TypewriterPrint::new(
+                typewriter_tx.send(TypewriterPrint::new(
                     "rise and shine mr freeman....... rise and shine....",
                 ));
 
@@ -340,7 +340,7 @@ pub fn process(
                 commands.entity(ent_sl1).insert(LightFade::fade_in(0.35));
                 commands.entity(ent_lamp).despawn();
 
-                recalc_nav_data_tx.send(RecalculateNavData);
+                recalc_nav_data_tx.send(SyncNavData);
 
                 MothMonster::spawn(
                     &mut commands,
