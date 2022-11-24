@@ -6,6 +6,7 @@ pub mod level1;
 pub mod level2;
 
 mod coordinator;
+mod loader;
 mod utils;
 
 pub fn start(mut enter_levels: EventWriter<EnterLevel>) {

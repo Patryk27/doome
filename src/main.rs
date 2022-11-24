@@ -1,4 +1,5 @@
 #![allow(clippy::type_complexity, clippy::too_many_arguments)]
+#![feature(map_first_last)]
 
 mod camera;
 mod charon;

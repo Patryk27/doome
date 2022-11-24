@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 use std::time::Duration;
 
+use super::loader::LevelLoader;
 use super::utils::LevelBuilder;
 use crate::prelude::*;
 
@@ -22,14 +23,20 @@ pub fn init(
 
     *player_xform = Transform::default()
         .with_translation(vec3(0.0, 0.0, -8.0))
-        .with_rotation(Quat::from_rotation_x(PI));
+        .with_rotation(Quat::from_rotation_y(PI));
 
     // -----
 
-    let mut lvl = LevelBuilder::new(&mut commands, &assets);
+    let mut lvl = LevelBuilder::new(
+        &mut commands,
+        &assets,
+        "floor.stone.mossy.water",
+        "floor.stone.mossy",
+        "wall.stone",
+    );
 
     lvl.model("ceiling")
-        .with_translation(vec3(0.0, 15.0, 0.0))
+        .with_translation(vec3(0.0, 1.25 * 10.0, 0.0))
         .with_scale(vec3(15.0, 1.0, 15.0))
         .with_rotation(Quat::from_rotation_y(PI / 1.5))
         .with_material(
@@ -41,9 +48,9 @@ pub fn init(
         )
         .spawn();
 
-    lvl.model("floor.hexagon")
-        .with_translation(vec3(0.0, 0.1, 0.0))
-        .with_scale(vec3(13.0, 1.0, 13.0))
+    lvl.model("floor")
+        .with_translation(vec3(1.0, 0.1, 0.0))
+        .with_scale(vec3(10.0, 1.0, 10.0))
         .with_material(
             Material::default()
                 .with_color(Color::hex(0xffffff) * 0.75)
@@ -51,7 +58,7 @@ pub fn init(
                 .with_reflection_color(Color::hex(0xffffff))
                 .with_texture(assets.load_texture("floor.stone.mossy.water"))
                 .without_casting_shadows()
-                .with_uv_divisor(12, 12),
+                .with_uv_divisor(8, 8),
         )
         .spawn();
 
@@ -60,6 +67,7 @@ pub fn init(
         .with_rotation(Quat::from_rotation_y(-PI / 2.0))
         .with_scale(Vec3::ONE * 0.6)
         .with_material(Material::default().with_uv_divisor(4, 4))
+        .with_collider(Collider::line(vec2(-1.0, 0.8), vec2(1.0, 0.8)))
         .spawn();
 
     for n in 0..6 {
@@ -71,32 +79,35 @@ pub fn init(
                 lvl.model("wall")
                     .with_translation(pos + vec3(0.0, 0.0, z))
                     .with_rotation(Quat::from_rotation_y(nf - PI / 2.0))
-                    .with_scale(vec3(3.0, 6.0, 1.0))
+                    .with_scale(vec3(2.5, 1.25 * 5.0, 1.0))
                     .with_material(
                         Material::default()
                             .with_color(Color::hex(0xffffff))
                             .with_texture(assets.load_texture("wall.stone"))
-                            .with_uv_divisor(1, 3),
+                            .with_uv_divisor(3, 5),
                     )
+                    .with_collider(Collider::line(
+                        vec2(-1.0, 0.0),
+                        vec2(1.0, 0.0),
+                    ))
                     .spawn();
             }
 
             lvl.model("wall")
-                .with_translation(pos + vec3(0.0, 3.0, 0.0))
+                .with_translation(pos + vec3(0.0, 2.5, 0.0))
                 .with_rotation(Quat::from_rotation_y(nf - PI / 2.0))
-                .with_scale(vec3(2.0, 6.0, 1.0))
+                .with_scale(vec3(2.5, 1.25 * 5.0, 1.0))
                 .with_material(
                     Material::default()
                         .with_color(Color::hex(0xffffff))
                         .with_texture(assets.load_texture("wall.stone"))
-                        .with_uv_divisor(1, 3),
+                        .with_uv_divisor(3, 5),
                 )
                 .spawn();
         }
 
         if n == 2 {
             lvl.model("floor") // hehe
-                .dynamic()
                 .with_translation(pos + vec3(-0.2, 2.5, -0.2))
                 .with_scale(vec3(1.0, 1.0, 1.0))
                 .with_rotation(
@@ -115,7 +126,6 @@ pub fn init(
 
         if n == 3 {
             lvl.model("grate")
-                .dynamic()
                 .with_translation(pos + vec3(-0.05, 1.0, 0.0))
                 .with_rotation(Quat::from_rotation_y(nf))
                 .with_scale(vec3(5.0, 10.0, 5.0))
@@ -133,14 +143,15 @@ pub fn init(
                 .obstacle()
                 .with_translation(pos)
                 .with_rotation(Quat::from_rotation_y(nf - PI / 2.0))
-                .with_scale(vec3(6.0, 6.0, 1.0))
+                .with_scale(vec3(6.0, 1.25 * 5.0, 1.0))
                 .with_material(
                     Material::default()
                         .with_color(Color::hex(0xffffff))
                         .with_texture(assets.load_texture("wall.stone"))
                         .without_casting_shadows()
-                        .with_uv_divisor(3, 3),
+                        .with_uv_divisor(8, 5),
                 )
+                .with_collider(Collider::line(vec2(-1.0, 0.0), vec2(1.0, 0.0)))
                 .spawn();
         }
     }
@@ -149,13 +160,14 @@ pub fn init(
         .model("cell")
         .dynamic()
         .with_translation(vec3(-8.52, 0.0, 0.0))
-        .with_scale(vec3(1.0, 1.5, 2.0))
+        .with_scale(vec3(1.0, 1.5, 2.5))
         .with_material(
             Material::default()
                 .with_color(Color::hex(0xffffff) * 0.75)
-                .with_uv_divisor(1, 1)
+                .with_uv_divisor(2, 1)
                 .with_uv_transparency(),
         )
+        .with_collider(Collider::line(vec2(-1.0, 0.0), vec2(1.0, 0.0)))
         .spawn()
         .id();
 
@@ -183,14 +195,8 @@ pub fn init(
         .insert(LightFade::fade_in(1.5))
         .id();
 
-    let ent_sl1 = lvl
-        .spot_light(
-            vec3(-15.0, 2.0, 0.0),
-            vec3(0.0, 0.0, 0.0),
-            PI / 3.0,
-            Color::hex(0xff0000),
-            0.0,
-        )
+    let ent_l0 = lvl
+        .point_light(vec3(-15.0, 2.0, 0.0), Color::hex(0xff0000), 0.0)
         .id();
 
     let ent_flashlight = FlashlightPicker::spawn(
@@ -201,11 +207,17 @@ pub fn init(
 
     // -----
 
+    LevelLoader::new(include_str!("../../assets/levels/level2.tmj"))
+        .offset(-15, 0)
+        .load(&mut lvl);
+
+    // -----
+
     lvl.complete(Level {
         ent_cell,
         ent_lamp,
         ent_sl0,
-        ent_sl1,
+        ent_l0,
         ent_flashlight,
         stage: LevelStage::AwaitingFlashlightPickup,
     });
@@ -216,7 +228,7 @@ pub struct Level {
     ent_cell: Entity,
     ent_lamp: Entity,
     ent_sl0: Entity,
-    ent_sl1: Entity,
+    ent_l0: Entity,
     ent_flashlight: Entity,
     stage: LevelStage,
 }
@@ -264,7 +276,7 @@ pub fn process(
     let ent_cell = level.ent_cell;
     let ent_lamp = level.ent_lamp;
     let ent_sl0 = level.ent_sl0;
-    let ent_sl1 = level.ent_sl1;
+    let ent_sl1 = level.ent_l0;
 
     match &mut level.stage {
         LevelStage::AwaitingFlashlightPickup => {

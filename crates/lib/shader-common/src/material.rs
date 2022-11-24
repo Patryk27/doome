@@ -56,28 +56,29 @@ impl Material {
             let ray = Ray::new(hit.point, light.pos() - hit.point);
             let distance = light.pos().distance(hit.point);
 
-            let diffuse_factor = if ray.hits_anything_up_to(world, distance) {
-                0.0
-            } else {
-                ray.direction().dot(hit.normal).max(0.0)
-            };
-
-            if light.is_spot() {
+            let cone_factor = if light.is_spot() {
                 let dir_light_to_hit = hit.point - light.pos();
                 let dir_light_to_point = light.point_at() - light.pos();
                 let angle = dir_light_to_point.angle_between(dir_light_to_hit);
 
-                let cone_factor =
-                    map_quadratic_clamped(angle, light.cone_angle());
+                map_quadratic_clamped(angle, light.cone_angle())
+            } else {
+                1.0
+            };
+
+            if cone_factor > 0.0 {
+                let diffuse_factor = if ray.hits_anything_up_to(world, distance)
+                {
+                    0.0
+                } else {
+                    ray.direction().dot(hit.normal).max(0.0)
+                };
 
                 radiance += cone_factor
                     * diffuse_factor
                     * light.color()
                     * light.intensity()
                     * color;
-            } else {
-                radiance +=
-                    diffuse_factor * light.color() * light.intensity() * color;
             }
 
             light_idx += 1;

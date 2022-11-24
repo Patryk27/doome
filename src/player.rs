@@ -66,7 +66,7 @@ pub fn process_movement(
     }
 
     if keys.pressed(KeyCode::A) || keys.pressed(KeyCode::D) {
-        let sign = if keys.pressed(KeyCode::A) { 1.0 } else { -1.0 };
+        let sign = if keys.pressed(KeyCode::A) { -1.0 } else { 1.0 };
         body.velocity += graphical_to_physical(transform.left() * sign);
     }
 

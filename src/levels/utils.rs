@@ -11,11 +11,26 @@ use glam::{vec2, vec3};
 pub struct LevelBuilder<'p, 'w, 's> {
     commands: &'p mut Commands<'w, 's>,
     assets: &'p Assets,
+    floor_tex: &'static str,
+    ceiling_tex: &'static str,
+    wall_tex: &'static str,
 }
 
 impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
-    pub fn new(commands: &'p mut Commands<'w, 's>, assets: &'p Assets) -> Self {
-        Self { commands, assets }
+    pub fn new(
+        commands: &'p mut Commands<'w, 's>,
+        assets: &'p Assets,
+        floor_tex: &'static str,
+        ceiling_tex: &'static str,
+        wall_tex: &'static str,
+    ) -> Self {
+        Self {
+            commands,
+            assets,
+            floor_tex,
+            ceiling_tex,
+            wall_tex,
+        }
     }
 
     pub fn commands(&mut self) -> &mut Commands<'w, 's> {
@@ -26,6 +41,7 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         &self.assets
     }
 
+    #[must_use]
     pub fn floor<'a>(
         &'a mut self,
         x1: i32,
@@ -50,6 +66,8 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
 
         assert!(dx > 0 && dz > 0, "Floor has no area");
 
+        let texture = self.assets.load_texture(self.floor_tex);
+
         self.model("floor")
             .with_translation(vec3(
                 (x1 + x2) as f32 / 2.0,
@@ -62,11 +80,13 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
                     .with_color(Color::hex(0xffffff))
                     .with_reflectivity(0.1)
                     .with_reflection_color(Color::hex(0xffffff))
+                    .with_texture(texture)
                     .with_uv_divisor(dx as _, dz as _)
                     .without_casting_shadows(),
             )
     }
 
+    #[must_use]
     pub fn ceiling<'a>(
         &'a mut self,
         x1: i32,
@@ -91,20 +111,24 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
 
         assert!(dx > 0 && dz > 0, "Ceiling has no area");
 
+        let texture = self.assets.load_texture(self.ceiling_tex);
+
         self.model("ceiling")
             .with_translation(vec3(
                 (x1 + x2) as f32 / 2.0,
-                2.99,
+                2.5,
                 (z1 + z2) as f32 / 2.0,
             ))
             .with_scale(vec3((dx as f32) / 2.0, 1.0, (dz as f32) / 2.0))
             .with_material(
                 Material::default()
                     .with_color(Color::hex(0xffffff))
+                    .with_texture(texture)
                     .with_uv_divisor(dx as _, dz as _),
             )
     }
 
+    #[must_use]
     pub fn wall<'a>(
         &'a mut self,
         x1: i32,
@@ -140,6 +164,7 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         };
 
         let scale = if dx == 1 { dz } else { dx };
+        let texture = self.assets.load_texture(self.wall_tex);
 
         self.model("wall")
             .obstacle()
@@ -151,10 +176,11 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
                 ) + extrude,
             )
             .with_rotation(Quat::from_rotation_y(PI / 2.0 * (rot as f32)))
-            .with_scale(vec3((scale as f32) / 2.0, 1.0, 1.0))
+            .with_scale(vec3((scale as f32) / 2.0, 1.25, 1.0))
             .with_material(
                 Material::default()
                     .with_color(Color::hex(0xffffff))
+                    .with_texture(texture)
                     .with_uv_divisor(scale as _, 1),
             )
             .with_collider(Collider::line(vec2(-1.0, 0.0), vec2(1.0, 0.0)))
@@ -164,11 +190,12 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         &'a mut self,
         pos: Vec3,
         color: Color,
+        intensity: f32,
     ) -> EntityCommands<'w, 's, 'a> {
         self.commands.spawn((
             Light {
                 enabled: true,
-                intensity: 1.0,
+                intensity,
                 kind: LightKind::Point,
             },
             Transform::from_translation(pos),
@@ -195,6 +222,7 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         ))
     }
 
+    #[must_use]
     pub fn model<'a>(
         &'a mut self,
         name: &'static str,

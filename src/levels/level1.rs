@@ -88,7 +88,7 @@ pub fn init(
 
     // -----
 
-    let mut lvl = LevelBuilder::new(&mut commands, &assets);
+    let mut lvl = level_builder(&mut commands, &assets);
 
     lvl.floor(-1, -1, 1, 20).spawn();
     lvl.wall(1, -1, 1, 20, 1).spawn();
@@ -290,7 +290,7 @@ pub fn process(
                     .entity(*main_sl0)
                     .insert(LightFade::fade_out_delayed(1.5, 0.5));
 
-                let mut lvl = LevelBuilder::new(&mut commands, &assets);
+                let mut lvl = level_builder(&mut commands, &assets);
 
                 let main_sl0 = lvl
                     .spot_light(
@@ -335,7 +335,7 @@ pub fn process(
                 return;
             }
 
-            LevelBuilder::new(&mut commands, &assets)
+            level_builder(&mut commands, &assets)
                 .ceiling(-8, 18, 8, 37)
                 .dynamic()
                 .spawn();
@@ -405,4 +405,17 @@ pub fn process(
             //
         }
     }
+}
+
+fn level_builder<'p, 'w, 's>(
+    commands: &'p mut Commands<'w, 's>,
+    assets: &'p Assets,
+) -> LevelBuilder<'p, 'w, 's> {
+    LevelBuilder::new(
+        commands,
+        assets,
+        "floor.basic",
+        "ceiling.basic",
+        "wall.basic",
+    )
 }

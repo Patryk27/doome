@@ -1,5 +1,3 @@
-use crate::prelude::*;
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct EnterLevel(usize);
 
