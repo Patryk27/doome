@@ -2,14 +2,11 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 use doome_bevy::assets::Assets;
-use doome_bevy::billboard::Billboard;
 use doome_bevy::components::*;
-use doome_bevy::enemies::{Enemy, RecalculateNavData};
 use doome_bevy::health::Health;
-use doome_bevy::physics::components::{Body, BodyType, Collider, RayCast};
+use doome_bevy::physics::components::{Body, BodyType, Collider};
 use doome_bevy::player::Player;
 use doome_bevy::shooting::Shooter;
-use doome_bevy::simple_animations::{Float, Rotate};
 use glam::vec3;
 use indoc::indoc;
 
@@ -84,11 +81,7 @@ const OUTRO_TEXT: &str = indoc! {r#"
 const MAIN_CENTER_Z: f32 = (21.0 + 37.0) / 2.0;
 const ELEPHANT_Z: f32 = MAIN_CENTER_Z + 3.0;
 
-pub fn init(
-    mut commands: Commands,
-    assets: Res<Assets>,
-    mut recalc_nav_data: EventWriter<RecalculateNavData>,
-) {
+pub fn init(mut commands: Commands, assets: Res<Assets>) {
     // ------ //
     // Player //
     let player_shooter = Shooter::default()
@@ -208,8 +201,6 @@ pub fn init(
         )
         .insert(LightFade::fade_in_delayed(4.5, 0.1))
         .id();
-
-    recalc_nav_data.send(RecalculateNavData);
 
     lvl.complete(Level {
         stage: LevelStage::CorridorIntro {

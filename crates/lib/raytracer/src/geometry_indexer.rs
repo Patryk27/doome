@@ -1,7 +1,7 @@
 mod axis;
 mod bounding_box;
 mod bvh;
-mod lbvh;
+mod flat_bvh;
 mod serializer;
 
 use std::fmt;
@@ -13,15 +13,16 @@ use instant::{Duration, Instant};
 use self::axis::*;
 use self::bounding_box::*;
 use self::bvh::*;
-use self::lbvh::*;
+use self::flat_bvh::*;
 use crate::{StaticGeometry, StaticGeometryIndex, StaticTriangle, Triangle};
 
 type TriangleId = crate::TriangleId<StaticTriangle>;
 
-/// An BVH + LBVH geometry indexer.
+/// An BVH (SAH-based) geometry indexer.
 ///
 /// Special thanks to:
-/// - https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/.
+/// - https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/,
+/// - https://github.com/svenstaro/bvh.
 #[derive(Default)]
 pub struct GeometryIndexer;
 
@@ -38,7 +39,7 @@ impl GeometryIndexer {
         }
 
         let (bvh, tt_bvh) = Self::measure(|| Bvh::build(geometry));
-        let (lbvh, tt_lbvh) = Self::measure(|| LinearBvh::build(bvh));
+        let (lbvh, tt_lbvh) = Self::measure(|| FlatBvh::build(bvh));
 
         let ((index, index_len), tt_serialize) =
             Self::measure(|| serializer::serialize(lbvh));

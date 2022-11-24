@@ -1,4 +1,4 @@
-//! Linearized / Flattened BVH.
+//! Flattened BVH.
 //!
 //! Note that I've basically implemented the algorithm from scratch, merely
 //! imagining how it should work, so the naming nomenclature might be a bit off
@@ -7,19 +7,19 @@
 use super::*;
 
 #[derive(Default)]
-pub struct LinearBvh {
+pub struct FlatBvh {
     nodes: Vec<LinearBvhNode>,
 }
 
-impl LinearBvh {
+impl FlatBvh {
     pub fn build(bvh: Bvh) -> Self {
         let mut this = Self::default();
 
-        this.linearize(bvh.into_root().deconstruct(), None);
+        this.flatten(bvh.into_root().deconstruct(), None);
         this
     }
 
-    fn linearize(
+    fn flatten(
         &mut self,
         bvh: DeconstructedBvhNode,
         backtrack_to: Option<usize>,
@@ -52,8 +52,8 @@ impl LinearBvh {
 
             DeconstructedBvhNode::NonLeaf { bb, left, right } => {
                 let id = self.add_non_leaf(bb);
-                let right_id = self.linearize(*right, backtrack_to);
-                let left_id = self.linearize(*left, Some(right_id));
+                let right_id = self.flatten(*right, backtrack_to);
+                let left_id = self.flatten(*left, Some(right_id));
 
                 self.fixup_non_leaf(id, left_id, backtrack_to);
 
@@ -114,7 +114,7 @@ impl LinearBvh {
     }
 }
 
-impl fmt::Display for LinearBvh {
+impl fmt::Display for FlatBvh {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (node_id, node) in self.nodes.iter().enumerate() {
             writeln!(f, "[{}]: {}", node_id, node)?;
@@ -124,7 +124,7 @@ impl fmt::Display for LinearBvh {
     }
 }
 
-impl IntoIterator for LinearBvh {
+impl IntoIterator for FlatBvh {
     type Item = LinearBvhNode;
     type IntoIter = impl Iterator<Item = Self::Item>;
 

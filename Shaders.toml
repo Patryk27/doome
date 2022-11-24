@@ -1,19 +1,19 @@
-dirs = [
+extra-watch-dirs = [
     "crates/lib/shader-common"
 ]
 
 [[shaders]]
-path_to_shader = "crates/shaders/raytracer"
-path_to_copy_to = "crates/lib/raytracer/src/shader"
+source-dir = "crates/shaders/raytracer"
+target-dir = "crates/lib/raytracer/src/shader"
 
 [[shaders]]
-path_to_shader = "crates/shaders/scaler"
-path_to_copy_to = "crates/lib/scaler/src/shader"
+source-dir = "crates/shaders/scaler"
+target-dir = "crates/lib/scaler/src/shader"
 
 [[shaders]]
-path_to_shader = "crates/shaders/pixels"
-path_to_copy_to = "crates/lib/pixels/src/shader"
+source-dir = "crates/shaders/pixels"
+target-dir = "crates/lib/pixels/src/shader"
 
 [[shaders]]
-path_to_shader = "crates/shaders/crt"
-path_to_copy_to = "crates/lib/screen-space-effects/src/crt"
+source-dir = "crates/shaders/crt"
+target-dir = "crates/lib/screen-space-effects/src/crt"

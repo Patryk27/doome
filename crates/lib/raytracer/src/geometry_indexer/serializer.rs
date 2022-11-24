@@ -1,6 +1,6 @@
 use super::*;
 
-pub fn serialize(lbvh: LinearBvh) -> (StaticGeometryIndex, usize) {
+pub fn serialize(lbvh: FlatBvh) -> (StaticGeometryIndex, usize) {
     let mut out = Vec::new();
 
     for node in lbvh {

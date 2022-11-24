@@ -1,28 +1,38 @@
 mod manifest;
 
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::sync::mpsc::TryRecvError;
+use std::path::PathBuf;
 
+use anyhow::Result;
 use clap::Parser;
-use manifest::{Manifest, ShaderConfig};
 use notify::Watcher;
-use spirv_builder::{Capability, MetadataPrintout, SpirvBuilder};
+
+use self::manifest::Manifest;
 
 #[derive(Debug, Clone, Parser)]
 #[clap(rename_all = "kebab-case")]
 struct Args {
     #[clap(short, long, env, default_value = "Shaders.toml")]
     manifest_path: PathBuf,
+
+    #[clap(short, long, env)]
+    watch: bool,
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<()> {
     dotenv::dotenv()?;
     pretty_env_logger::try_init()?;
 
     let args = Args::parse();
-    let manifest = load_manifest(&args.manifest_path)?;
+    let manifest = Manifest::from_path(&args.manifest_path)?;
 
+    if args.watch {
+        watch(&manifest)
+    } else {
+        build(&manifest)
+    }
+}
+
+fn watch(manifest: &Manifest) -> Result<()> {
     let (tx, rx) = std::sync::mpsc::channel();
 
     let mut watcher = {
@@ -30,16 +40,15 @@ fn main() -> anyhow::Result<()> {
 
         notify::recommended_watcher(move |res| match res {
             Ok(_) => tx.send(()).unwrap(),
-            Err(e) => log::error!("watch error: {:?}", e),
+            Err(e) => panic!("Couldn't start file watcher: {:?}", e),
         })?
     };
 
     for shader in &manifest.shaders {
-        watcher
-            .watch(&shader.path_to_shader, notify::RecursiveMode::Recursive)?;
+        watcher.watch(&shader.source_dir, notify::RecursiveMode::Recursive)?;
     }
 
-    for dir in &manifest.dirs {
+    for dir in &manifest.extra_watch_dirs {
         watcher.watch(dir, notify::RecursiveMode::Recursive)?;
     }
 
@@ -50,96 +59,16 @@ fn main() -> anyhow::Result<()> {
         loop {
             match rx.try_recv() {
                 Ok(_) => (),
-                Err(TryRecvError::Empty) => break,
-                Err(TryRecvError::Disconnected) => panic!("Disconnected"),
+                Err(_) => break,
             }
         }
 
-        for shader in &manifest.shaders {
-            build_shader(shader)?;
-        }
+        _ = manifest.build();
     }
 
     Ok(())
 }
 
-fn load_manifest(path: impl AsRef<Path>) -> anyhow::Result<Manifest> {
-    let manifest = fs::read_to_string(path)?;
-    let manifest = toml::from_str(&manifest)?;
-
-    Ok(manifest)
-}
-
-fn build_shader(shader_config: &ShaderConfig) -> anyhow::Result<()> {
-    let build_result = SpirvBuilder::new(
-        &shader_config.path_to_shader,
-        "spirv-unknown-spv1.5",
-    )
-    .print_metadata(MetadataPrintout::None)
-    .capability(Capability::Int8)
-    .release(true)
-    .build()?;
-
-    if let Some(parent) = shader_config.path_to_copy_to.parent() {
-        fs::create_dir_all(parent)?;
-    }
-
-    let spirv_module_path = shader_config.path_to_copy_to.with_extension("spv");
-    let glsl_module_path = shader_config.path_to_copy_to.with_extension("glsl");
-
-    fs_extra::file::copy(
-        build_result.module.unwrap_single(),
-        &spirv_module_path,
-        &fs_extra::file::CopyOptions {
-            overwrite: true,
-            skip_exist: false,
-            ..fs_extra::file::CopyOptions::default()
-        },
-    )?;
-
-    // TODO that's a hack so that we can inspect the raytracer's glsl output
-    {
-        let module = fs::read(spirv_module_path)?;
-
-        let module =
-            naga::front::spv::parse_u8_slice(&module, &Default::default())?;
-
-        let info =
-            naga::valid::Validator::new(Default::default(), Default::default())
-                .validate(&module)?;
-
-        let policies = naga::proc::BoundsCheckPolicies {
-            index: naga::proc::BoundsCheckPolicy::Unchecked,
-            buffer: naga::proc::BoundsCheckPolicy::Unchecked,
-            image: naga::proc::BoundsCheckPolicy::Unchecked,
-            binding_array: naga::proc::BoundsCheckPolicy::Unchecked,
-        };
-
-        let opts = Default::default();
-
-        let pipeline_options = naga::back::glsl::PipelineOptions {
-            shader_stage: naga::ShaderStage::Fragment,
-            entry_point: "fs_main".into(),
-            multiview: None,
-        };
-
-        let mut output = String::new();
-
-        let writer = naga::back::glsl::Writer::new(
-            &mut output,
-            &module,
-            &info,
-            &opts,
-            &pipeline_options,
-            policies,
-        );
-
-        if let Ok(mut writer) = writer {
-            writer.write()?;
-
-            fs::write(glsl_module_path, output)?;
-        }
-    }
-
-    Ok(())
+fn build(manifest: &Manifest) -> Result<()> {
+    manifest.build()
 }

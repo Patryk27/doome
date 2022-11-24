@@ -12,7 +12,8 @@ Requirements:
 ``` shell
 $ git clone https://github.com/Patryk27/doome
 $ cd doome
-$ cargo run --release
+$ cargo build-shaders
+$ cargo run-app
 # or:
 $ cargo run-wasm
 ```
