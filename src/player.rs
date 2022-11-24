@@ -29,7 +29,7 @@ pub fn process_movement(
     mut player: Query<(&Player, &mut Body, &mut Transform)>,
 ) {
     const MOUSE_ROTATION_SENSITIVITY: f32 = 0.5;
-    const PLANAR_MOVEMENT_SPEED: f32 = 10.0;
+    const PLANAR_MOVEMENT_SPEED: f32 = 7.5;
     const ROTATION_SPEED: f32 = 2.0;
 
     let (player, mut body, mut transform) = player.single_mut();

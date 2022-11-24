@@ -73,6 +73,10 @@ impl Polygon {
         })
     }
 
+    pub fn num_edges(&self) -> usize {
+        self.points.len()
+    }
+
     pub fn map_points<F>(mut self, m: F) -> Self
     where
         F: Fn(Vec2) -> Vec2,

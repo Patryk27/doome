@@ -3,36 +3,34 @@ use doome_geo::sat;
 
 use super::components::{Body, Collider};
 use super::events::Collision;
+use super::PhysicsEnabled;
 use crate::convert::physical_to_graphical;
-
-const MIN_VELOCITY: f32 = 0.1;
 
 pub fn resolve_collisions(
     time: Res<Time>,
+    physics_enabled: Res<PhysicsEnabled>,
     mut collisions: EventWriter<Collision>,
-    mut bodies_with_colliders: Query<(
-        Entity,
-        &mut Body,
-        &Transform,
-        &Collider,
-    )>,
-    colliders: Query<(Entity, &Collider, &Transform)>,
+    mut bodies_with_colliders: Query<(Entity, &mut Body, &Collider)>,
+    colliders: Query<(Entity, &Collider)>,
+    transforms: Query<&mut Transform>,
 ) {
     let delta = time.delta_seconds();
 
-    for (
-        active_entity,
-        mut body,
-        active_entity_transform,
-        active_entity_collider,
-    ) in bodies_with_colliders.iter_mut()
+    for (active_entity, body, active_entity_collider) in
+        bodies_with_colliders.iter_mut()
     {
-        for (
-            passive_entity,
-            passive_entity_collider,
-            passive_entity_transform,
-        ) in colliders.iter()
-        {
+        // SAFETY: This is safe, because we will validate that the entities are different.
+        let mut active_entity_transform =
+            unsafe { transforms.get_unchecked(active_entity).unwrap() };
+
+        active_entity_transform.translation +=
+            physical_to_graphical(body.velocity) * delta;
+
+        if !physics_enabled.0 {
+            continue;
+        }
+
+        for (passive_entity, passive_entity_collider) in colliders.iter() {
             if body.velocity.length() < f32::EPSILON {
                 break;
             }
@@ -41,15 +39,18 @@ pub fn resolve_collisions(
                 continue;
             }
 
-            let v = body.velocity * delta;
-            let new_transform = active_entity_transform.with_translation(
-                active_entity_transform.translation + physical_to_graphical(v),
-            );
+            // SAFETY: This is safe, because we validate previously that the entities are different.
+            let passive_entity_transform = unsafe {
+                let passive_entity_transform =
+                    transforms.get_unchecked(passive_entity).unwrap();
+
+                passive_entity_transform
+            };
 
             if let Some(mtv) = are_colliding(
-                &new_transform,
+                &active_entity_transform,
                 active_entity_collider,
-                passive_entity_transform,
+                &passive_entity_transform,
                 passive_entity_collider,
             ) {
                 collisions.send(Collision {
@@ -58,13 +59,8 @@ pub fn resolve_collisions(
                 });
 
                 if body.body_type.is_kinematic() {
-                    let mtv_component = vector_decompose(body.velocity, mtv);
-
-                    body.velocity -= mtv * mtv_component;
-
-                    if body.velocity.length() < MIN_VELOCITY {
-                        body.velocity = Vec2::ZERO;
-                    }
+                    active_entity_transform.translation -=
+                        physical_to_graphical(mtv);
                 }
             }
         }

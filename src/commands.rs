@@ -1,6 +1,7 @@
 mod cmd;
 
 use bevy::app::AppExit;
+use doome_bevy::physics::PhysicsEnabled;
 
 pub use self::cmd::*;
 use crate::prelude::*;
@@ -21,6 +22,8 @@ fn handle_commands(
     mut game_commands: EventReader<Command>,
     mut commands: Commands,
     assets: Res<Assets>,
+    // Mutable resources
+    mut physics_enabled: ResMut<PhysicsEnabled>,
     mut input_lock: ResMut<InputLock>,
     // Queries
     mut transforms: Query<&mut Transform>,
@@ -104,6 +107,14 @@ fn handle_commands(
             }
             Command::SyncNavData => {
                 sync_nav_data.send(RecalculateNavData);
+            }
+            Command::NoClip => {
+                physics_enabled.0 = !physics_enabled.0;
+                if physics_enabled.0 {
+                    output.send(CommandOutput("Physics enabled".to_string()));
+                } else {
+                    output.send(CommandOutput("Physics disabled".to_string()));
+                }
             }
         }
     }
