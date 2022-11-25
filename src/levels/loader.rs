@@ -40,7 +40,7 @@ impl LevelLoader {
 
         log::debug!("Spawning map");
         gmap.spawn(lvl);
-        locator.spawn(lvl);
+        locator.spawn(&imap, lvl);
 
         log::debug!("Completed");
 

@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use doome_bevy::prelude::Light;
 
 use crate::prelude::Flashlight;
 

@@ -183,4 +183,8 @@ impl<'a> Tile<'a> {
     pub fn is_floor(self) -> bool {
         matches!(self, Tile::Floor(_))
     }
+
+    pub fn is_wall(self) -> bool {
+        matches!(self, Tile::Wall(_, _))
+    }
 }

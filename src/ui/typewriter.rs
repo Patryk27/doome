@@ -1,33 +1,65 @@
 const FUEL_PER_CHARACTER: f32 = 0.07;
 const LINE_HEIGHT: u16 = 12;
 
+use std::collections::VecDeque;
 use std::mem;
 
 use doome_engine::{TextCanvas, HEIGHT};
 
 use crate::prelude::*;
 
-#[derive(Resource)]
-pub enum Typewriter {
-    Idle,
-
-    Working {
-        text: String,
-        layout: Vec<String>,
-        tt: f32,
-        next_layout_at: f32,
-        completed_at: Option<f32>,
-    },
+#[derive(Default, Resource)]
+pub struct Typewriter {
+    current: Option<TypewriterText>,
+    scheduled: VecDeque<TypewriterText>,
 }
 
 impl Typewriter {
     pub fn render(&self, canvas: &mut TextCanvas) {
-        let Self::Working { layout, ..} = self else { return; };
+        if let Some(current) = &self.current {
+            current.render(canvas);
+        }
+    }
+}
 
+#[derive(Default)]
+pub struct TypewriterPrint {
+    text: String,
+}
+
+impl TypewriterPrint {
+    pub fn new(text: impl ToString) -> Self {
+        Self {
+            text: text.to_string(),
+        }
+    }
+
+    fn build(&self) -> TypewriterText {
+        TypewriterText {
+            text: self.text.clone(),
+            layout: Default::default(),
+            tt: Default::default(),
+            relayout_at: Default::default(),
+            completed_at: Default::default(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+struct TypewriterText {
+    text: String,
+    layout: Vec<String>,
+    tt: f32,
+    relayout_at: f32,
+    completed_at: Option<f32>,
+}
+
+impl TypewriterText {
+    fn render(&self, canvas: &mut TextCanvas) {
         let x = 5;
         let mut y = 5;
 
-        for line in layout.iter() {
+        for line in self.layout.iter() {
             canvas.text(x, y, line, false);
 
             y += LINE_HEIGHT;
@@ -126,60 +158,39 @@ impl Typewriter {
     }
 }
 
-#[derive(Default)]
-pub struct TypewriterPrint {
-    text: String,
-}
-
-impl TypewriterPrint {
-    pub fn new(text: impl ToString) -> Self {
-        Self {
-            text: text.to_string(),
-        }
-    }
-}
-
 pub fn update(
     time: Res<Time>,
     mut state: ResMut<Typewriter>,
     mut events: EventReader<TypewriterPrint>,
 ) {
-    if let Typewriter::Working {
-        text,
-        layout,
-        tt,
-        next_layout_at,
-        completed_at,
-    } = &mut *state
-    {
-        *tt += time.delta_seconds();
+    if let Some(curr) = &mut state.current {
+        curr.tt += time.delta_seconds();
 
-        if *tt >= *next_layout_at {
-            let (new_layout, remaining_fuel) = Typewriter::layout(text, *tt);
+        if curr.tt >= curr.relayout_at {
+            let (new_layout, remaining_fuel) =
+                TypewriterText::layout(&curr.text, curr.tt);
 
-            *layout = new_layout;
+            curr.layout = new_layout;
 
-            if remaining_fuel > 0.0 && completed_at.is_none() {
-                *completed_at = Some(*tt);
+            if remaining_fuel > 0.0 && curr.completed_at.is_none() {
+                curr.completed_at = Some(curr.tt);
             }
 
-            *next_layout_at = *tt + FUEL_PER_CHARACTER;
+            curr.relayout_at = curr.tt + FUEL_PER_CHARACTER;
         }
 
-        if let Some(completed_at) = completed_at {
-            if *tt > *completed_at + 2.0 {
-                *state = Typewriter::Idle;
+        if let Some(completed_at) = curr.completed_at {
+            if curr.tt > completed_at + 2.0 {
+                state.current = state.scheduled.pop_front();
             }
         }
     }
 
     for event in events.iter() {
-        *state = Typewriter::Working {
-            text: event.text.clone(),
-            layout: Default::default(),
-            tt: Default::default(),
-            next_layout_at: Default::default(),
-            completed_at: Default::default(),
-        };
+        if state.current.is_none() {
+            state.current = Some(event.build());
+        } else {
+            state.scheduled.push_back(event.build());
+        }
     }
 }

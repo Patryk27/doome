@@ -4,117 +4,104 @@ use super::*;
 
 #[derive(Clone, Debug, Default)]
 pub struct LevelLocator {
-    objects: HashMap<String, Object>,
+    objects: HashMap<String, Vec<Object>>,
     entities: HashMap<String, Entity>,
+    tags: HashMap<String, Vec3>,
 }
 
 impl LevelLocator {
     pub(super) fn add(&mut self, name: String, x: i32, y: i32, w: i32, h: i32) {
-        self.objects.insert(name, Object { x, y, w, h });
+        self.objects
+            .entry(name)
+            .or_default()
+            .push(Object { x, y, w, h });
     }
 
-    pub(super) fn spawn(&mut self, lvl: &mut LevelBuilder) {
-        for name in self.objects.keys() {
-            let pname = name.strip_prefix("$:");
+    pub(super) fn spawn(
+        &mut self,
+        imap: &indexed::Map<'_>,
+        lvl: &mut LevelBuilder,
+    ) {
+        let has_wall_at = |x, y| imap.get(x, y).any(|tile| tile.is_wall());
 
-            if name.starts_with("$:door") {
-                let rot = if name.contains("door.h") {
-                    Quat::from_rotation_y(0.0)
-                } else if name.contains("door.v") {
-                    Quat::from_rotation_y(PI / 2.0)
+        let objects = self
+            .objects
+            .iter()
+            .flat_map(|(k, vs)| vs.iter().map(move |v| (k, v)));
+
+        for (obj_name, obj) in objects {
+            if let Some(name) = obj_name.strip_prefix("door:") {
+                let rot = if has_wall_at(obj.x - 1, obj.y)
+                    || has_wall_at(obj.x + 1, obj.y)
+                {
+                    Quat::from_rotation_y(2.0 * PI / 2.0)
                 } else {
-                    panic!("Invalid door specification: {}", name);
+                    Quat::from_rotation_y(-PI / 2.0)
                 };
 
                 let entity = Door::spawn(
                     lvl.assets(),
                     lvl.commands(),
-                    self.world_point(name),
+                    obj.location(),
                     rot,
                 );
 
-                self.entities.insert(pname.unwrap().to_owned(), entity);
+                self.entities.insert(name.to_owned(), entity);
+                continue;
             }
 
-            if name.starts_with("$:gate") {
-                let (rot, ext) = if name.contains(".north") {
-                    (Quat::from_rotation_y(3.0 * PI / 2.0), vec3(0.0, 0.0, 0.0))
-                } else if name.contains(".east") {
-                    (Quat::from_rotation_y(PI), vec3(0.0, 0.0, 0.5))
-                } else if name.contains(".west") {
-                    (Quat::from_rotation_y(0.0), vec3(0.0, 0.0, -0.5))
+            if obj_name == "gate" {
+                let rot = if has_wall_at(obj.x - 1, obj.y)
+                    || has_wall_at(obj.x + 1, obj.y)
+                {
+                    Quat::from_rotation_y(PI / 2.0)
                 } else {
-                    (Quat::from_rotation_y(PI / 2.0), vec3(0.0, 0.0, 0.0))
+                    Default::default()
                 };
 
-                Gate::spawn(
-                    lvl.assets(),
-                    lvl.commands(),
-                    self.world_point(name) + ext,
-                    rot,
-                );
+                Gate::spawn(lvl.assets(), lvl.commands(), obj.location(), rot);
+                continue;
             }
 
-            if name.starts_with("$:heart") {
-                Heart::spawn(
-                    lvl.assets(),
-                    lvl.commands(),
-                    self.world_point(name),
-                );
+            if obj_name == "heart" {
+                Heart::spawn(lvl.assets(), lvl.commands(), obj.location());
+                continue;
             }
 
-            if name.starts_with("$:zone") {
-                let zone = self.rect(name);
-                let zone_name = name.strip_prefix("$:").unwrap();
+            if let Some(name) = obj_name.strip_prefix("tag:") {
+                if self.tags.insert(name.to_owned(), obj.location()).is_some() {
+                    panic!("Map contains tag defined multiple times: {}", name);
+                }
 
+                continue;
+            }
+
+            if let Some(name) = obj_name.strip_prefix("zone:") {
                 lvl.zone(
-                    zone_name,
-                    zone.0 as f32,
-                    zone.1 as f32,
-                    (zone.0 + zone.2) as f32,
-                    (zone.1 + zone.3) as f32,
-                )
+                    name,
+                    obj.x as f32,
+                    obj.y as f32,
+                    (obj.x + obj.w) as f32,
+                    (obj.y + obj.h) as f32,
+                );
+
+                continue;
             }
+
+            panic!("Map contains unrecognized object: {}", obj_name);
         }
-    }
-
-    pub fn point(&self, name: &str) -> (i32, i32) {
-        let object = self.get(name);
-
-        if object.w != 0 || object.h != 0 {
-            panic!("Map object `{}` is not a point", name);
-        }
-
-        (object.x, object.y)
-    }
-
-    pub fn world_point(&self, name: &str) -> Vec3 {
-        let (x, z) = self.point(name);
-
-        vec3(x as f32, 0.0, z as f32)
-    }
-
-    pub fn rect(&self, name: &str) -> (i32, i32, i32, i32) {
-        let object = self.get(name);
-
-        if object.w == 0 || object.h == 0 {
-            panic!("Map object `{}` is not a rectange", name);
-        }
-
-        (object.x, object.y, object.w, object.h)
     }
 
     pub fn entity(&self, name: &str) -> Entity {
         self.entities.get(name).cloned().unwrap_or_else(|| {
-            panic!("Map object `{}` has no associated entity", name)
+            panic!("Map contains no entity called `{}`", name)
         })
     }
 
-    fn get(&self, name: &str) -> Object {
-        self.objects
-            .get(name)
-            .copied()
-            .unwrap_or_else(|| panic!("Map object `{}` does not exist", name))
+    pub fn tag(&self, name: &str) -> Vec3 {
+        self.tags.get(name).cloned().unwrap_or_else(|| {
+            panic!("Map contains no tag called `{}`", name);
+        })
     }
 }
 
@@ -124,4 +111,10 @@ struct Object {
     y: i32,
     w: i32,
     h: i32,
+}
+
+impl Object {
+    fn location(self) -> Vec3 {
+        vec3(self.x as f32, 0.0, self.y as f32)
+    }
 }

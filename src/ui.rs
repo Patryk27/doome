@@ -29,7 +29,7 @@ impl Plugin for UiPlugin {
         app.add_startup_system(hide_cursor).add_system(quit_on_exit);
 
         // Typewriter
-        app.insert_resource(Typewriter::Idle)
+        app.insert_resource(Typewriter::default())
             .add_event::<TypewriterPrint>()
             .add_system(typewriter::update);
 

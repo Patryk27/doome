@@ -82,8 +82,10 @@ pub fn update(
                     was_input: true,
                 });
 
+                cmd_line.is_shown = false;
                 cmd_line.current.clear();
                 commands.send(cmd);
+                commands.send(Command::UnlockInput);
             }
 
             Err(e) => {

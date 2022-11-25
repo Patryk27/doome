@@ -208,7 +208,7 @@ pub fn init(
 
     lvl.model("gate")
         .dynamic()
-        .with_translation(locator.world_point("gate.2"))
+        .with_translation(locator.tag("gate-2"))
         .with_scale(vec3(1.0, 1.0, 3.0))
         .with_material(
             Material::default()
@@ -261,7 +261,6 @@ pub fn process(
     mut transforms: Query<&mut Transform>,
     mut lights: Query<&mut Light>,
     mut typewriter_tx: EventWriter<TypewriterPrint>,
-    mut message_tx: EventWriter<Message>,
     mut recalc_nav_data_tx: EventWriter<SyncNavData>,
     mut level_tx: EventReader<LevelGameplayEvent>,
     inventory: Query<&Inventory>,
@@ -339,7 +338,7 @@ pub fn process(
                     MothMonster::spawn(
                         &assets,
                         &mut commands,
-                        level.locator.world_point(&format!("monster.{}", id)),
+                        level.locator.tag(&format!("monster-{}", id)),
                     )
                 });
 
@@ -361,7 +360,11 @@ pub fn process(
                 .insert(LightFade::fade_out(4.0));
 
             typewriter_tx.send(TypewriterPrint::new(
-                "ouch... oh no........ i'll see you again..... soon........",
+                "owww my bones hurt a lot, oww oof my bones...",
+            ));
+
+            typewriter_tx.send(TypewriterPrint::new(
+                "i'll see you again......... soon..........",
             ));
 
             level.stage = LevelStage::AwaitingZoneEnter;
@@ -371,30 +374,37 @@ pub fn process(
             for event in level_tx.iter() {
                 match event {
                     LevelGameplayEvent::ZoneEntered(name)
-                        if name == "zone.door.1" || name == "zone.door.2" =>
+                        if name == "door-a" || name == "door-b" =>
                     {
                         typewriter_tx.send(TypewriterPrint::new(
                             "gotcha this time......",
                         ));
 
-                        let (moth_spawn_point, other_door) =
-                            if name == "zone.door.1" {
-                                ("monster.door.1", "door.v.2")
-                            } else {
-                                ("monster.door.2", "door.v.1")
-                            };
+                        let (moth_spawn_point, other_door) = if name == "door-a"
+                        {
+                            ("monster-door-a", "door-b")
+                        } else {
+                            ("monster-door-b", "door-a")
+                        };
 
-                        for sp in [moth_spawn_point, "monster.door.3"] {
+                        for tag in [moth_spawn_point, "monster-door"] {
                             MothMonster::spawn(
                                 &assets,
                                 &mut commands,
-                                level.locator.world_point(sp),
+                                level.locator.tag(tag),
                             );
                         }
 
-                        commands
-                            .entity(level.locator.entity(other_door))
-                            .despawn();
+                        for n in 1..=2 {
+                            commands
+                                .entity(
+                                    level.locator.entity(&format!(
+                                        "{}{}",
+                                        other_door, n
+                                    )),
+                                )
+                                .despawn();
+                        }
 
                         level.stage = LevelStage::AwaitingKeyPickup;
                     }

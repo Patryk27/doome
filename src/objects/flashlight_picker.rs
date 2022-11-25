@@ -33,8 +33,10 @@ impl FlashlightPicker {
                 GeometryType::Dynamic,
                 Collider::circle(1.25, 6),
                 Pickable {
-                    on_pickup: Command::Give { what: Item::Flashlight },
-                }
+                    on_pickup: Command::Give {
+                        what: Item::Flashlight,
+                    },
+                },
             ))
             .id()
     }
