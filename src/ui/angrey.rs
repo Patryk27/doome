@@ -18,6 +18,7 @@ pub fn render(
     time: Res<Time>,
     assets: Res<Assets>,
     player: Query<(&Player, &Health)>,
+    gun_state: Res<super::gun::State>,
     mut renderer: ResMut<DoomeRenderer>,
 ) {
     let frame = &mut renderer.pixels.image_data;
@@ -46,6 +47,8 @@ pub fn render(
     };
 
     canvas.blit(0, 0, assets.image(ui_image));
+
+    canvas.blit(0, 0, assets.image(gun_state.current_weapon.ui_icon));
 
     let seconds = time.elapsed_seconds();
     let (x, y) = match state {
