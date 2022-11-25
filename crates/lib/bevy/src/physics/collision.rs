@@ -50,6 +50,7 @@ pub fn resolve_collisions(
         }
 
         body.velocity += body.acceleration * delta;
+
         active_entity_transform.translation +=
             physical_to_graphical(body.velocity) * delta;
 
@@ -90,11 +91,8 @@ pub fn resolve_collisions(
                         physical_to_graphical(mtv);
 
                     if mtv.length() > MIN_MTV_LENGTH_TO_DECOMPOSE {
-                        let mtv_component =
-                            vector_decompose(body.velocity, mtv);
-                        let mtv_component = mtv * mtv_component;
-
-                        body.velocity -= mtv_component;
+                        body.velocity -=
+                            mtv * vector_decompose(body.velocity, mtv);
                     }
 
                     if body.velocity.length() < MIN_VELOCITY {

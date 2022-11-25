@@ -7,7 +7,7 @@ pub struct LevelsCoordinator;
 
 impl LevelsCoordinator {
     pub fn init(mut goto_level_tx: EventWriter<GotoLevel>) {
-        goto_level_tx.send(GotoLevel::new(Level::l1()));
+        goto_level_tx.send(GotoLevel::new(Level::l2()));
     }
 
     pub fn unload(

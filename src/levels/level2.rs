@@ -67,7 +67,7 @@ pub fn init(
         .with_rotation(Quat::from_rotation_y(-PI / 2.0))
         .with_scale(Vec3::ONE * 0.6)
         .with_material(Material::default().with_uv_divisor(4, 4))
-        .with_collider(Collider::line(vec2(-1.0, 0.8), vec2(1.0, 0.8)))
+        .with_collider(Collider::line(vec2(-1.0, 0.95), vec2(1.0, 0.95)))
         .spawn();
 
     for n in 0..6 {
@@ -289,8 +289,6 @@ pub fn process(
 
                     Flashlight::spawn(&mut commands);
 
-                    commands.entity(level.ent_cell).remove::<Collider>();
-
                     level.stage = LevelStage::Intro0 {
                         txt_rise_timer: Timer::new(
                             Duration::from_secs(5),
@@ -336,6 +334,7 @@ pub fn process(
             wave0_timer.tick(dt);
 
             if light_timer.just_finished() {
+                commands.entity(ent_cell).remove::<Collider>();
                 commands.entity(ent_sl0).insert(LightFade::fade_out(0.35));
                 commands.entity(ent_sl1).insert(LightFade::fade_in(0.35));
                 commands.entity(ent_lamp).despawn();

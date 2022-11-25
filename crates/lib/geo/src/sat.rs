@@ -33,7 +33,8 @@ pub fn resolve_sat(a: &Polygon, b: &Polygon) -> Option<Vec2> {
 }
 
 fn iter_separation_axes(poly: &Polygon) -> impl Iterator<Item = Vec2> + '_ {
-    poly.iter_edge_vectors().map(|v| v.perp().normalize())
+    poly.iter_edge_vectors()
+        .flat_map(|v| [v.perp().normalize(), -v.perp().normalize()])
 }
 
 /// Resolves axis projections
@@ -51,15 +52,28 @@ fn resolve_axis_projections(
     let b_max = b.iter().copied().fold(f32::NAN, f32::max);
 
     if a_max < b_min || b_max < a_min {
-        None
-    } else {
-        let a_overlap = a_max - b_min;
-        let b_overlap = b_max - a_min;
-
-        let overlap = a_overlap.min(b_overlap);
-
-        Some((axis * overlap, overlap))
+        return None;
     }
+
+    let a_overlap = a_max - b_min;
+    let b_overlap = b_max - a_min;
+    let mut overlap = a_overlap.min(b_overlap);
+    let mut sign = 1.0;
+
+    if (a_min >= b_min && a_max <= b_max) || (b_min >= a_min && b_max <= a_max)
+    {
+        let mins = (a_min - b_min).abs();
+        let maxs = (a_max - b_max).abs();
+
+        if mins < maxs {
+            overlap += mins;
+            sign *= -1.0;
+        } else {
+            overlap += maxs;
+        }
+    }
+
+    Some((axis * overlap * sign, overlap))
 }
 
 fn project_vertices_onto(vertices: &[Vec2], axis: Vec2) -> Vec<f32> {

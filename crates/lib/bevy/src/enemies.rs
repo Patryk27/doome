@@ -223,7 +223,7 @@ fn sync_nav_data(
 
     let nav_data = nav_data_builder.build();
 
-    nav_data.rasterize().save("nav_data.png");
+    // nav_data.rasterize().save("nav_data.png");
 
     let build_time = build_time_start.elapsed();
 
