@@ -14,7 +14,13 @@ impl RiflePickup {
         commands: &mut Commands,
         position: Vec3,
     ) -> Entity {
-        spawn(assets, commands, position, "rifle_icon")
+        spawn(
+            assets,
+            commands,
+            position,
+            "rifle_icon",
+            Command::Give { what: Item::Rifle },
+        )
     }
 }
 
@@ -24,7 +30,15 @@ impl RpgPickup {
         commands: &mut Commands,
         position: Vec3,
     ) -> Entity {
-        spawn(assets, commands, position, "rpg_icon")
+        spawn(
+            assets,
+            commands,
+            position,
+            "rpg_icon",
+            Command::Give {
+                what: Item::RocketLauncher,
+            },
+        )
     }
 }
 
@@ -33,6 +47,7 @@ fn spawn(
     commands: &mut Commands,
     position: Vec3,
     icon_name: &str,
+    on_pickup: Command,
 ) -> Entity {
     let model = assets.load_model("heart");
     let texture = assets.load_texture(icon_name);
@@ -43,11 +58,7 @@ fn spawn(
         .spawn((
             model,
             Transform::from_translation(position),
-            Pickable {
-                on_pickup: Command::Give {
-                    what: Item::RocketLauncher,
-                },
-            },
+            Pickable { on_pickup },
             Material::default()
                 .with_color(Color::hex(0xffffff))
                 .with_uv_transparency()

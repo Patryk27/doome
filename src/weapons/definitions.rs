@@ -20,7 +20,7 @@ pub fn rifle(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
 
     let definition = WeaponDefinition::new()
         .with_cooldown(0.3)
-        .with_speed(40.0)
+        .with_speed(50.0)
         .with_damage(10.0)
         .with_limited_ammo(20);
 
@@ -45,7 +45,7 @@ pub fn handgun(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
 
     let definition = WeaponDefinition::new()
         .with_cooldown(0.6)
-        .with_speed(40.0)
+        .with_speed(50.0)
         .with_damage(10.0)
         .with_limited_ammo(20);
 
@@ -69,7 +69,7 @@ pub fn rpg(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
         .with_rocket(6.0)
         .with_cooldown(0.5)
         .with_speed(20.0)
-        .with_damage(10.0)
+        .with_damage(500.0)
         .with_limited_ammo(1);
 
     (Arc::new(definition), Arc::new(sprites))
