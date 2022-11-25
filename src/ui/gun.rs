@@ -1,16 +1,13 @@
 use std::sync::Arc;
-use std::time::Duration;
 
 use bevy::prelude::*;
-use doome_bevy::assets::{AssetHandle, Assets};
+use doome_bevy::assets::Assets;
 use doome_bevy::audio::Audio;
 use doome_bevy::doome::DoomeRenderer;
 use doome_bevy::health::Health;
 use doome_bevy::player::Player;
 use doome_engine::Canvas;
-use image::RgbaImage;
 
-use super::InputLock;
 use crate::player::PlayerShot;
 use crate::weapons::{PrefabWeapons, Weapon, WeaponSprites};
 
@@ -18,7 +15,8 @@ const GUN_OFFSET_Y: u16 = 16;
 
 #[derive(Resource)]
 pub struct State {
-    current_weapon: Arc<WeaponSprites>,
+    pub current_weapon: Arc<WeaponSprites>,
+    pub anim_state: AnimationState,
 }
 
 #[derive(Component)]
@@ -32,35 +30,28 @@ impl State {
     pub fn new(prefab_weaons: &PrefabWeapons) -> Self {
         Self {
             current_weapon: prefab_weaons.handgun.1.clone(),
+            anim_state: AnimationState {
+                is_firing: false,
+                current_frame: 0,
+                timer: 0.0,
+            },
         }
     }
-}
-
-pub fn setup(mut commands: Commands, assets: Res<Assets>) {
-    let mut timer =
-        Timer::new(Duration::from_millis(100), TimerMode::Repeating);
-
-    timer.pause();
-
-    commands.spawn(AnimationState {
-        is_firing: false,
-        current_frame: 0,
-        timer: 0.0,
-    });
 }
 
 pub fn render(
     time: Res<Time>,
     assets: Res<Assets>,
-    state: Res<State>,
+    mut state: ResMut<State>,
     mut renderer: ResMut<DoomeRenderer>,
-    mut shooting_animation: Query<&mut AnimationState>,
     player: Query<(&Player, &Health, &Weapon)>,
     mut audio: ResMut<Audio>,
     mut shots: EventReader<PlayerShot>,
 ) {
-    let mut shooting_anim = shooting_animation.single_mut();
-    let shooting_anim = shooting_anim.as_mut();
+    let State {
+        current_weapon,
+        anim_state: shooting_anim,
+    } = state.as_mut();
 
     if shots.iter().count() > 0 {
         trigger_animation(&assets, shooting_anim, &mut audio);
@@ -80,7 +71,7 @@ pub fn render(
     };
 
     let gun_image = if shooting_anim.is_firing {
-        let frames = &state.current_weapon.animation;
+        let frames = &current_weapon.animation;
 
         if shooting_anim.current_frame >= frames.len() {
             shooting_anim.current_frame = 0;
@@ -97,7 +88,6 @@ pub fn render(
     canvas.blit(sway_x, sway_y - GUN_OFFSET_Y, assets.image(gun_image));
 }
 
-// TODO: Attach an event writer
 pub fn trigger_animation(
     assets: &Assets,
     shooting_animation: &mut AnimationState,

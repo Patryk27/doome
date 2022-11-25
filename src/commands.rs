@@ -1,5 +1,7 @@
 mod cmd;
 
+use std::sync::Arc;
+
 use bevy::app::AppExit;
 use bevy::ecs::system::SystemParam;
 use doome_bevy::physics::PhysicsEnabled;
@@ -7,7 +9,8 @@ use doome_bevy::physics::PhysicsEnabled;
 pub use self::cmd::*;
 use crate::inventory::Inventory;
 use crate::prelude::*;
-use crate::weapons::{PrefabWeapons, Weapon};
+use crate::ui;
+use crate::weapons::{PrefabWeapons, Weapon, WeaponDefinition, WeaponSprites};
 
 pub struct CommandsPlugin;
 
@@ -38,6 +41,7 @@ fn handle_commands(
     // Mutable resources
     mut physics_enabled: ResMut<PhysicsEnabled>,
     mut input_lock: ResMut<InputLock>,
+    mut weapon_sprites: ResMut<ui::gun::State>,
     // Queries
     colliders: Query<&Collider>,
     all_entities: Query<Entity>,
@@ -202,11 +206,46 @@ fn handle_commands(
                     let mut inventory = inventory.single_mut();
                     inventory.has_flashlight = true;
                 }
-                Item::Rifle => todo!(),
-                Item::RocketLauncher => todo!(),
+                Item::Rifle => {
+                    give_gun_to_player(
+                        &player,
+                        &mut weapons,
+                        &mut weapon_sprites,
+                        &prefab_weapons.rifle,
+                    );
+                }
+                Item::RocketLauncher => {
+                    give_gun_to_player(
+                        &player,
+                        &mut weapons,
+                        &mut weapon_sprites,
+                        &prefab_weapons.rpg,
+                    );
+                }
+                Item::Handgun => {
+                    give_gun_to_player(
+                        &player,
+                        &mut weapons,
+                        &mut weapon_sprites,
+                        &prefab_weapons.handgun,
+                    );
+                }
             },
         }
     }
+}
+
+fn give_gun_to_player(
+    player: &Query<Entity, With<Player>>,
+    weapons: &mut Query<&mut Weapon>,
+    weapon_sprites: &mut ui::gun::State,
+    prefab_weapon: &(Arc<WeaponDefinition>, Arc<WeaponSprites>),
+) {
+    let player = player.single();
+    let mut player_weapon = weapons.get_mut(player).unwrap();
+
+    player_weapon.update_def(prefab_weapon.0.clone());
+    weapon_sprites.current_weapon = prefab_weapon.1.clone();
 }
 
 fn resolve_entity(

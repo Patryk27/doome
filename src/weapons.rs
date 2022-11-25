@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
 use bevy::prelude::*;
-use doome_bevy::bullets::Bullet;
 use doome_bevy::convert::graphical_to_physical;
 
-use self::definition::WeaponDefinition;
+use crate::bullets::Bullet;
 use crate::prelude::*;
 
 mod definition;
@@ -54,6 +53,12 @@ impl Weapon {
         }
     }
 
+    pub fn update_def(&mut self, definition: Arc<WeaponDefinition>) {
+        self.cooldown_timer = definition.cooldown;
+        self.definition = definition;
+        self.ammo = self.definition.limited_ammo;
+    }
+
     pub fn can_shoot(&self) -> bool {
         self.cooldown_timer <= 0.0
     }
@@ -91,9 +96,10 @@ impl Weapon {
                 body_type: BodyType::Ethereal,
             },
             GeometryType::Dynamic,
-            Bullet {
-                damage: self.definition.bullet_damage,
-            },
+            Bullet::new(
+                self.definition.bullet_damage,
+                self.definition.bullet_type,
+            ),
             Billboard,
         ));
 

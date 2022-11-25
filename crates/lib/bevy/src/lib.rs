@@ -3,7 +3,6 @@
 pub mod assets;
 pub mod audio;
 pub mod billboard;
-pub mod bullets;
 pub mod components;
 pub mod convert;
 pub mod doome;

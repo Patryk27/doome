@@ -1,6 +1,6 @@
 mod angrey;
 mod command_line;
-mod gun;
+pub mod gun;
 mod health;
 mod messages;
 mod text;
@@ -46,10 +46,6 @@ impl Plugin for UiPlugin {
         // Command line
         app.add_startup_system(command_line::setup)
             .add_system(command_line::update);
-
-        // Gun animation
-        // TODO: Extract this stuff
-        app.add_startup_system(gun::setup);
 
         // Ui rendering systems (strictly ordered)
         app.add_system(ordered_systems! {

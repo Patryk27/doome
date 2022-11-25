@@ -1,16 +1,23 @@
 use bevy::prelude::*;
+use doome_bevy::health::Health;
+use doome_bevy::physics::events::Collision;
+use doome_bevy::prelude::Assets;
 
-use crate::health::Health;
-use crate::physics::events::Collision;
+use crate::explosions::spawn_explosion;
+use crate::weapons::BulletType;
 
 #[derive(Component)]
 pub struct Bullet {
     pub damage: f32,
+    pub bullet_type: BulletType,
 }
 
 impl Bullet {
-    pub fn new(damage: f32) -> Self {
-        Self { damage }
+    pub fn new(damage: f32, bullet_type: BulletType) -> Self {
+        Self {
+            damage,
+            bullet_type,
+        }
     }
 }
 
@@ -24,14 +31,24 @@ impl Plugin for BulletsPlugin {
 
 fn collide_and_apply_damage(
     mut commands: Commands,
+    assets: Res<Assets>,
     mut collisions: EventReader<Collision>,
     mut health: Query<&mut Health>,
-    bullets: Query<&Bullet>,
+    bullets: Query<(&Bullet, &Transform)>,
 ) {
     for collision in collisions.iter() {
-        if let Ok(bullet) = bullets.get(collision.entity_a) {
+        if let Ok((bullet, transform)) = bullets.get(collision.entity_a) {
             if is_a_bullet(&bullets, collision.entity_b) {
                 continue;
+            }
+
+            if let BulletType::Rocket { explosion_radius } = bullet.bullet_type
+            {
+                spawn_explosion(
+                    &mut commands,
+                    &assets,
+                    transform.clone().with_scale(Vec3::ONE * explosion_radius),
+                );
             }
 
             if let Some(mut entity) = commands.get_entity(collision.entity_a) {
@@ -45,6 +62,6 @@ fn collide_and_apply_damage(
     }
 }
 
-fn is_a_bullet(bullets: &Query<&Bullet>, entity: Entity) -> bool {
+fn is_a_bullet(bullets: &Query<(&Bullet, &Transform)>, entity: Entity) -> bool {
     bullets.get(entity).is_ok()
 }

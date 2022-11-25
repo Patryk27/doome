@@ -1,6 +1,7 @@
 use bevy::input::mouse::MouseMotion;
 use doome_bevy::convert::graphical_to_physical;
 
+use crate::commands::{Command, Item};
 use crate::prelude::*;
 use crate::weapons::{PrefabWeapons, Weapon};
 
@@ -117,6 +118,7 @@ pub fn sync_camera(
 pub fn handle_shooting(
     input_lock: Res<InputLock>,
     mut commands: Commands,
+    mut game_commands: EventWriter<Command>,
     mouse: Res<Input<MouseButton>>,
     keys: Res<Input<KeyCode>>,
     mut weapon: Query<(&Player, &Transform, &mut Weapon)>,
@@ -125,6 +127,14 @@ pub fn handle_shooting(
     let (_, transform, mut weapon) = weapon.single_mut();
 
     if input_lock.is_locked {
+        return;
+    }
+
+    if weapon.out_of_ammo() {
+        game_commands.send(Command::Give {
+            what: Item::Handgun,
+        });
+
         return;
     }
 

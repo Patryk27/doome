@@ -4,6 +4,7 @@
 #[macro_use]
 mod utils;
 
+mod bullets;
 mod charon;
 mod commands;
 mod explosions;
@@ -81,13 +82,13 @@ fn main() {
         .add_plugin(doome_bevy::audio::AudioPlugin)
         .add_plugin(doome_bevy::enemies::EnemiesPlugin)
         .add_plugin(doome_bevy::billboard::BillboardPlugin)
-        .add_plugin(doome_bevy::bullets::BulletsPlugin)
         .add_plugin(doome_bevy::health::HealthPlugin)
         .add_system(doome_bevy::simple_animations::rotate)
         .add_system(doome_bevy::simple_animations::float)
         .add_system(doome_bevy::model_animation::animate)
         // ===== //
         // doome //
+        .add_plugin(bullets::BulletsPlugin)
         .add_plugin(weapons::WeaponsPlugin)
         .add_plugin(charon::CharonPlugin)
         .add_plugin(player::PlayerPlugin)

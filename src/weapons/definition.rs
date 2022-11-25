@@ -14,7 +14,7 @@ pub struct WeaponDefinition {
     pub bullet_type: BulletType,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum BulletType {
     Bullet,
     Rocket { explosion_radius: f32 },

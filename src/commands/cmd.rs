@@ -94,6 +94,7 @@ pub enum Item {
     Flashlight,
     Rifle,
     RocketLauncher,
+    Handgun,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -274,7 +275,8 @@ impl FromStr for Item {
         match s {
             "flashlight" => Ok(Item::Flashlight),
             "rifle" => Ok(Item::Rifle),
-            "rocket-launcher" => Ok(Item::RocketLauncher),
+            "rpg" | "rocket-launcher" => Ok(Item::RocketLauncher),
+            "handgun" => Ok(Item::Handgun),
             _ => Err(anyhow!("Invalid item: {s}")),
         }
     }
