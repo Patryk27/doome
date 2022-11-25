@@ -7,6 +7,7 @@ use doome_bevy::physics::PhysicsEnabled;
 pub use self::cmd::*;
 use crate::inventory::Inventory;
 use crate::prelude::*;
+use crate::weapons::{PrefabWeapons, Weapon};
 
 pub struct CommandsPlugin;
 
@@ -33,15 +34,17 @@ fn handle_commands(
     mut game_commands: EventReader<Command>,
     mut commands: Commands,
     assets: Res<Assets>,
+    prefab_weapons: Res<PrefabWeapons>,
     // Mutable resources
     mut physics_enabled: ResMut<PhysicsEnabled>,
     mut input_lock: ResMut<InputLock>,
     // Queries
-    mut transforms: Query<&mut Transform>,
-    colliders: Query<&mut Collider>,
-    mut healths: Query<&mut Health>,
-    player: Query<Entity, With<Player>>,
+    colliders: Query<&Collider>,
     all_entities: Query<Entity>,
+    player: Query<Entity, With<Player>>,
+    mut weapons: Query<&mut Weapon>,
+    mut transforms: Query<&mut Transform>,
+    mut healths: Query<&mut Health>,
     mut inventory: Query<&mut Inventory>,
     // Event writers
     mut event_writers: EventWriters,
@@ -199,7 +202,8 @@ fn handle_commands(
                     let mut inventory = inventory.single_mut();
                     inventory.has_flashlight = true;
                 }
-                _ => unimplemented!(),
+                Item::Rifle => todo!(),
+                Item::RocketLauncher => todo!(),
             },
         }
     }

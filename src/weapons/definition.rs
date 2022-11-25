@@ -1,20 +1,17 @@
 use doome_bevy::assets::{AssetHandle, Model};
-use image::RgbaImage;
-
-use super::sprites::WeaponSprites;
 
 #[derive(Debug, Clone)]
 pub struct WeaponDefinition {
-    cooldown: f32,
-    bullet_model: Option<AssetHandle<Model>>,
-    bullet_speed: f32,
-    bullet_damage: f32,
-    bullet_scale: f32,
-    forward_offset: f32,
-    height_offset: f32,
-    collider_radius: f32,
-    limited_ammo: Option<usize>,
-    bullet_type: BulletType,
+    pub cooldown: f32,
+    pub bullet_model: Option<AssetHandle<Model>>,
+    pub bullet_speed: f32,
+    pub bullet_damage: f32,
+    pub bullet_scale: f32,
+    pub forward_offset: f32,
+    pub height_offset: f32,
+    pub collider_radius: f32,
+    pub limited_ammo: Option<usize>,
+    pub bullet_type: BulletType,
 }
 
 #[derive(Debug, Clone)]

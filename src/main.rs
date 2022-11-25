@@ -88,16 +88,15 @@ fn main() {
         .add_system(doome_bevy::model_animation::animate)
         // ===== //
         // doome //
-        .add_startup_system(player::spawn)
+        .add_plugin(weapons::WeaponsPlugin)
         .add_plugin(charon::CharonPlugin)
+        .add_plugin(player::PlayerPlugin)
         .add_plugin(commands::CommandsPlugin)
         .add_plugin(levels::LevelsPlugin)
         .add_plugin(ui::UiPlugin)
         .add_plugin(pickable::PickablePlugin)
         .add_plugin(inventory::InventoryPlugin)
         .add_system(explosions::update)
-        .add_system(player::process_movement)
-        .add_system(player::sync_camera.after(player::process_movement))
         .add_system(
             Flashlight::sync_with_player.after(player::process_movement),
         )

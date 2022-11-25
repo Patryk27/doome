@@ -24,7 +24,7 @@ fn setup(mut commands: Commands) {
 fn handle_inventory(
     mut commands: Commands,
     mut inventory: Query<&mut Inventory, Changed<Inventory>>,
-    mut flashlight: Query<(Entity, &Flashlight)>,
+    flashlight: Query<(Entity, &Flashlight)>,
 ) {
     let Ok(mut inventory) = inventory.get_single_mut() else { return };
     let flashlight = flashlight.get_single();

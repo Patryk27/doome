@@ -1,9 +1,11 @@
+use std::sync::Arc;
+
 use doome_bevy::prelude::Assets;
 
 use super::definition::WeaponDefinition;
 use super::WeaponSprites;
 
-pub fn rifle(assets: &Assets) -> (WeaponDefinition, WeaponSprites) {
+pub fn rifle(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     let idle = assets.load_image("rifle_0");
     let animation =
         vec![assets.load_image("rifle_1"), assets.load_image("rifle_2")];
@@ -18,14 +20,14 @@ pub fn rifle(assets: &Assets) -> (WeaponDefinition, WeaponSprites) {
 
     let definition = WeaponDefinition::new()
         .with_cooldown(0.5)
-        .with_speed(10.0)
+        .with_speed(40.0)
         .with_damage(10.0)
         .with_limited_ammo(20);
 
-    (definition, sprites)
+    (Arc::new(definition), Arc::new(sprites))
 }
 
-pub fn handgun(assets: &Assets) -> (WeaponDefinition, WeaponSprites) {
+pub fn handgun(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     let idle = assets.load_image("gun_1");
     let animation = vec![
         assets.load_image("gun_shoot_1"),
@@ -42,15 +44,15 @@ pub fn handgun(assets: &Assets) -> (WeaponDefinition, WeaponSprites) {
     };
 
     let definition = WeaponDefinition::new()
-        .with_cooldown(0.2)
-        .with_speed(10.0)
+        .with_cooldown(0.6)
+        .with_speed(40.0)
         .with_damage(10.0)
         .with_limited_ammo(20);
 
-    (definition, sprites)
+    (Arc::new(definition), Arc::new(sprites))
 }
 
-pub fn rpg(assets: &Assets) -> (WeaponDefinition, WeaponSprites) {
+pub fn rpg(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     let idle = assets.load_image("rpg");
     let animation = vec![assets.load_image("rpg")];
 
@@ -63,10 +65,21 @@ pub fn rpg(assets: &Assets) -> (WeaponDefinition, WeaponSprites) {
     };
 
     let definition = WeaponDefinition::new()
+        .with_model(assets.load_model("fireball"))
+        .with_rocket(3.0)
         .with_cooldown(1.0)
-        .with_speed(10.0)
+        .with_speed(20.0)
         .with_damage(10.0)
         .with_limited_ammo(1);
 
-    (definition, sprites)
+    (Arc::new(definition), Arc::new(sprites))
+}
+
+pub fn enemy_fire_spew(assets: &Assets) -> WeaponDefinition {
+    WeaponDefinition::new()
+        .with_model(assets.load_model("fireball"))
+        .with_cooldown(0.5)
+        .with_speed(10.0)
+        .with_damage(10.0)
+        .with_limited_ammo(20)
 }

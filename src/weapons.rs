@@ -1,15 +1,18 @@
+use std::sync::Arc;
+
 use bevy::prelude::*;
+use doome_bevy::bullets::Bullet;
+use doome_bevy::convert::graphical_to_physical;
 
 use self::definition::WeaponDefinition;
 use crate::prelude::*;
 
 mod definition;
+pub mod definitions;
 mod sprites;
-mod weapons;
 
 pub use definition::*;
 pub use sprites::*;
-pub use weapons::*;
 
 pub struct WeaponsPlugin;
 
@@ -17,39 +20,92 @@ impl Plugin for WeaponsPlugin {
     fn build(&self, app: &mut App) {
         let assets = app.world.resource::<Assets>();
 
-        app.insert_resource(Weapons {
-            rifle: rifle(&assets),
-            handgun: handgun(&assets),
-            rpg: rpg(&assets),
+        app.insert_resource(PrefabWeapons {
+            rifle: definitions::rifle(&assets),
+            handgun: definitions::handgun(&assets),
+            rpg: definitions::rpg(&assets),
         });
+
+        app.add_system(update_cooldown);
     }
 }
 
 #[derive(Resource)]
-pub struct Weapons {
-    pub handgun: (WeaponDefinition, WeaponSprites),
-    pub rifle: (WeaponDefinition, WeaponSprites),
-    pub rpg: (WeaponDefinition, WeaponSprites),
-}
-
-#[derive(Component)]
-pub struct PlayerWeapon {
-    pub weapon: WeaponDefinition,
-    pub weapon_sprites: WeaponSprites,
-    pub cooldown: f32,
-    pub ammo: i32,
-}
-
-#[derive(Component)]
-pub struct EnemyWeapon {
-    pub weapon: WeaponDefinition,
-    pub cooldown: f32,
+pub struct PrefabWeapons {
+    pub handgun: (Arc<WeaponDefinition>, Arc<WeaponSprites>),
+    pub rifle: (Arc<WeaponDefinition>, Arc<WeaponSprites>),
+    pub rpg: (Arc<WeaponDefinition>, Arc<WeaponSprites>),
 }
 
 #[derive(Component)]
 pub struct Weapon {
-    pub definition: definition::WeaponDefinition,
+    pub definition: Arc<WeaponDefinition>,
     pub cooldown_timer: f32,
     // None if unlimited
     pub ammo: Option<usize>,
+}
+
+impl Weapon {
+    pub fn new(definition: Arc<WeaponDefinition>) -> Self {
+        Self {
+            ammo: definition.limited_ammo,
+            definition,
+            cooldown_timer: 0.0,
+        }
+    }
+
+    pub fn can_shoot(&self) -> bool {
+        self.cooldown_timer <= 0.0
+    }
+
+    pub fn out_of_ammo(&self) -> bool {
+        self.ammo.map(|ammo| ammo == 0).unwrap_or(false)
+    }
+
+    pub fn shoot(&mut self, commands: &mut Commands, transform: &Transform) {
+        self.cooldown_timer = self.definition.cooldown;
+
+        if let Some(ammo) = self.ammo.as_mut() {
+            *ammo = ammo.saturating_sub(1);
+        }
+
+        self.cooldown_timer = self.definition.cooldown;
+
+        let forward = transform.forward();
+        let position_offset = forward * self.definition.forward_offset;
+
+        let mut bullet_transform = transform.clone();
+        bullet_transform.translation += position_offset;
+        bullet_transform.translation += Vec3::Y * self.definition.height_offset; // from the camera
+        bullet_transform.scale = Vec3::ONE * self.definition.bullet_scale;
+
+        let mut cmds = commands.spawn((
+            bullet_transform,
+            Material::default().with_uv_transparency().emissive(),
+            Collider::circle(self.definition.collider_radius, 6),
+            Body {
+                acceleration: Vec2::ZERO,
+                velocity: graphical_to_physical(
+                    forward.normalize() * self.definition.bullet_speed,
+                ),
+                body_type: BodyType::Ethereal,
+            },
+            GeometryType::Dynamic,
+            Bullet {
+                damage: self.definition.bullet_damage,
+            },
+            Billboard,
+        ));
+
+        if let Some(model) = self.definition.bullet_model {
+            cmds.insert(model);
+        }
+    }
+}
+
+fn update_cooldown(time: Res<Time>, mut weapons: Query<&mut Weapon>) {
+    for mut weapon in weapons.iter_mut() {
+        weapon.cooldown_timer = (weapon.cooldown_timer - time.delta_seconds())
+            .clamp(0.0, weapon.definition.cooldown);
+    }
 }

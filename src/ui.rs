@@ -18,11 +18,16 @@ use glam::{vec2, Vec3Swizzles};
 pub use self::messages::*;
 pub use self::text::*;
 pub use self::typewriter::*;
+use crate::weapons::PrefabWeapons;
 
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
+        let prefab_weapons = app.world.resource::<PrefabWeapons>();
+
+        app.insert_resource(gun::State::new(&prefab_weapons));
+
         app.insert_resource(InputLock { is_locked: false });
 
         // Miscellaneous
@@ -44,9 +49,7 @@ impl Plugin for UiPlugin {
 
         // Gun animation
         // TODO: Extract this stuff
-        app.add_startup_system(gun::setup)
-            .add_system(gun::trigger_shoot)
-            .add_system(gun::update_gun);
+        app.add_startup_system(gun::setup);
 
         // Ui rendering systems (strictly ordered)
         app.add_system(ordered_systems! {

@@ -2,8 +2,23 @@ use bevy::input::mouse::MouseMotion;
 use doome_bevy::convert::graphical_to_physical;
 
 use crate::prelude::*;
+use crate::weapons::{PrefabWeapons, Weapon};
 
-pub fn spawn(mut commands: Commands) {
+pub struct PlayerPlugin;
+
+pub struct PlayerShot;
+
+impl Plugin for PlayerPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_event::<PlayerShot>();
+        app.add_startup_system(spawn);
+        app.add_system(process_movement);
+        app.add_system(handle_shooting);
+        app.add_system(sync_camera.after(process_movement));
+    }
+}
+
+pub fn spawn(mut commands: Commands, prefab_weapons: Res<PrefabWeapons>) {
     commands.spawn((
         Player::new(),
         Transform::default(),
@@ -12,6 +27,7 @@ pub fn spawn(mut commands: Commands) {
             velocity: Vec2::ZERO,
             body_type: BodyType::Kinematic,
         },
+        Weapon::new(prefab_weapons.handgun.0.clone()),
         Collider::circle(0.5, 16),
         Health::new(100.0, 100.0),
     ));
@@ -96,4 +112,28 @@ pub fn sync_camera(
 
     camera.origin = vec3(pos.x, 1.2, pos.z);
     camera.look_at = camera.origin + transform.forward() * 5.0;
+}
+
+pub fn handle_shooting(
+    input_lock: Res<InputLock>,
+    mut commands: Commands,
+    mouse: Res<Input<MouseButton>>,
+    keys: Res<Input<KeyCode>>,
+    mut weapon: Query<(&Player, &Transform, &mut Weapon)>,
+    mut shots: EventWriter<PlayerShot>,
+) {
+    let (_, transform, mut weapon) = weapon.single_mut();
+
+    if input_lock.is_locked {
+        return;
+    }
+
+    if !weapon.can_shoot() {
+        return;
+    }
+
+    if mouse.pressed(MouseButton::Left) || keys.pressed(KeyCode::Space) {
+        weapon.shoot(&mut commands, &transform);
+        shots.send(PlayerShot);
+    }
 }
