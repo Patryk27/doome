@@ -79,6 +79,8 @@ pub enum Command {
 pub enum Spawnable {
     MothMonster,
     Heart,
+    RpgPickup,
+    RiflePickup,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -231,6 +233,8 @@ impl FromStr for Spawnable {
         match s {
             "moth-monster" => Ok(Spawnable::MothMonster),
             "heart" => Ok(Spawnable::Heart),
+            "rpg-pickup" => Ok(Spawnable::RpgPickup),
+            "rifle-pickup" => Ok(Spawnable::RiflePickup),
             _ => Err(anyhow!("Invalid spawnable: {s}")),
         }
     }

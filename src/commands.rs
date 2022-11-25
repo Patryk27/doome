@@ -111,6 +111,12 @@ fn handle_commands(
                     Spawnable::Heart => {
                         Heart::spawn(&assets, &mut commands, position)
                     }
+                    Spawnable::RiflePickup => {
+                        RiflePickup::spawn(&assets, &mut commands, position)
+                    }
+                    Spawnable::RpgPickup => {
+                        RpgPickup::spawn(&assets, &mut commands, position)
+                    }
                 };
 
                 event_writers.output_tx.send(CommandOutput(format!(
