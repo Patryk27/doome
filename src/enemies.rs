@@ -1,11 +1,12 @@
 use bevy::prelude::*;
+use doome_bevy::convert::{graphical_to_physical, physical_to_graphical};
+use doome_bevy::nav::NavObstacle;
+use doome_bevy::physics::components::{Collider, RayCast};
+use doome_bevy::player::Player;
 use doome_nav::{NavData, NavDataBuilder};
 use instant::Instant;
 
-use crate::convert::{graphical_to_physical, physical_to_graphical};
-use crate::nav::NavObstacle;
-use crate::physics::components::{Collider, RayCast};
-use crate::player::Player;
+use crate::weapons::Weapon;
 
 pub struct EnemiesPlugin;
 
@@ -67,12 +68,9 @@ fn update_hivemind(
 
 fn update_shooting(
     mut commands: Commands,
-    time: Res<Time>,
     hivemind: Query<&Hivemind>,
-    mut enemies: Query<(&mut Enemy, &Transform, &RayCast)>,
+    mut enemies: Query<(&mut Enemy, &mut Weapon, &Transform, &RayCast)>,
 ) {
-    let delta_time = time.delta_seconds();
-
     let hivemind = hivemind.single();
 
     let Some(player_entity) = hivemind.player_entity else {
@@ -80,15 +78,13 @@ fn update_shooting(
         return;
     };
 
-    // for (mut enemy, transform, raycast) in enemies.iter_mut() {
-    //     enemy.shooter.update(delta_time);
-
-    //     if let Some(_) = player_entity_raycast(raycast, player_entity) {
-    //         if enemy.shooter.can_shoot() {
-    //             enemy.shooter.shoot(transform, &mut commands);
-    //         }
-    //     }
-    // }
+    for (_, mut weapon, transform, raycast) in enemies.iter_mut() {
+        if let Some(_) = player_entity_raycast(raycast, player_entity) {
+            if weapon.can_shoot() {
+                weapon.shoot(&mut commands, transform);
+            }
+        }
+    }
 }
 
 fn assign_paths_to_enemies(

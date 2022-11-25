@@ -24,13 +24,13 @@ impl WeaponDefinition {
     pub fn new() -> Self {
         Self {
             cooldown: 0.5,
-            forward_offset: 1.0,
+            forward_offset: 1.5,
             height_offset: 1.0,
             bullet_speed: 10.0,
             bullet_model: None,
             bullet_damage: 10.0,
             bullet_scale: 1.0,
-            collider_radius: 0.25,
+            collider_radius: 0.75,
             limited_ammo: None,
             bullet_type: BulletType::Bullet,
         }

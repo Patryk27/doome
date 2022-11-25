@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use doome_bevy::assets::Assets;
-use doome_bevy::enemies::Enemy;
 use doome_bevy::health::Death;
 
+use crate::enemies::Enemy;
 use crate::explosions::spawn_explosion;
 
 pub struct CharonPlugin;

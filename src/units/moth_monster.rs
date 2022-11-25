@@ -1,4 +1,7 @@
+use std::sync::Arc;
+
 use crate::prelude::*;
+use crate::weapons::Weapon;
 
 pub struct MothMonster;
 
@@ -9,6 +12,8 @@ impl MothMonster {
         position: Vec3,
     ) -> Entity {
         let model = assets.load_model("moth_monster");
+
+        let weapon = crate::weapons::definitions::enemy_fire_spew(&assets);
 
         commands
             .spawn((
@@ -25,6 +30,7 @@ impl MothMonster {
                     hit: None,
                 },
                 Collider::circle(0.5, 6),
+                Weapon::new(Arc::new(weapon)), // TODO: arc is inefficient here
             ))
             .id()
     }

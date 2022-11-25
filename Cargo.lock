@@ -1251,6 +1251,7 @@ dependencies = [
  "image",
  "include_dir",
  "indoc",
+ "instant",
  "log",
  "quick-xml",
  "serde",

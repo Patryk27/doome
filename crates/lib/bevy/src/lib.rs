@@ -6,7 +6,6 @@ pub mod billboard;
 pub mod components;
 pub mod convert;
 pub mod doome;
-pub mod enemies;
 pub mod health;
 pub mod model_animation;
 pub mod nav;
@@ -24,7 +23,6 @@ pub mod prelude {
     pub use crate::assets::*;
     pub use crate::billboard::*;
     pub use crate::components::*;
-    pub use crate::enemies::*;
     pub use crate::health::*;
     pub use crate::physics::components::*;
     pub use crate::physics::events::*;

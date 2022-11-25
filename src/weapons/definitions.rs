@@ -78,8 +78,8 @@ pub fn rpg(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
 pub fn enemy_fire_spew(assets: &Assets) -> WeaponDefinition {
     WeaponDefinition::new()
         .with_model(assets.load_model("fireball"))
-        .with_cooldown(0.5)
+        .with_cooldown(1.0)
         .with_speed(10.0)
         .with_damage(10.0)
-        .with_limited_ammo(20)
+        .with_collider_radius(0.5)
 }

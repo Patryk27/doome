@@ -7,6 +7,7 @@ mod utils;
 mod bullets;
 mod charon;
 mod commands;
+mod enemies;
 mod explosions;
 mod interaction;
 mod inventory;
@@ -23,6 +24,7 @@ mod prelude {
     pub use bevy::prelude::*;
     pub use doome_bevy::prelude::*;
 
+    pub use crate::enemies::*;
     pub use crate::levels::*;
     pub use crate::objects::*;
     pub use crate::ui::*;
@@ -80,7 +82,6 @@ fn main() {
         .add_plugin(doome_bevy::doome::DoomePlugin)
         .add_plugin(doome_bevy::physics::PhysicsPlugin::default())
         .add_plugin(doome_bevy::audio::AudioPlugin)
-        .add_plugin(doome_bevy::enemies::EnemiesPlugin)
         .add_plugin(doome_bevy::billboard::BillboardPlugin)
         .add_plugin(doome_bevy::health::HealthPlugin)
         .add_system(doome_bevy::simple_animations::rotate)
@@ -88,6 +89,7 @@ fn main() {
         .add_system(doome_bevy::model_animation::animate)
         // ===== //
         // doome //
+        .add_plugin(enemies::EnemiesPlugin)
         .add_plugin(bullets::BulletsPlugin)
         .add_plugin(weapons::WeaponsPlugin)
         .add_plugin(charon::CharonPlugin)
