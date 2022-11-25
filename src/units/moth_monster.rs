@@ -12,13 +12,7 @@ impl MothMonster {
 
         commands
             .spawn((
-                Enemy::new(
-                    Shooter::default()
-                        .with_cooldown(1.0)
-                        .with_damage(10.0)
-                        .with_speed(10.0)
-                        .with_model(assets.load_model("fireball")),
-                ),
+                Enemy::new(),
                 model,
                 Material::default().with_uv_transparency(),
                 GeometryType::Dynamic,

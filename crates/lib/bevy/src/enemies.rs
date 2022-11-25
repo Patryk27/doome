@@ -6,22 +6,17 @@ use crate::convert::{graphical_to_physical, physical_to_graphical};
 use crate::nav::NavObstacle;
 use crate::physics::components::{Collider, RayCast};
 use crate::player::Player;
-use crate::shooting::Shooter;
 
 pub struct EnemiesPlugin;
 
 #[derive(Component)]
 pub struct Enemy {
     path: Option<Vec<Vec2>>,
-    shooter: Shooter,
 }
 
 impl Enemy {
-    pub fn new(shooter: Shooter) -> Self {
-        Self {
-            path: None,
-            shooter,
-        }
+    pub fn new() -> Self {
+        Self { path: None }
     }
 }
 
@@ -85,15 +80,15 @@ fn update_shooting(
         return;
     };
 
-    for (mut enemy, transform, raycast) in enemies.iter_mut() {
-        enemy.shooter.update(delta_time);
+    // for (mut enemy, transform, raycast) in enemies.iter_mut() {
+    //     enemy.shooter.update(delta_time);
 
-        if let Some(_) = player_entity_raycast(raycast, player_entity) {
-            if enemy.shooter.can_shoot() {
-                enemy.shooter.shoot(transform, &mut commands);
-            }
-        }
-    }
+    //     if let Some(_) = player_entity_raycast(raycast, player_entity) {
+    //         if enemy.shooter.can_shoot() {
+    //             enemy.shooter.shoot(transform, &mut commands);
+    //         }
+    //     }
+    // }
 }
 
 fn assign_paths_to_enemies(

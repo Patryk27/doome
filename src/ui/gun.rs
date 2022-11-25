@@ -101,15 +101,15 @@ pub fn trigger_shoot(
 
     let delta = time.delta_seconds();
 
-    player.shooter.update(delta);
+    // player.shooter.update(delta);
 
     if input_lock.is_locked {
         return;
     }
 
-    if !player.shooter.can_shoot() {
-        return;
-    }
+    // if !player.shooter.can_shoot() {
+    //     return;
+    // }
 
     let mut shooting_animation = shooting_animation.single_mut();
 
@@ -120,7 +120,7 @@ pub fn trigger_shoot(
         shooting_animation.timer.unpause();
         shooting_animation.timer.reset();
 
-        player.shooter.shoot(player_transform, &mut commands);
+        // player.shooter.shoot(player_transform, &mut commands);
     }
 }
 

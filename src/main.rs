@@ -16,6 +16,7 @@ mod pickable;
 mod player;
 mod ui;
 mod units;
+mod weapons;
 
 mod prelude {
     pub use bevy::prelude::*;

@@ -14,7 +14,6 @@ pub mod nav;
 pub mod physics;
 pub mod player;
 pub mod renderer;
-pub mod shooting;
 pub mod simple_animations;
 pub mod text;
 
@@ -31,6 +30,5 @@ pub mod prelude {
     pub use crate::physics::components::*;
     pub use crate::physics::events::*;
     pub use crate::player::*;
-    pub use crate::shooting::*;
     pub use crate::simple_animations::*;
 }

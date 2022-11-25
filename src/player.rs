@@ -4,13 +4,8 @@ use doome_bevy::convert::graphical_to_physical;
 use crate::prelude::*;
 
 pub fn spawn(mut commands: Commands) {
-    let shooter = Shooter::default()
-        .with_speed(20.0)
-        .with_cooldown(0.2)
-        .with_damage(30.0);
-
     commands.spawn((
-        Player::new(shooter),
+        Player::new(),
         Transform::default(),
         Body {
             acceleration: Vec2::ZERO,
