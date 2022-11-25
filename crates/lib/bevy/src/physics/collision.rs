@@ -92,7 +92,7 @@ pub fn resolve_collisions(
 
                     if mtv.length() > MIN_MTV_LENGTH_TO_DECOMPOSE {
                         body.velocity -=
-                            mtv * vector_decompose(body.velocity, mtv);
+                            vector_decomposition(body.velocity, mtv);
                     }
 
                     if body.velocity.length() < MIN_VELOCITY {
@@ -104,9 +104,9 @@ pub fn resolve_collisions(
     }
 }
 
-/// Decomposes the vector c along the vectors a and a.perp, returns only the component along a
-fn vector_decompose(c: Vec2, a: Vec2) -> f32 {
-    c.dot(a) / a.length_squared()
+/// Decomposes the vector c along the vectors a and a.perp, returns the component multiplied by a
+fn vector_decomposition(c: Vec2, a: Vec2) -> Vec2 {
+    a * c.dot(a) / a.length_squared()
 }
 
 fn are_colliding(

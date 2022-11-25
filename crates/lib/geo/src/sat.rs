@@ -33,8 +33,7 @@ pub fn resolve_sat(a: &Polygon, b: &Polygon) -> Option<Vec2> {
 }
 
 fn iter_separation_axes(poly: &Polygon) -> impl Iterator<Item = Vec2> + '_ {
-    poly.iter_edge_vectors()
-        .flat_map(|v| [v.perp().normalize(), -v.perp().normalize()])
+    poly.iter_edge_vectors().map(|v| v.perp().normalize())
 }
 
 /// Resolves axis projections
