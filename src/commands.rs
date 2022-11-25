@@ -1,9 +1,11 @@
 mod cmd;
 
 use bevy::app::AppExit;
+use bevy::ecs::system::SystemParam;
 use doome_bevy::physics::PhysicsEnabled;
 
 pub use self::cmd::*;
+use crate::inventory::Inventory;
 use crate::prelude::*;
 
 pub struct CommandsPlugin;
@@ -18,6 +20,15 @@ impl Plugin for CommandsPlugin {
 
 pub struct CommandOutput(pub String);
 
+#[derive(SystemParam)]
+pub struct EventWriters<'w, 's> {
+    output_tx: EventWriter<'w, 's, CommandOutput>,
+    exit_tx: EventWriter<'w, 's, AppExit>,
+    death_tx: EventWriter<'w, 's, Death>,
+    sync_nav_data_tx: EventWriter<'w, 's, SyncNavData>,
+    goto_level_tx: EventWriter<'w, 's, GotoLevel>,
+}
+
 fn handle_commands(
     mut game_commands: EventReader<Command>,
     mut commands: Commands,
@@ -31,19 +42,16 @@ fn handle_commands(
     mut healths: Query<&mut Health>,
     player: Query<Entity, With<Player>>,
     all_entities: Query<Entity>,
+    mut inventory: Query<&mut Inventory>,
     // Event writers
-    mut output_tx: EventWriter<CommandOutput>,
-    mut exit_tx: EventWriter<AppExit>,
-    mut death_tx: EventWriter<Death>,
-    mut sync_nav_data_tx: EventWriter<SyncNavData>,
-    mut goto_level_tx: EventWriter<GotoLevel>,
+    mut event_writers: EventWriters,
 ) {
     for cmd in game_commands.iter().copied() {
         log::info!("Handling command: {cmd:?}");
 
         match cmd {
             Command::Quit => {
-                exit_tx.send(AppExit);
+                event_writers.exit_tx.send(AppExit);
             }
 
             Command::LockInput => {
@@ -56,7 +64,8 @@ fn handle_commands(
 
             Command::ListEntities => {
                 for entity in all_entities.iter() {
-                    output_tx
+                    event_writers
+                        .output_tx
                         .send(CommandOutput(format!("{}", entity.to_bits())));
                 }
             }
@@ -65,7 +74,8 @@ fn handle_commands(
                 let entity = resolve_entity(entity, &player);
                 let transform = transforms.get(entity).unwrap();
 
-                output_tx
+                event_writers
+                    .output_tx
                     .send(CommandOutput(format!("{}", transform.translation)));
             }
 
@@ -103,7 +113,7 @@ fn handle_commands(
                     }
                 };
 
-                output_tx.send(CommandOutput(format!(
+                event_writers.output_tx.send(CommandOutput(format!(
                     "Spawned {spawnable:?}: {}",
                     EntityHandle(entity)
                 )));
@@ -114,21 +124,23 @@ fn handle_commands(
             }
 
             Command::Kill { entity } => {
-                death_tx.send(Death(entity.0));
+                event_writers.death_tx.send(Death(entity.0));
             }
 
             Command::SyncNavData => {
-                sync_nav_data_tx.send(SyncNavData);
+                event_writers.sync_nav_data_tx.send(SyncNavData);
             }
 
             Command::NoClip => {
                 physics_enabled.0 = !physics_enabled.0;
 
                 if physics_enabled.0 {
-                    output_tx
+                    event_writers
+                        .output_tx
                         .send(CommandOutput("Physics enabled".to_string()));
                 } else {
-                    output_tx
+                    event_writers
+                        .output_tx
                         .send(CommandOutput("Physics disabled".to_string()));
                 }
             }
@@ -173,8 +185,16 @@ fn handle_commands(
             }
 
             Command::GotoLevel { level } => {
-                goto_level_tx.send(GotoLevel::new(level));
+                event_writers.goto_level_tx.send(GotoLevel::new(level));
             }
+
+            Command::Give { what } => match what {
+                Item::Flashlight => {
+                    let mut inventory = inventory.single_mut();
+                    inventory.has_flashlight = true;
+                }
+                _ => unimplemented!(),
+            },
         }
     }
 }

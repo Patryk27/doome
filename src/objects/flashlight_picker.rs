@@ -1,3 +1,5 @@
+use crate::commands::{Command, Item};
+use crate::pickable::Pickable;
 use crate::prelude::*;
 
 #[derive(Component)]
@@ -30,6 +32,9 @@ impl FlashlightPicker {
                     .with_uv_transparency(),
                 GeometryType::Dynamic,
                 Collider::circle(1.25, 6),
+                Pickable {
+                    on_pickup: Command::Give { what: Item::Flashlight },
+                }
             ))
             .id()
     }

@@ -8,9 +8,11 @@ mod charon;
 mod commands;
 mod explosions;
 mod interaction;
+mod inventory;
 mod levels;
 mod markers;
 mod objects;
+mod pickable;
 mod player;
 mod ui;
 mod units;
@@ -90,6 +92,8 @@ fn main() {
         .add_plugin(commands::CommandsPlugin)
         .add_plugin(levels::LevelsPlugin)
         .add_plugin(ui::UiPlugin)
+        .add_plugin(pickable::PickablePlugin)
+        .add_plugin(inventory::InventoryPlugin)
         .add_system(explosions::update)
         .add_system(player::process_movement)
         .add_system(player::sync_camera.after(player::process_movement))

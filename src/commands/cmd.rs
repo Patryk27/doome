@@ -69,6 +69,10 @@ pub enum Command {
     GotoLevel {
         level: Level,
     },
+
+    Give {
+        what: Item,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -81,6 +85,13 @@ pub enum Spawnable {
 pub enum EntityOrPlayer {
     Entity(Entity),
     Player,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Item {
+    Flashlight,
+    Rifle,
+    RocketLauncher,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -177,6 +188,13 @@ impl FromStr for Command {
                 Ok(Command::GotoLevel { level })
             }
 
+            "give" => {
+                let item = parts.next().context("Missing item")?;
+                let item = item.parse()?;
+
+                Ok(Command::Give { what: item })
+            }
+
             _ => Err(anyhow!("Failed to parse command: {s}")),
         }
     }
@@ -242,5 +260,18 @@ impl fmt::Display for EntityHandle {
         let generation = bits >> 32;
 
         write!(f, "{}v{}", index, generation)
+    }
+}
+
+impl FromStr for Item {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "flashlight" => Ok(Item::Flashlight),
+            "rifle" => Ok(Item::Rifle),
+            "rocket-launcher" => Ok(Item::RocketLauncher),
+            _ => Err(anyhow!("Invalid item: {s}")),
+        }
     }
 }

@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use super::builder::LevelBuilder;
 use super::loader::{LevelLoader, LevelLocator};
+use crate::inventory::Inventory;
 use crate::prelude::*;
 
 pub fn init(
@@ -257,13 +258,13 @@ pub fn process(
     assets: Res<Assets>,
     mut commands: Commands,
     mut level: Query<&mut LevelState>,
-    mut collisions: EventReader<Collision>,
     mut transforms: Query<&mut Transform>,
     mut lights: Query<&mut Light>,
     mut typewriter_tx: EventWriter<TypewriterPrint>,
     mut message_tx: EventWriter<Message>,
     mut recalc_nav_data_tx: EventWriter<SyncNavData>,
     mut level_tx: EventReader<LevelGameplayEvent>,
+    inventory: Query<&Inventory>,
 ) {
     let Ok(mut level) = level.get_single_mut() else { return };
     let t = time.elapsed_seconds();
@@ -284,20 +285,15 @@ pub fn process(
 
     match &mut level.stage {
         LevelStage::AwaitingFlashlightPickup => {
-            for collision in collisions.iter() {
-                if collision.collides_with(level.ent_flashlight) {
-                    commands.entity(level.ent_flashlight).despawn();
-                    message_tx.send(Message::new("Picked: flashlight"));
+            let Ok(inventory) = inventory.get_single() else { return };
 
-                    Flashlight::spawn(&mut commands);
-
-                    level.stage = LevelStage::Intro0 {
-                        txt_rise_timer: Timer::new(
-                            Duration::from_secs(5),
-                            TimerMode::Once,
-                        ),
-                    };
-                }
+            if inventory.has_flashlight {
+                level.stage = LevelStage::Intro0 {
+                    txt_rise_timer: Timer::new(
+                        Duration::from_secs(5),
+                        TimerMode::Once,
+                    ),
+                };
             }
         }
 
