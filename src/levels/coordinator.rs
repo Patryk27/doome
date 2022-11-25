@@ -10,6 +10,35 @@ impl LevelsCoordinator {
         goto_level_tx.send(GotoLevel::new(Level::l2()));
     }
 
+    pub fn process_zones(
+        player: Query<&Transform, With<Player>>,
+        mut zones: Query<&mut LevelZone>,
+        mut level_tx: EventWriter<LevelGameplayEvent>,
+    ) {
+        let Ok(player_xform) = player.get_single() else { return; };
+
+        for mut zone in zones.iter_mut() {
+            let contains_player = zone.contains(player_xform);
+
+            if zone.contains_player != contains_player {
+                if contains_player {
+                    log::trace!("Zone entered: {}", zone.name);
+
+                    level_tx.send(LevelGameplayEvent::ZoneEntered(
+                        zone.name.clone(),
+                    ));
+                } else {
+                    log::trace!("Zone left: {}", zone.name);
+
+                    level_tx
+                        .send(LevelGameplayEvent::ZoneLeft(zone.name.clone()));
+                }
+
+                zone.contains_player = contains_player;
+            }
+        }
+    }
+
     pub fn unload(
         mut commands: Commands,
         mut goto_level_rx: EventReader<GotoLevel>,
@@ -18,6 +47,7 @@ impl LevelsCoordinator {
             Or<(
                 With<AssetHandle<Model>>,
                 With<Light>,
+                With<LevelZone>,
                 With<GcAfterLevelUnloaded>,
             )>,
         >,
@@ -72,4 +102,10 @@ impl ops::Deref for GotoLevel {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
+}
+
+#[derive(Clone, Debug)]
+pub enum LevelGameplayEvent {
+    ZoneEntered(String),
+    ZoneLeft(String),
 }

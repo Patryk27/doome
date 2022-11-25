@@ -215,7 +215,7 @@ fn sync_nav_data(
 
     for (transform, collider) in walls.iter() {
         let polygon = collider.to_polygon(transform);
-        log::info!("Adding polygon: {:?}", polygon);
+        log::trace!("Adding polygon: {:?}", polygon);
         nav_data_builder.push_polygon(polygon);
     }
 

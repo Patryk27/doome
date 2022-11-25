@@ -90,7 +90,15 @@ impl Ray {
                     let hit = tri.hit(self, false);
 
                     if hit.t < distance {
-                        return true;
+                        let got_hit = if tri.has_uv_transparency() {
+                            world.atlas_sample(tri_id.into_any(), hit).w > 0.5
+                        } else {
+                            true
+                        };
+
+                        if got_hit {
+                            return true;
+                        }
                     }
                 }
 

@@ -10,7 +10,8 @@
 | Weathered Metal Grates | https://opengameart.org/content/weathered-metal-grates                      | ???            |
 | Rusted metal texture pack | https://opengameart.org/content/rusted-metal-texture-pack | ??? |
 | Sewer tileset | https://opengameart.org/content/sewer-tileset | CC-BY 3.0 |
-
+| Heart pixel art | https://opengameart.org/content/heart-pixel-art | CC-BY 4.0 |
+| Dungeon Door | https://opengameart.org/content/dungeon-door | CC0 |
 
 
 # Misc

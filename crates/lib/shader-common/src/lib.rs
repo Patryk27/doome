@@ -53,7 +53,7 @@ pub const MAX_STATIC_TRIANGLES: usize = (MAX_BUFFER_BINDING_SIZE
     - mem::size_of::<PadU32>())
     / mem::size_of::<Triangle>();
 
-pub const MAX_DYNAMIC_TRIANGLES: usize = 128;
+pub const MAX_DYNAMIC_TRIANGLES: usize = 256;
 pub const MAX_LIGHTS: usize = 64;
 pub const MAX_MATERIALS: usize = 64;
 pub const STATIC_GEOMETRY_INDEX_SIZE: usize = 4096;

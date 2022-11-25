@@ -1,6 +1,6 @@
 # Blender 3.3.0
 # www.blender.org
-mtllib cell.mtl
+mtllib gate.mtl
 o Plane
 v 0.000000 -0.000000 1.000000
 v 0.000000 0.000000 -1.000000

@@ -96,10 +96,10 @@ fn handle_commands(
             } => {
                 let entity = match spawnable {
                     Spawnable::MothMonster => {
-                        MothMonster::spawn(&mut commands, &assets, position)
+                        MothMonster::spawn(&assets, &mut commands, position)
                     }
                     Spawnable::Heart => {
-                        Heart::spawn(&mut commands, &assets, position)
+                        Heart::spawn(&assets, &mut commands, position)
                     }
                 };
 

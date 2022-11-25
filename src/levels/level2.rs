@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 use std::time::Duration;
 
 use super::builder::LevelBuilder;
-use super::loader::LevelLoader;
+use super::loader::{LevelLoader, LevelLocator};
 use crate::prelude::*;
 
 pub fn init(
@@ -27,13 +27,7 @@ pub fn init(
 
     // -----
 
-    let mut lvl = LevelBuilder::new(
-        &mut commands,
-        &assets,
-        "floor.stone.mossy.water",
-        "floor.stone.mossy",
-        "wall.stone",
-    );
+    let mut lvl = LevelBuilder::new(&mut commands, &assets);
 
     lvl.model("ceiling")
         .with_translation(vec3(0.0, 1.25 * 10.0, 0.0))
@@ -79,12 +73,12 @@ pub fn init(
                 lvl.model("wall")
                     .with_translation(pos + vec3(0.0, 0.0, z))
                     .with_rotation(Quat::from_rotation_y(nf - PI / 2.0))
-                    .with_scale(vec3(2.0, 1.25 * 5.0, 1.0))
+                    .with_scale(vec3(1.5, 1.25 * 5.0, 1.0))
                     .with_material(
                         Material::default()
                             .with_color(Color::hex(0xffffff))
                             .with_texture(assets.load_texture("wall.stone"))
-                            .with_uv_divisor(3, 5),
+                            .with_uv_divisor(2, 5),
                     )
                     .with_collider(Collider::line(
                         vec2(-1.0, 0.0),
@@ -96,12 +90,12 @@ pub fn init(
             lvl.model("wall")
                 .with_translation(pos + vec3(0.0, 2.5, 0.0))
                 .with_rotation(Quat::from_rotation_y(nf - PI / 2.0))
-                .with_scale(vec3(3.0, 1.25 * 5.0, 1.0))
+                .with_scale(vec3(4.0, 1.25 * 5.0, 1.0))
                 .with_material(
                     Material::default()
                         .with_color(Color::hex(0xffffff))
                         .with_texture(assets.load_texture("wall.stone"))
-                        .with_uv_divisor(3, 5),
+                        .with_uv_divisor(4, 5),
                 )
                 .spawn();
         }
@@ -156,15 +150,15 @@ pub fn init(
         }
     }
 
-    let ent_cell = lvl
-        .model("cell")
+    let ent_gate = lvl
+        .model("gate")
         .dynamic()
         .with_translation(vec3(-8.52, 0.0, 0.0))
-        .with_scale(vec3(1.0, 1.5, 3.0))
+        .with_scale(vec3(1.0, 1.5, 4.0))
         .with_material(
             Material::default()
                 .with_color(Color::hex(0xffffff) * 0.75)
-                .with_uv_divisor(2, 1)
+                .with_uv_divisor(3, 1)
                 .with_uv_transparency(),
         )
         .with_collider(Collider::line(vec2(0.0, -1.0), vec2(0.0, 1.0)))
@@ -207,14 +201,29 @@ pub fn init(
 
     // -----
 
-    LevelLoader::new(include_str!("../../assets/levels/level2.tmj"))
-        .offset(-15, -1)
-        .load(&mut lvl);
+    let locator =
+        LevelLoader::load(include_str!("../../assets/levels/level2.tmj"))
+            .spawn(&mut lvl);
+
+    lvl.model("gate")
+        .dynamic()
+        .with_translation(locator.world_point("gate.2"))
+        .with_scale(vec3(1.0, 1.0, 3.0))
+        .with_material(
+            Material::default()
+                .two_sided()
+                .with_color(Color::hex(0xffffff) * 0.75)
+                .with_uv_divisor(3, 1)
+                .with_uv_transparency(),
+        )
+        .with_collider(Collider::line(vec2(0.0, -1.0), vec2(0.0, 1.0)))
+        .spawn();
 
     // -----
 
     lvl.complete(LevelState {
-        ent_cell,
+        locator,
+        ent_gate,
         ent_lamp,
         ent_sl0,
         ent_l0,
@@ -225,7 +234,8 @@ pub fn init(
 
 #[derive(Component)]
 pub struct LevelState {
-    ent_cell: Entity,
+    locator: LevelLocator,
+    ent_gate: Entity,
     ent_lamp: Entity,
     ent_sl0: Entity,
     ent_l0: Entity,
@@ -235,16 +245,11 @@ pub struct LevelState {
 
 enum LevelStage {
     AwaitingFlashlightPickup,
-
-    Intro0 {
-        txt_rise_timer: Timer,
-    },
-
-    Intro1 {
-        light_timer: Timer,
-        gate_timer: Timer,
-        wave0_timer: Timer,
-    },
+    Intro0 { txt_rise_timer: Timer },
+    Intro1 { spawn_timer: Timer },
+    AwaitingMothsDeath { moths: Vec<Entity> },
+    AwaitingZoneEnter,
+    AwaitingKeyPickup,
 }
 
 pub fn process(
@@ -258,10 +263,12 @@ pub fn process(
     mut typewriter_tx: EventWriter<TypewriterPrint>,
     mut message_tx: EventWriter<Message>,
     mut recalc_nav_data_tx: EventWriter<SyncNavData>,
+    mut level_tx: EventReader<LevelGameplayEvent>,
 ) {
     let Ok(mut level) = level.get_single_mut() else { return };
     let t = time.elapsed_seconds();
     let dt = time.delta();
+    let level = &mut *level;
 
     // -----
 
@@ -274,11 +281,6 @@ pub fn process(
     }
 
     // -----
-
-    let ent_cell = level.ent_cell;
-    let ent_lamp = level.ent_lamp;
-    let ent_sl0 = level.ent_sl0;
-    let ent_sl1 = level.ent_l0;
 
     match &mut level.stage {
         LevelStage::AwaitingFlashlightPickup => {
@@ -308,15 +310,7 @@ pub fn process(
                 ));
 
                 level.stage = LevelStage::Intro1 {
-                    light_timer: Timer::new(
-                        Duration::from_millis(3150),
-                        TimerMode::Once,
-                    ),
-                    gate_timer: Timer::new(
-                        Duration::from_millis(3600),
-                        TimerMode::Once,
-                    ),
-                    wave0_timer: Timer::new(
+                    spawn_timer: Timer::new(
                         Duration::from_millis(3150),
                         TimerMode::Once,
                     ),
@@ -324,38 +318,100 @@ pub fn process(
             }
         }
 
-        LevelStage::Intro1 {
-            light_timer,
-            gate_timer,
-            wave0_timer,
-        } => {
-            light_timer.tick(dt);
-            gate_timer.tick(dt);
-            wave0_timer.tick(dt);
+        LevelStage::Intro1 { spawn_timer } => {
+            spawn_timer.tick(dt);
 
-            if light_timer.just_finished() {
-                commands.entity(ent_cell).remove::<Collider>();
-                commands.entity(ent_sl0).insert(LightFade::fade_out(0.35));
-                commands.entity(ent_sl1).insert(LightFade::fade_in(0.35));
-                commands.entity(ent_lamp).despawn();
+            transforms.get_mut(level.ent_gate).unwrap().translation.y +=
+                time.delta_seconds() / 1.2;
+
+            if spawn_timer.just_finished() {
+                commands.entity(level.ent_gate).remove::<Collider>();
+
+                commands
+                    .entity(level.ent_sl0)
+                    .insert(LightFade::fade_out(0.35));
+
+                commands
+                    .entity(level.ent_l0)
+                    .insert(LightFade::fade_in(0.35));
+
+                commands.entity(level.ent_lamp).despawn();
 
                 recalc_nav_data_tx.send(SyncNavData);
 
-                MothMonster::spawn(
-                    &mut commands,
-                    &assets,
-                    vec3(-20.0, 0.0, 0.0),
-                );
+                let moths = (1..5).map(|id| {
+                    MothMonster::spawn(
+                        &assets,
+                        &mut commands,
+                        level.locator.world_point(&format!("monster.{}", id)),
+                    )
+                });
+
+                level.stage = LevelStage::AwaitingMothsDeath {
+                    moths: moths.collect(),
+                };
+            }
+        }
+
+        LevelStage::AwaitingMothsDeath { moths } => {
+            for moth in moths {
+                if commands.get_entity(*moth).is_some() {
+                    return;
+                }
             }
 
-            if gate_timer.finished() {
-                transforms.get_mut(ent_cell).unwrap().translation.y +=
-                    time.delta_seconds() / 2.0;
-            }
+            commands
+                .entity(level.ent_l0)
+                .insert(LightFade::fade_out(4.0));
 
-            if wave0_timer.just_finished() {
-                // TODO
+            typewriter_tx.send(TypewriterPrint::new(
+                "ouch... oh no........ i'll see you again..... soon........",
+            ));
+
+            level.stage = LevelStage::AwaitingZoneEnter;
+        }
+
+        LevelStage::AwaitingZoneEnter => {
+            for event in level_tx.iter() {
+                match event {
+                    LevelGameplayEvent::ZoneEntered(name)
+                        if name == "zone.door.1" || name == "zone.door.2" =>
+                    {
+                        typewriter_tx.send(TypewriterPrint::new(
+                            "gotcha this time......",
+                        ));
+
+                        let (moth_spawn_point, other_door) =
+                            if name == "zone.door.1" {
+                                ("monster.door.1", "door.v.2")
+                            } else {
+                                ("monster.door.2", "door.v.1")
+                            };
+
+                        for sp in [moth_spawn_point, "monster.door.3"] {
+                            MothMonster::spawn(
+                                &assets,
+                                &mut commands,
+                                level.locator.world_point(sp),
+                            );
+                        }
+
+                        commands
+                            .entity(level.locator.entity(other_door))
+                            .despawn();
+
+                        level.stage = LevelStage::AwaitingKeyPickup;
+                    }
+
+                    _ => {
+                        //
+                    }
+                }
             }
+        }
+
+        LevelStage::AwaitingKeyPickup => {
+            //
         }
     }
 }

@@ -4,8 +4,8 @@ pub struct MothMonster;
 
 impl MothMonster {
     pub fn spawn(
-        commands: &mut Commands,
         assets: &Assets,
+        commands: &mut Commands,
         position: Vec3,
     ) -> Entity {
         let model = assets.load_model("moth_monster");

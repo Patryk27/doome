@@ -1,3 +1,5 @@
+//! TODO bring back reflective floor
+
 use std::f32::consts::PI;
 
 use indoc::indoc;
@@ -92,7 +94,7 @@ pub fn init(
 
     // -----
 
-    let mut lvl = level_builder(&mut commands, &assets);
+    let mut lvl = LevelBuilder::new(&mut commands, &assets);
 
     lvl.floor(-1, -1, 1, 20).spawn();
     lvl.wall(1, -1, 1, 20, 1).spawn();
@@ -294,7 +296,7 @@ pub fn process(
                     .entity(*main_sl0)
                     .insert(LightFade::fade_out_delayed(1.5, 0.5));
 
-                let mut lvl = level_builder(&mut commands, &assets);
+                let mut lvl = LevelBuilder::new(&mut commands, &assets);
 
                 let main_sl0 = lvl
                     .spot_light(
@@ -339,7 +341,7 @@ pub fn process(
                 return;
             }
 
-            level_builder(&mut commands, &assets)
+            LevelBuilder::new(&mut commands, &assets)
                 .ceiling(-8, 18, 8, 37)
                 .dynamic()
                 .alter_material(|mat| {
@@ -413,17 +415,4 @@ pub fn process(
             //
         }
     }
-}
-
-fn level_builder<'p, 'w, 's>(
-    commands: &'p mut Commands<'w, 's>,
-    assets: &'p Assets,
-) -> LevelBuilder<'p, 'w, 's> {
-    LevelBuilder::new(
-        commands,
-        assets,
-        "floor.basic",
-        "ceiling.basic",
-        "wall.basic",
-    )
 }

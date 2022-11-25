@@ -17,8 +17,9 @@ impl Flashlight {
                     angle: PI / 4.5,
                 },
             },
-            Color::hex(0xffffff) * 0.4,
+            Color::hex(0xffffff) * 0.8,
             Flashlight,
+            LightFade::fade_in(0.1),
         ));
     }
 

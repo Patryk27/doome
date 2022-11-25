@@ -8,31 +8,16 @@ use doome_bevy::nav::NavObstacle;
 use doome_bevy::physics::components::Collider;
 use glam::{vec2, vec3};
 
-use super::GcAfterLevelUnloaded;
+use super::{GcAfterLevelUnloaded, LevelZone};
 
 pub struct LevelBuilder<'p, 'w, 's> {
     commands: &'p mut Commands<'w, 's>,
     assets: &'p Assets,
-    floor_tex: &'static str,
-    ceiling_tex: &'static str,
-    wall_tex: &'static str,
 }
 
 impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
-    pub fn new(
-        commands: &'p mut Commands<'w, 's>,
-        assets: &'p Assets,
-        floor_tex: &'static str,
-        ceiling_tex: &'static str,
-        wall_tex: &'static str,
-    ) -> Self {
-        Self {
-            commands,
-            assets,
-            floor_tex,
-            ceiling_tex,
-            wall_tex,
-        }
+    pub fn new(commands: &'p mut Commands<'w, 's>, assets: &'p Assets) -> Self {
+        Self { commands, assets }
     }
 
     pub fn commands(&mut self) -> &mut Commands<'w, 's> {
@@ -68,8 +53,6 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
 
         assert!(dx > 0 && dz > 0, "Floor has no area");
 
-        let texture = self.assets.load_texture(self.floor_tex);
-
         self.model("floor")
             .with_translation(vec3(
                 (x1 + x2) as f32 / 2.0,
@@ -80,9 +63,6 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
             .with_material(
                 Material::default()
                     .with_color(Color::hex(0xffffff))
-                    .with_reflectivity(0.1)
-                    .with_reflection_color(Color::hex(0xffffff))
-                    .with_texture(texture)
                     .with_uv_divisor(dx as _, dz as _)
                     .without_casting_shadows(),
             )
@@ -113,8 +93,6 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
 
         assert!(dx > 0 && dz > 0, "Ceiling has no area");
 
-        let texture = self.assets.load_texture(self.ceiling_tex);
-
         self.model("ceiling")
             .with_translation(vec3(
                 (x1 + x2) as f32 / 2.0,
@@ -125,7 +103,6 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
             .with_material(
                 Material::default()
                     .with_color(Color::hex(0xffffff))
-                    .with_texture(texture)
                     .with_uv_divisor(dx as _, dz as _),
             )
     }
@@ -158,15 +135,14 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         assert!(dx == 1 || dz == 1, "Wall is not axis-aligned");
 
         let extrude = match rot {
-            0 => vec3(0.0, 0.0, 0.5),
-            1 => vec3(0.5, 0.0, 0.0),
-            2 => vec3(0.0, 0.0, -0.5),
-            3 => vec3(-0.5, 0.0, 0.0),
-            _ => Default::default(),
+            0 => vec3(0.0, 0.0, -0.5),
+            1 => vec3(-0.5, 0.0, 0.0),
+            2 => vec3(0.0, 0.0, 0.5),
+            3 => vec3(0.5, 0.0, 0.0),
+            _ => panic!("Invalid wall rotation: {}", rot),
         };
 
         let scale = if dx == 1 { dz } else { dx };
-        let texture = self.assets.load_texture(self.wall_tex);
 
         self.model("wall")
             .obstacle()
@@ -182,7 +158,6 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
             .with_material(
                 Material::default()
                     .with_color(Color::hex(0xffffff))
-                    .with_texture(texture)
                     .with_uv_divisor(scale as _, 1),
             )
             .with_collider(Collider::line(vec2(-1.0, 0.0), vec2(1.0, 0.0)))
@@ -230,6 +205,24 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         name: &'static str,
     ) -> LevelModelBuilder<'w, 's, 'a> {
         LevelModelBuilder::new(self.commands, self.assets.load_model(name))
+    }
+
+    pub fn zone(
+        &mut self,
+        name: impl ToString,
+        x1: f32,
+        z1: f32,
+        x2: f32,
+        z2: f32,
+    ) {
+        self.commands.spawn(LevelZone {
+            name: name.to_string(),
+            x1,
+            z1,
+            x2,
+            z2,
+            contains_player: false,
+        });
     }
 
     pub fn complete<T>(self, level: T)

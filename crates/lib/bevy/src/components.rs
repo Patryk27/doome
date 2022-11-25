@@ -158,6 +158,7 @@ pub struct Camera {
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Component)]
 pub struct Material {
+    pub two_sided: Option<bool>,
     pub alpha: Option<f32>,
     pub color: Option<Color>,
     pub emissive: bool,
@@ -171,6 +172,11 @@ pub struct Material {
 }
 
 impl Material {
+    pub fn two_sided(mut self) -> Self {
+        self.two_sided = Some(true);
+        self
+    }
+
     pub fn with_alpha(mut self, val: f32) -> Self {
         self.alpha = Some(val);
         self
@@ -224,6 +230,7 @@ impl Material {
 
     pub(crate) fn merge_with(self, other: Self) -> Self {
         Self {
+            two_sided: self.two_sided.or(other.two_sided),
             alpha: self.alpha.or(other.alpha),
             color: self.color.or(other.color),
             emissive: self.emissive || other.emissive,
