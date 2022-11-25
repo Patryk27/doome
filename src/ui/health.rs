@@ -21,7 +21,7 @@ pub fn render(
     const HEALTH_Y: u16 = HEIGHT - 9 - HEALTH_HEIGHT;
 
     let actual_width =
-        (player_health.val * HEALTH_WIDTH as f32 / 100.0).floor() as u16;
+        (player_health.health * HEALTH_WIDTH as f32 / 100.0).floor() as u16;
 
     canvas.rect(
         HEALTH_X,

@@ -24,7 +24,7 @@ impl MothMonster {
                 GeometryType::Dynamic,
                 Transform::from_translation(position),
                 Billboard,
-                Health::new(100.0),
+                Health::new(100.0, 100.0),
                 RayCast {
                     origin: Vec2::ZERO,
                     direction: Vec2::NEG_Y * 20.0,

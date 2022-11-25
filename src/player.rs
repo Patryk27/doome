@@ -18,7 +18,7 @@ pub fn spawn(mut commands: Commands) {
             body_type: BodyType::Kinematic,
         },
         Collider::circle(0.5, 16),
-        Health::new(100.0),
+        Health::new(100.0, 100.0),
     ));
 }
 
@@ -38,10 +38,6 @@ pub fn process_movement(
     let (player, mut body, mut transform) = player.single_mut();
     let delta = time.delta_seconds();
 
-    if input_lock.is_locked {
-        return;
-    }
-
     // TODO a bit wonky
     #[cfg(not(target_arch = "wasm32"))]
     for ev in mouse_motion.iter() {
@@ -55,24 +51,27 @@ pub fn process_movement(
 
     body.acceleration = Vec2::ZERO;
 
-    if keys.pressed(KeyCode::W) || keys.pressed(KeyCode::S) {
-        let sign = if keys.pressed(KeyCode::W) { 1.0 } else { -1.0 };
-        desired_velocity += graphical_to_physical(transform.forward() * sign);
-    }
+    if !input_lock.is_locked {
+        if keys.pressed(KeyCode::W) || keys.pressed(KeyCode::S) {
+            let sign = if keys.pressed(KeyCode::W) { 1.0 } else { -1.0 };
+            desired_velocity +=
+                graphical_to_physical(transform.forward() * sign);
+        }
 
-    if keys.pressed(KeyCode::Comma) || keys.pressed(KeyCode::Period) {
-        let sign = if keys.pressed(KeyCode::Comma) {
-            -1.0
-        } else {
-            1.0
-        };
+        if keys.pressed(KeyCode::Comma) || keys.pressed(KeyCode::Period) {
+            let sign = if keys.pressed(KeyCode::Comma) {
+                -1.0
+            } else {
+                1.0
+            };
 
-        transform.rotate_axis(Vec3::Y, ROTATION_SPEED * sign * delta);
-    }
+            transform.rotate_axis(Vec3::Y, ROTATION_SPEED * sign * delta);
+        }
 
-    if keys.pressed(KeyCode::A) || keys.pressed(KeyCode::D) {
-        let sign = if keys.pressed(KeyCode::A) { -1.0 } else { 1.0 };
-        desired_velocity += graphical_to_physical(transform.left() * sign);
+        if keys.pressed(KeyCode::A) || keys.pressed(KeyCode::D) {
+            let sign = if keys.pressed(KeyCode::A) { -1.0 } else { 1.0 };
+            desired_velocity += graphical_to_physical(transform.left() * sign);
+        }
     }
 
     let desired_velocity =

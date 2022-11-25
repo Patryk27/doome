@@ -1,3 +1,5 @@
+use crate::commands::{Command, EntityOrPlayer};
+use crate::pickable::Pickable;
 use crate::prelude::*;
 
 #[derive(Component)]
@@ -27,6 +29,13 @@ impl Heart {
                 Material::default()
                     .with_color(Color::hex(0xffffff))
                     .with_uv_transparency(),
+                Collider::circle(1.25, 6),
+                Pickable {
+                    on_pickup: Command::Heal {
+                        entity: EntityOrPlayer::Player,
+                        amount: 20.0,
+                    },
+                },
             ))
             .id()
     }

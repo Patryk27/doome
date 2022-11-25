@@ -31,9 +31,9 @@ pub fn render(
     let mehey_face = assets.load_image("mehey");
     let angrey_face = assets.load_image("angrey");
 
-    let state = if health.val > 50.0 {
+    let state = if health.health > 50.0 {
         State::Happy
-    } else if health.val > 25.0 {
+    } else if health.health > 25.0 {
         State::Meh
     } else {
         State::Angrey

@@ -4,16 +4,22 @@ use bevy::prelude::*;
 
 #[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Health {
-    pub val: f32,
+    pub health: f32,
+    pub max_health: f32,
     pub is_dead: bool,
 }
 
 impl Health {
-    pub fn new(health: f32) -> Self {
+    pub fn new(health: f32, max_health: f32) -> Self {
         Self {
-            val: health,
+            health,
+            max_health,
             is_dead: false,
         }
+    }
+
+    pub fn heal(&mut self, amount: f32) {
+        self.health = (self.health + amount).min(self.max_health);
     }
 }
 
@@ -37,7 +43,7 @@ fn despawn_dead(
             continue;
         }
 
-        if health.val <= 0.0 {
+        if health.health <= 0.0 {
             log::info!("Annoucned death of entity {:?}", entity);
             health.is_dead = true;
             deaths.send(Death(entity));

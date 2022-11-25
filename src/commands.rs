@@ -90,14 +90,14 @@ fn handle_commands(
                 let entity = resolve_entity(entity, &player);
                 let mut health_component = healths.get_mut(entity).unwrap();
 
-                health_component.val = health;
+                health_component.health = health;
             }
 
             Command::Heal { entity, amount } => {
                 let entity = resolve_entity(entity, &player);
                 let mut health_component = healths.get_mut(entity).unwrap();
 
-                health_component.val += amount;
+                health_component.heal(amount);
             }
 
             Command::Spawn {

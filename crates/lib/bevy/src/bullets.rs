@@ -39,7 +39,7 @@ fn collide_and_apply_damage(
             }
 
             if let Ok(mut health) = health.get_mut(collision.entity_b) {
-                health.val -= bullet.damage;
+                health.health -= bullet.damage;
             }
         }
     }
