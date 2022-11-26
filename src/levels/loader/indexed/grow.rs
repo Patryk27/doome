@@ -100,13 +100,31 @@ pub fn line<'a>(
 
         let (x, y) = match dir {
             Direction::Up => (x, y1 - 1),
-            Direction::Down => (y, y2 + 1),
+            Direction::Down => (x, y2 + 1),
             Direction::Left => (x1 - 1, y),
             Direction::Right => (x2 + 1, y),
         };
 
         if !pending_points.contains(&(x, y, tile)) || !matches(x, y) {
-            break;
+            let dir = match dir {
+                Direction::Up => Direction::Down,
+                Direction::Down => Direction::Up,
+                Direction::Left => Direction::Right,
+                Direction::Right => Direction::Left,
+            };
+
+            let (x, y) = match dir {
+                Direction::Up => (x, y1 - 1),
+                Direction::Down => (x, y2 + 1),
+                Direction::Left => (x1 - 1, y),
+                Direction::Right => (x2 + 1, y),
+            };
+
+            if pending_points.contains(&(x, y, tile)) && matches(x, y) {
+                grow_dir = Some(dir);
+            } else {
+                break;
+            }
         }
     }
 

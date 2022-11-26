@@ -29,7 +29,7 @@ pub fn spawn(mut commands: Commands, prefab_weapons: Res<PrefabWeapons>) {
             body_type: BodyType::Kinematic,
         },
         Weapon::new(prefab_weapons.handgun.0.clone()),
-        Collider::circle(0.5, 16),
+        Collider::circle(0.35, 16),
         Health::new(100.0, 100.0),
     ));
 }

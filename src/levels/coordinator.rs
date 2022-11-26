@@ -62,7 +62,7 @@ impl LevelsCoordinator {
         }
 
         for entity in entities.iter() {
-            commands.entity(entity).despawn();
+            commands.entity(entity).despawn_recursive();
         }
 
         if let Ok(mut inventory) = inventory.get_single_mut() {
@@ -81,6 +81,14 @@ impl Level {
 
     pub fn l2() -> Self {
         Self(2)
+    }
+
+    pub fn l3() -> Self {
+        Self(3)
+    }
+
+    pub fn l4() -> Self {
+        Self(4)
     }
 }
 
@@ -111,6 +119,8 @@ impl ops::Deref for GotoLevel {
 
 #[derive(Clone, Debug)]
 pub enum LevelGameplayEvent {
+    DoorOpened(String),
+    KeyPicked(String),
     ZoneEntered(String),
     ZoneLeft(String),
 }

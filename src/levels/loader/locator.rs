@@ -7,8 +7,10 @@ use super::*;
 #[derive(Clone, Debug, Default)]
 pub struct LevelLocator {
     objects: HashMap<String, Vec<Object>>,
-    entities: HashMap<String, Entity>,
+    doors: HashMap<String, Entity>,
+    keys: HashMap<String, Entity>,
     tags: HashMap<String, Vec2>,
+    torches: HashMap<String, Entity>,
 }
 
 impl LevelLocator {
@@ -62,14 +64,12 @@ impl LevelLocator {
                     .with_key_opt(key)
                     .spawn(lvl.assets(), lvl.commands());
 
-                self.entities.insert(name.to_owned(), entity);
+                self.doors.insert(name.to_owned(), entity);
                 continue;
             }
 
             if obj_name == "gate" {
-                let rot = if has_wall_at(obj.x - 1, obj.y)
-                    || has_wall_at(obj.x + 1, obj.y)
-                {
+                let rot = if has_wall_at(obj.x - 1, obj.y) {
                     Quat::from_rotation_y(PI / 2.0)
                 } else {
                     Default::default()
@@ -97,16 +97,68 @@ impl LevelLocator {
                 let color = u32::from_str_radix(color, 16).unwrap();
                 let color = Color::hex(color);
 
-                Picker::key(Key::new(name, color))
+                let entity = Picker::key(Key::new(name, color))
                     .with_position(obj.position())
                     .spawn(lvl.assets(), lvl.commands());
 
+                self.keys.insert(name.to_owned(), entity);
                 continue;
             }
 
             if let Some(name) = obj_name.strip_prefix("tag:") {
                 if self.tags.insert(name.to_owned(), obj.position()).is_some() {
                     panic!("Map contains tag defined multiple times: {}", name);
+                }
+
+                continue;
+            }
+
+            if let Some(spec) = obj_name.strip_prefix("torch:") {
+                let mut opts = spec.split(",");
+
+                let name = opts.next().unwrap();
+                let mut active = true;
+                let mut force_active_texture = false;
+
+                for opt in opts {
+                    match opt {
+                        "off" => {
+                            active = false;
+                        }
+                        "force-active-texture" => {
+                            force_active_texture = true;
+                        }
+                        _ => {
+                            panic!(
+                                "Map contains invalid torch definition: {}",
+                                name
+                            );
+                        }
+                    }
+                }
+
+                let rot = if has_wall_at(obj.x - 1, obj.y) {
+                    Default::default()
+                } else if has_wall_at(obj.x + 1, obj.y) {
+                    Quat::from_rotation_y(PI)
+                } else if has_wall_at(obj.x, obj.y - 1) {
+                    Quat::from_rotation_y(-PI / 2.0)
+                } else {
+                    Default::default()
+                };
+
+                let entity = Torch::new()
+                    .with_active(active)
+                    .with_force_active_texture(force_active_texture)
+                    .with_position(obj.position())
+                    .with_rotation(rot)
+                    .spawn(lvl.assets(), lvl.commands());
+
+                if self.torches.insert(name.to_owned(), entity).is_some() {
+                    panic!(
+                        "Map contains torch defined multiple times: {}",
+                        name
+                    );
                 }
 
                 continue;
@@ -128,19 +180,45 @@ impl LevelLocator {
         }
     }
 
-    pub fn entity(&self, name: &str) -> Entity {
-        self.entities.get(name).cloned().unwrap_or_else(|| {
-            panic!("Map contains no entity called `{}`", name)
-        })
+    pub fn door(&self, name: impl AsRef<str>) -> Entity {
+        let name = name.as_ref();
+
+        self.doors
+            .get(name)
+            .cloned()
+            .unwrap_or_else(|| panic!("Map contains no door called `{}`", name))
     }
 
-    pub fn tag(&self, name: &str) -> Vec3 {
+    pub fn key(&self, name: impl AsRef<str>) -> Entity {
+        let name = name.as_ref();
+
+        self.keys
+            .get(name)
+            .cloned()
+            .unwrap_or_else(|| panic!("Map contains no key called `{}`", name))
+    }
+
+    pub fn tag(&self, name: impl AsRef<str>) -> Vec3 {
+        let name = name.as_ref();
+
         self.tags
             .get(name)
             .map(|pos| vec3(pos.x, 0.0, pos.y))
             .unwrap_or_else(|| {
                 panic!("Map contains no tag called `{}`", name);
             })
+    }
+
+    pub fn torch(&self, name: impl AsRef<str>) -> Entity {
+        let name = name.as_ref();
+
+        self.torches.get(name).cloned().unwrap_or_else(|| {
+            panic!("Map contains no torch called `{}`", name)
+        })
+    }
+
+    pub fn torches(&self) -> impl Iterator<Item = (&str, Entity)> + '_ {
+        self.torches.iter().map(|(k, v)| (k.as_str(), *v))
     }
 }
 

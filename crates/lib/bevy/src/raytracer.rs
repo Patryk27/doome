@@ -176,15 +176,16 @@ fn sync_updated_geometry(
 // TODO doing this each frame feels wonky
 fn sync_lights(
     mut state: ResMut<State>,
-    lights: Query<(&Light, &Transform, &Color)>,
+    lights: Query<(&Light, &Transform, &Color, Option<&Visibility>)>,
 ) {
     state.lights = Default::default();
 
     let lights = lights
         .iter()
-        .filter(|(light, _, _)| light.enabled && light.intensity > 0.0);
+        .filter(|(_, _, _, vis)| vis.map_or(true, |vis| vis.is_visible))
+        .filter(|(light, _, _, _)| light.enabled && light.intensity > 0.0);
 
-    for (light, transform, color) in lights {
+    for (light, transform, color, _) in lights {
         let position = transform.translation;
 
         match light.kind {
@@ -195,6 +196,7 @@ fn sync_lights(
                     light.intensity,
                 ));
             }
+
             LightKind::Spot { point_at, angle } => {
                 state.lights.push(rt::Light::spot(
                     position,

@@ -1,3 +1,4 @@
+use super::LockedDoorsState;
 use crate::prelude::*;
 
 pub struct Door {
@@ -83,4 +84,53 @@ impl Door {
 #[derive(Component)]
 pub struct LockedDoor {
     pub key: Key,
+}
+
+impl LockedDoor {
+    pub(super) fn process(
+        mut commands: Commands,
+        keys: Res<Input<KeyCode>>,
+        state: Res<LockedDoorsState>,
+        player: Query<&Transform, With<Player>>,
+        mut inventory: Query<&mut Inventory>,
+        doors: Query<(Entity, &Transform, &LockedDoor)>,
+        mut visibilities: Query<&mut Visibility>,
+        mut level_tx: EventWriter<LevelGameplayEvent>,
+    ) {
+        visibilities.get_mut(state.txt_unlock).unwrap().is_visible = false;
+
+        let Ok(player_xform) = player.get_single() else { return };
+        let Ok(mut inventory) = inventory.get_single_mut() else { return };
+
+        // -----
+
+        let mut nearby_door = None;
+
+        for (door_entity, door_xform, door) in doors.iter() {
+            let distance = player_xform
+                .translation
+                .xz()
+                .distance(door_xform.translation.xz());
+
+            if distance < 3.0 && inventory.has_key(&door.key) {
+                nearby_door = Some((door_entity, door));
+                break;
+            }
+        }
+
+        // -----
+
+        let Some((door_entity, door)) = nearby_door else { return };
+
+        visibilities.get_mut(state.txt_unlock).unwrap().is_visible = true;
+
+        if keys.pressed(KeyCode::F) {
+            inventory.remove_key(&door.key);
+            commands.entity(door_entity).despawn_recursive();
+
+            level_tx.send(LevelGameplayEvent::DoorOpened(
+                door.key.name().to_owned(),
+            ));
+        }
+    }
 }

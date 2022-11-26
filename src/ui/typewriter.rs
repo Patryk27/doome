@@ -4,7 +4,8 @@ const LINE_HEIGHT: u16 = 12;
 use std::collections::VecDeque;
 use std::mem;
 
-use doome_engine::{TextCanvas, HEIGHT};
+use doome_engine::{TextCanvas, HEIGHT, WIDTH};
+use doome_surface::Color;
 
 use crate::prelude::*;
 
@@ -58,6 +59,19 @@ impl TypewriterText {
     fn render(&self, canvas: &mut TextCanvas) {
         let x = 5;
         let mut y = 5;
+
+        canvas.rect(
+            0,
+            0,
+            WIDTH,
+            5 + LINE_HEIGHT + 5,
+            Color {
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 128 + 64,
+            },
+        );
 
         for line in self.layout.iter() {
             canvas.text(x, y, line, false);

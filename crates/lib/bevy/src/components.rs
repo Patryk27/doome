@@ -147,7 +147,7 @@ impl LightFade {
                 if this.direction > 0.0 {
                     commands.entity(entity).remove::<Self>();
                 } else {
-                    commands.entity(entity).despawn();
+                    commands.entity(entity).despawn_recursive();
                 }
             }
         }

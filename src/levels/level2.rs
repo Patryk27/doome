@@ -255,9 +255,10 @@ pub fn process(
     mut transforms: Query<&mut Transform>,
     mut lights: Query<&mut Light>,
     mut typewriter_tx: EventWriter<TypewriterPrint>,
-    mut recalc_nav_data_tx: EventWriter<SyncNavData>,
-    mut level_tx: EventReader<LevelGameplayEvent>,
+    mut sync_nav_data_tx: EventWriter<SyncNavData>,
+    mut level_rx: EventReader<LevelGameplayEvent>,
     inventory: Query<&Inventory>,
+    mut goto_level_tx: EventWriter<GotoLevel>,
 ) {
     let Ok(mut level) = level.get_single_mut() else { return };
     let t = time.elapsed_seconds();
@@ -326,13 +327,13 @@ pub fn process(
 
                 commands.entity(level.ent_lamp).despawn();
 
-                recalc_nav_data_tx.send(SyncNavData);
+                sync_nav_data_tx.send(SyncNavData);
 
                 let moths = (1..=2).map(|id| {
                     MothMonster::spawn(
                         &assets,
                         &mut commands,
-                        level.locator.tag(&format!("monster-{}", id)),
+                        level.locator.tag(format!("monster-{}", id)),
                     )
                 });
 
@@ -365,7 +366,7 @@ pub fn process(
         }
 
         LevelStage::AwaitingZoneEnter => {
-            for event in level_tx.iter() {
+            for event in level_rx.iter() {
                 match event {
                     LevelGameplayEvent::ZoneEntered(name)
                         if name == "door-a" || name == "door-b" =>
@@ -386,16 +387,9 @@ pub fn process(
                             level.locator.tag(moth_spawn_point),
                         );
 
-                        for n in 1..=2 {
-                            commands
-                                .entity(
-                                    level.locator.entity(&format!(
-                                        "{}{}",
-                                        other_door, n
-                                    )),
-                                )
-                                .despawn();
-                        }
+                        commands
+                            .entity(level.locator.door(other_door))
+                            .despawn();
 
                         level.stage = LevelStage::AwaitingKeyPickup;
                     }
@@ -408,7 +402,7 @@ pub fn process(
         }
 
         LevelStage::AwaitingKeyPickup => {
-            for event in level_tx.iter() {
+            for event in level_rx.iter() {
                 match event {
                     LevelGameplayEvent::ZoneEntered(name) if name == "key" => {
                         typewriter_tx.send(TypewriterPrint::new(
@@ -432,7 +426,17 @@ pub fn process(
         }
 
         LevelStage::AwaitingLeaving => {
-            //
+            for event in level_rx.iter() {
+                match event {
+                    LevelGameplayEvent::ZoneEntered(name) if name == "end" => {
+                        goto_level_tx.send(GotoLevel::new(Level::l3()));
+                    }
+
+                    _ => {
+                        //
+                    }
+                }
+            }
         }
     }
 }

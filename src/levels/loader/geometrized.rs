@@ -76,10 +76,10 @@ impl<'a> Feature<'a> {
                 y2,
                 tex,
             } => {
-                let tex = lvl.assets().load_texture(tex);
+                let tex_handle = lvl.assets().load_texture(tex);
 
                 lvl.ceiling(x1, y1, x2, y2)
-                    .alter_material(|mat| mat.with_texture(tex))
+                    .alter_material(|mat| mat.with_texture(tex_handle))
                     .spawn();
             }
 
@@ -93,20 +93,23 @@ impl<'a> Feature<'a> {
                 assert!(x1 <= x2);
                 assert!(y1 <= y2);
 
-                let reflective = tex == "floor.stone.mossy.water";
-                let tex = lvl.assets().load_texture(tex);
+                let tex_handle = lvl.assets().load_texture(tex);
 
                 lvl.floor(x1, y1, x2, y2)
                     .alter_material(|mat| {
-                        let mut mat = mat.with_texture(tex);
+                        let mat = mat.with_texture(tex_handle);
 
-                        if reflective {
-                            mat = mat
+                        match tex {
+                            "floor.stone.mossy.water" => mat
                                 .with_reflectivity(0.1)
-                                .with_reflection_color(Color::hex(0xffffff));
-                        }
+                                .with_reflection_color(Color::hex(0xffffff)),
 
-                        mat
+                            "floor.checkerboard" => mat
+                                .with_reflectivity(0.8)
+                                .with_reflection_color(Color::hex(0xffffff)),
+
+                            _ => mat,
+                        }
                     })
                     .spawn();
             }
@@ -123,10 +126,20 @@ impl<'a> Feature<'a> {
                 assert!(y1 <= y2);
                 assert!(rot <= 3);
 
-                let tex = lvl.assets().load_texture(tex);
+                let tex_handle = lvl.assets().load_texture(tex);
 
                 lvl.wall(x1, y1, x2, y2, rot)
-                    .alter_material(|mat| mat.with_texture(tex))
+                    .alter_material(|mat| {
+                        let mat = mat.with_texture(tex_handle);
+
+                        match tex {
+                            "wall.marble" => mat
+                                .with_reflectivity(0.8)
+                                .with_reflection_color(Color::hex(0xffffff)),
+
+                            _ => mat,
+                        }
+                    })
                     .spawn();
             }
         }

@@ -4,6 +4,7 @@ use crate::prelude::*;
 pub struct Picker {
     texture: &'static str,
     position: Vec2,
+    scale: Vec3,
     color: Color,
     on_pickup: Option<Command>,
 }
@@ -14,6 +15,7 @@ impl Picker {
             texture,
             on_pickup: Default::default(),
             position: Default::default(),
+            scale: Vec3::splat(0.75),
             color: Color::hex(0xffffff),
         }
     }
@@ -43,6 +45,7 @@ impl Picker {
 
     pub fn key(key: Key) -> Self {
         Self::new("key")
+            .with_scale(Vec3::splat(0.35))
             .with_color(key.color())
             .on_pickup(Command::Give {
                 what: Item::Key(key.clone()),
@@ -51,6 +54,11 @@ impl Picker {
 
     pub fn with_position(mut self, val: Vec2) -> Self {
         self.position = val;
+        self
+    }
+
+    pub fn with_scale(mut self, val: Vec3) -> Self {
+        self.scale = val;
         self
     }
 
@@ -71,7 +79,7 @@ impl Picker {
 
         let mut entity = commands.spawn((
             model,
-            Transform::from_translation(position).with_scale(Vec3::splat(0.75)),
+            Transform::from_translation(position).with_scale(self.scale),
             Float {
                 anchor: position,
                 amplitude: 0.5,
