@@ -1,6 +1,4 @@
-use bevy::prelude::*;
-
-use crate::prelude::Flashlight;
+use crate::prelude::*;
 
 pub struct InventoryPlugin;
 
@@ -10,29 +8,41 @@ impl Plugin for InventoryPlugin {
         app.add_system(handle_inventory);
     }
 }
-#[derive(Debug, Component)]
+
+#[derive(Debug, Default, Component)]
 pub struct Inventory {
     pub has_flashlight: bool,
+    pub keys: Vec<Key>,
+}
+
+impl Inventory {
+    pub fn has_key(&self, key: &Key) -> bool {
+        self.keys.iter().any(|key2| key2.name() == key.name())
+    }
+
+    pub fn remove_key(&mut self, key: &Key) {
+        self.keys.drain_filter(|key2| key2.name() == key.name());
+    }
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn((Inventory {
-        has_flashlight: false,
-    },));
+    commands.spawn(Inventory::default());
 }
 
 fn handle_inventory(
     mut commands: Commands,
-    mut inventory: Query<&mut Inventory, Changed<Inventory>>,
-    flashlight: Query<(Entity, &Flashlight)>,
+    inventory: Query<&Inventory, Changed<Inventory>>,
+    flashlight: Query<Entity, With<Flashlight>>,
 ) {
-    let Ok(mut inventory) = inventory.get_single_mut() else { return };
-    let flashlight = flashlight.get_single();
+    let Ok(inventory) = inventory.get_single() else { return };
 
-    if inventory.has_flashlight && flashlight.is_err() {
-        Flashlight::spawn(&mut commands);
+    if let Ok(flashlight) = flashlight.get_single() {
+        if !inventory.has_flashlight {
+            commands.entity(flashlight).despawn();
+        }
     } else {
-        let Ok((entity, _)) = flashlight else { return };
-        commands.entity(entity).despawn();
+        if inventory.has_flashlight {
+            Flashlight::spawn(&mut commands);
+        }
     }
 }

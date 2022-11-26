@@ -53,7 +53,7 @@ fn handle_commands(
     // Event writers
     mut event_writers: EventWriters,
 ) {
-    for cmd in game_commands.iter().copied() {
+    for cmd in game_commands.iter().cloned() {
         log::info!("Handling command: {cmd:?}");
 
         match cmd {
@@ -115,15 +115,15 @@ fn handle_commands(
                     Spawnable::MothMonster => {
                         MothMonster::spawn(&assets, &mut commands, position)
                     }
-                    Spawnable::Heart => {
-                        Heart::spawn(&assets, &mut commands, position)
-                    }
-                    Spawnable::RiflePickup => {
-                        RiflePickup::spawn(&assets, &mut commands, position)
-                    }
-                    Spawnable::RpgPickup => {
-                        RpgPickup::spawn(&assets, &mut commands, position)
-                    }
+                    Spawnable::Heart => Picker::heart()
+                        .with_position(position.xz())
+                        .spawn(&assets, &mut commands),
+                    Spawnable::RiflePickup => Picker::rifle()
+                        .with_position(position.xz())
+                        .spawn(&assets, &mut commands),
+                    Spawnable::RpgPickup => Picker::rpg()
+                        .with_position(position.xz())
+                        .spawn(&assets, &mut commands),
                 };
 
                 event_writers.output_tx.send(CommandOutput(format!(
@@ -229,6 +229,9 @@ fn handle_commands(
                         &mut weapon_sprites,
                         &prefab_weapons.handgun,
                     );
+                }
+                Item::Key(key) => {
+                    inventory.single_mut().keys.push(key);
                 }
             },
         }

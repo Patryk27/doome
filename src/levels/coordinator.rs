@@ -51,6 +51,7 @@ impl LevelsCoordinator {
                 With<GcAfterLevelUnloaded>,
             )>,
         >,
+        mut inventory: Query<&mut Inventory>,
     ) {
         if goto_level_rx.iter().count() == 0 {
             return;
@@ -62,6 +63,10 @@ impl LevelsCoordinator {
 
         for entity in entities.iter() {
             commands.entity(entity).despawn();
+        }
+
+        if let Ok(mut inventory) = inventory.get_single_mut() {
+            *inventory = Default::default();
         }
     }
 }

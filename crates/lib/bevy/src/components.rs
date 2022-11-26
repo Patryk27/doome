@@ -29,6 +29,10 @@ impl Color {
         vec3(self.r, self.g, self.b)
     }
 
+    pub fn into_tuple(self) -> (f32, f32, f32) {
+        (self.r, self.g, self.b)
+    }
+
     pub fn from_vec3(vec: Vec3) -> Self {
         Self {
             r: vec.x,
@@ -158,7 +162,7 @@ pub struct Camera {
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Component)]
 pub struct Material {
-    pub two_sided: Option<bool>,
+    pub double_sided: Option<bool>,
     pub alpha: Option<f32>,
     pub color: Option<Color>,
     pub emissive: bool,
@@ -172,8 +176,8 @@ pub struct Material {
 }
 
 impl Material {
-    pub fn two_sided(mut self) -> Self {
-        self.two_sided = Some(true);
+    pub fn double_sided(mut self) -> Self {
+        self.double_sided = Some(true);
         self
     }
 
@@ -230,7 +234,7 @@ impl Material {
 
     pub(crate) fn merge_with(self, other: Self) -> Self {
         Self {
-            two_sided: self.two_sided.or(other.two_sided),
+            double_sided: self.double_sided.or(other.double_sided),
             alpha: self.alpha.or(other.alpha),
             color: self.color.or(other.color),
             emissive: self.emissive || other.emissive,

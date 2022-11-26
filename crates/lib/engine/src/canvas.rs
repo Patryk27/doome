@@ -37,18 +37,26 @@ impl<'f, T> Canvas<'f, T> {
         }
     }
 
-    pub fn blit(&mut self, x_offset: u16, y_offset: u16, image: &RgbaImage) {
+    pub fn blit(
+        &mut self,
+        x_offset: u16,
+        y_offset: u16,
+        image: &RgbaImage,
+        (blend_r, blend_g, blend_b): (f32, f32, f32),
+    ) {
         let (width, height) = image.dimensions();
 
         for x in 0..width {
             for y in 0..height {
                 let color = image.get_pixel(x, y).0;
+
                 let color = Color {
                     r: color[0],
                     g: color[1],
                     b: color[2],
                     a: color[3],
-                };
+                }
+                .blend(blend_r, blend_g, blend_b);
 
                 self.set(x_offset + x as u16, y_offset + y as u16, color);
             }

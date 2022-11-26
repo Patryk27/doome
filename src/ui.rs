@@ -11,6 +11,7 @@ use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
 use doome_bevy::components::*;
 use doome_bevy::doome::DoomeRenderer;
+use doome_bevy::prelude::Assets;
 use doome_bevy::text::TextEngine;
 use doome_engine::{Canvas, HEIGHT, WIDTH};
 use glam::{vec2, Vec3Swizzles};
@@ -18,6 +19,7 @@ use glam::{vec2, Vec3Swizzles};
 pub use self::messages::*;
 pub use self::text::*;
 pub use self::typewriter::*;
+use crate::prelude::Inventory;
 use crate::weapons::PrefabWeapons;
 
 pub struct UiPlugin;
@@ -27,7 +29,6 @@ impl Plugin for UiPlugin {
         let prefab_weapons = app.world.resource::<PrefabWeapons>();
 
         app.insert_resource(gun::State::new(&prefab_weapons));
-
         app.insert_resource(InputLock { is_locked: false });
 
         // Miscellaneous
@@ -88,11 +89,13 @@ fn canvas_clear(
 }
 
 fn canvas_render_texts(
+    assets: Res<Assets>,
     mut renderer: ResMut<DoomeRenderer>,
     text_engine: Res<TextEngine>,
     typewriter: Res<Typewriter>,
     messages: Res<Messages>,
     texts: Query<(&Text, &Transform, Option<&Visibility>)>,
+    inventory: Query<&Inventory>,
 ) {
     let frame = &mut renderer.pixels.image_data;
     let mut canvas = Canvas::new_text(&text_engine, frame);
@@ -116,5 +119,19 @@ fn canvas_render_texts(
             &text.text,
             text.centered,
         );
+    }
+
+    if let Ok(inventory) = inventory.get_single() {
+        let key_image = assets.load_image("key");
+        let key_image = assets.image(key_image);
+
+        for (key_idx, key) in inventory.keys.iter().enumerate() {
+            canvas.blit(
+                WIDTH - 16 - 5,
+                5 + (key_idx as u16) * 16,
+                key_image,
+                key.color().into_tuple(),
+            );
+        }
     }
 }

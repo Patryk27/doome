@@ -1,6 +1,6 @@
 # Blender 3.3.0
 # www.blender.org
-mtllib heart.mtl
+mtllib picker.mtl
 o Plane
 v 1.000000 -1.000000 -0.000000
 v -1.000000 -1.000000 0.000000

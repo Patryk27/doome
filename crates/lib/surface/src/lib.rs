@@ -16,6 +16,13 @@ impl Color {
 
         Self { r, g, b, a }
     }
+
+    pub fn blend(mut self, r: f32, g: f32, b: f32) -> Self {
+        self.r = ((self.r as f32) * r) as u8;
+        self.g = ((self.g as f32) * g) as u8;
+        self.b = ((self.b as f32) * b) as u8;
+        self
+    }
 }
 
 impl Color {

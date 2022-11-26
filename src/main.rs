@@ -1,4 +1,6 @@
-#![allow(clippy::type_complexity, clippy::too_many_arguments)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::type_complexity)]
+#![feature(drain_filter)]
 #![feature(map_first_last)]
 
 #[macro_use]
@@ -24,7 +26,9 @@ mod prelude {
     pub use bevy::prelude::*;
     pub use doome_bevy::prelude::*;
 
+    pub use crate::commands::*;
     pub use crate::enemies::*;
+    pub use crate::inventory::*;
     pub use crate::levels::*;
     pub use crate::objects::*;
     pub use crate::ui::*;
@@ -99,6 +103,7 @@ fn main() {
         .add_plugin(ui::UiPlugin)
         .add_plugin(pickable::PickablePlugin)
         .add_plugin(inventory::InventoryPlugin)
+        .add_plugin(objects::ObjectsPlugin)
         .add_system(explosions::update)
         .add_system(
             Flashlight::sync_with_player.after(player::process_movement),

@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
+pub use self::builder::*;
 pub use self::coordinator::*;
+pub use self::loader::*;
 pub use self::zone::*;
 
 pub mod level1;

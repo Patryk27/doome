@@ -39,33 +39,30 @@ pub struct RayCastHit {
 #[derive(Component, Debug)]
 pub struct Collider {
     pub(super) polygon: Polygon,
-    pub(super) collision_mask: u32,
 }
 
 impl Collider {
     pub fn circle(radius: f32, n: usize) -> Self {
         Self {
             polygon: Polygon::circle(radius, n),
-            collision_mask: u32::MAX,
         }
     }
 
     pub fn rect(width: f32, height: f32) -> Self {
         Self {
             polygon: Polygon::rect(Vec2::new(width, height)),
-            collision_mask: u32::MAX,
         }
     }
 
     pub fn line(start: Vec2, end: Vec2) -> Self {
         Self {
             polygon: Polygon::new(vec![start, end]),
-            collision_mask: u32::MAX,
         }
     }
 
     pub fn to_polygon(&self, transform: &Transform) -> Polygon {
         let matrix = transform.compute_matrix();
+
         self.polygon.clone().map_points(|p| {
             graphical_to_physical(
                 matrix.transform_point3(physical_to_graphical(p)),

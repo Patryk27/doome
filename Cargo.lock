@@ -1252,6 +1252,7 @@ dependencies = [
  "include_dir",
  "indoc",
  "instant",
+ "itertools",
  "log",
  "quick-xml",
  "serde",

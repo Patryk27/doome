@@ -21,7 +21,7 @@ fn handle_pickables(
     for collision in collisions.iter() {
         if player.get(collision.entity_a).is_ok() {
             if let Ok(pickable) = pickables.get(collision.entity_b) {
-                game_commands.send(pickable.on_pickup);
+                game_commands.send(pickable.on_pickup.clone());
                 commands.entity(collision.entity_b).despawn();
             }
         }

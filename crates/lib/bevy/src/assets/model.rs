@@ -36,7 +36,7 @@ impl ModelTriangle {
         .with_transform(xform)
         .with_casts_shadows(mat.casts_shadows.unwrap_or(true))
         .with_uv_transparency(mat.uv_transparency.unwrap_or(false))
-        .with_two_sided(mat.two_sided.unwrap_or(false))
+        .with_double_sided(mat.double_sided.unwrap_or(false))
         .with_uv_divisor(u_div, v_div)
     }
 

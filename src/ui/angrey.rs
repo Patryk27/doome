@@ -46,9 +46,14 @@ pub fn render(
         State::Angrey => angrey_face,
     };
 
-    canvas.blit(0, 0, assets.image(ui_image));
+    canvas.blit(0, 0, assets.image(ui_image), (1.0, 1.0, 1.0));
 
-    canvas.blit(0, 0, assets.image(gun_state.current_weapon.ui_icon));
+    canvas.blit(
+        0,
+        0,
+        assets.image(gun_state.current_weapon.ui_icon),
+        (1.0, 1.0, 1.0),
+    );
 
     let seconds = time.elapsed_seconds();
     let (x, y) = match state {
@@ -87,5 +92,5 @@ pub fn render(
         }
     };
 
-    canvas.blit(x, y, assets.image(face));
+    canvas.blit(x, y, assets.image(face), (1.0, 1.0, 1.0));
 }

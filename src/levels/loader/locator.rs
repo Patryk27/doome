@@ -1,12 +1,14 @@
 use std::f32::consts::PI;
 
+use itertools::Itertools;
+
 use super::*;
 
 #[derive(Clone, Debug, Default)]
 pub struct LevelLocator {
     objects: HashMap<String, Vec<Object>>,
     entities: HashMap<String, Entity>,
-    tags: HashMap<String, Vec3>,
+    tags: HashMap<String, Vec2>,
 }
 
 impl LevelLocator {
@@ -30,7 +32,22 @@ impl LevelLocator {
             .flat_map(|(k, vs)| vs.iter().map(move |v| (k, v)));
 
         for (obj_name, obj) in objects {
-            if let Some(name) = obj_name.strip_prefix("door:") {
+            if let Some(spec) = obj_name.strip_prefix("door:") {
+                let (name, key) = if spec.contains(",") {
+                    let (name, color) =
+                        spec.split(",").collect_tuple().unwrap();
+
+                    let color = color.strip_prefix("0x").unwrap();
+                    let color = u32::from_str_radix(color, 16).unwrap();
+                    let color = Color::hex(color);
+
+                    let key = Key::new(name, color);
+
+                    (name, Some(key))
+                } else {
+                    (spec, None)
+                };
+
                 let rot = if has_wall_at(obj.x - 1, obj.y)
                     || has_wall_at(obj.x + 1, obj.y)
                 {
@@ -39,12 +56,11 @@ impl LevelLocator {
                     Quat::from_rotation_y(-PI / 2.0)
                 };
 
-                let entity = Door::spawn(
-                    lvl.assets(),
-                    lvl.commands(),
-                    obj.location(),
-                    rot,
-                );
+                let entity = Door::new()
+                    .with_position(obj.position())
+                    .with_rotation(rot)
+                    .with_key_opt(key)
+                    .spawn(lvl.assets(), lvl.commands());
 
                 self.entities.insert(name.to_owned(), entity);
                 continue;
@@ -59,17 +75,37 @@ impl LevelLocator {
                     Default::default()
                 };
 
-                Gate::spawn(lvl.assets(), lvl.commands(), obj.location(), rot);
+                Gate::spawn(lvl.assets(), lvl.commands(), obj.position(), rot);
                 continue;
             }
 
             if obj_name == "heart" {
-                Heart::spawn(lvl.assets(), lvl.commands(), obj.location());
+                Picker::heart()
+                    .with_position(obj.position())
+                    .spawn(lvl.assets(), lvl.commands());
+
+                continue;
+            }
+
+            if let Some(spec) = obj_name.strip_prefix("key:") {
+                let (name, color) =
+                    spec.split(",").collect_tuple().unwrap_or_else(|| {
+                        panic!("Map contains invalid key definition: {}", spec);
+                    });
+
+                let color = color.strip_prefix("0x").unwrap();
+                let color = u32::from_str_radix(color, 16).unwrap();
+                let color = Color::hex(color);
+
+                Picker::key(Key::new(name, color))
+                    .with_position(obj.position())
+                    .spawn(lvl.assets(), lvl.commands());
+
                 continue;
             }
 
             if let Some(name) = obj_name.strip_prefix("tag:") {
-                if self.tags.insert(name.to_owned(), obj.location()).is_some() {
+                if self.tags.insert(name.to_owned(), obj.position()).is_some() {
                     panic!("Map contains tag defined multiple times: {}", name);
                 }
 
@@ -99,9 +135,12 @@ impl LevelLocator {
     }
 
     pub fn tag(&self, name: &str) -> Vec3 {
-        self.tags.get(name).cloned().unwrap_or_else(|| {
-            panic!("Map contains no tag called `{}`", name);
-        })
+        self.tags
+            .get(name)
+            .map(|pos| vec3(pos.x, 0.0, pos.y))
+            .unwrap_or_else(|| {
+                panic!("Map contains no tag called `{}`", name);
+            })
     }
 }
 
@@ -114,7 +153,7 @@ struct Object {
 }
 
 impl Object {
-    fn location(self) -> Vec3 {
-        vec3(self.x as f32, 0.0, self.y as f32)
+    fn position(self) -> Vec2 {
+        vec2(self.x as f32, self.y as f32)
     }
 }

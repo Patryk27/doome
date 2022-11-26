@@ -41,17 +41,15 @@ pub fn process_movement(
     mut mouse_motion: EventReader<MouseMotion>,
     mut player: Query<(&Player, &mut Body, &mut Transform)>,
 ) {
-    const MOUSE_ROTATION_SENSITIVITY: f32 = 0.5;
+    const MOUSE_ROTATION_SENSITIVITY: f32 = 0.15;
     const PLANAR_MOVEMENT_SPEED: f32 = 7.5;
     const ROTATION_SPEED: f32 = 2.0;
     const ACCELERATION_SPEED: f32 = 8.0;
-    const BRAKING_SPEED: f32 = 12.0;
+    const BRAKING_SPEED: f32 = 24.0;
 
     let (player, mut body, mut transform) = player.single_mut();
     let delta = time.delta_seconds();
 
-    // TODO a bit wonky
-    #[cfg(not(target_arch = "wasm32"))]
     for ev in mouse_motion.iter() {
         transform.rotate_axis(
             Vec3::Y,

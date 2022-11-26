@@ -7,7 +7,7 @@ use glam::Vec3;
 
 use crate::prelude::*;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Command {
     // quit
     Quit,
@@ -89,12 +89,13 @@ pub enum EntityOrPlayer {
     Player,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Item {
     Flashlight,
     Rifle,
     RocketLauncher,
     Handgun,
+    Key(Key),
 }
 
 #[derive(Debug, Clone, Copy)]

@@ -33,7 +33,7 @@ pub struct Triangle {
 impl Triangle {
     const CASTS_SHADOWS_MASK: u32 = 1 << 0;
     const UV_TRANSPARENCY_MASK: u32 = 1 << 1;
-    const TWO_SIDED_MASK: u32 = 1 << 2;
+    const DOUBLE_SIDED_MASK: u32 = 1 << 2;
 
     pub fn new(v0: Vec3, v1: Vec3, v2: Vec3, mat_id: MaterialId) -> Self {
         Self {
@@ -81,8 +81,8 @@ impl Triangle {
         self.v2.w.to_bits() & Self::UV_TRANSPARENCY_MASK > 0
     }
 
-    pub fn two_sided(&self) -> bool {
-        self.v2.w.to_bits() & Self::TWO_SIDED_MASK > 0
+    pub fn double_sided(&self) -> bool {
+        self.v2.w.to_bits() & Self::DOUBLE_SIDED_MASK > 0
     }
 
     pub fn uv_divisor(&self) -> Vec2 {
@@ -101,7 +101,7 @@ impl Triangle {
         let pvec = ray.direction().cross(v0v2);
         let det = v0v1.dot(pvec);
 
-        if culling && !self.two_sided() {
+        if culling && !self.double_sided() {
             if det < f32::EPSILON {
                 return Hit::none();
             }
@@ -140,12 +140,22 @@ impl Triangle {
 
         let uv_divisor = self.uv_divisor();
 
+        let normal = {
+            let n = v0v1.cross(v0v2).normalize();
+
+            if det < 0.0 {
+                -n
+            } else {
+                n
+            }
+        };
+
         Hit {
             t,
             uv: vec2(u, v).extend(uv_divisor.x).extend(uv_divisor.y),
             ray,
             point: ray.origin() + ray.direction() * (t - 0.01),
-            normal: v0v1.cross(v0v2).normalize(),
+            normal,
             tri_id: TriangleId::new_static(0).into_any(),
             mat_id: self.material_id(),
             alpha: self.alpha(),
@@ -193,13 +203,13 @@ impl Triangle {
         self
     }
 
-    pub fn with_two_sided(mut self, val: bool) -> Self {
+    pub fn with_double_sided(mut self, val: bool) -> Self {
         let mut w = self.v2.w.to_bits();
 
         if val {
-            w |= Self::TWO_SIDED_MASK;
+            w |= Self::DOUBLE_SIDED_MASK;
         } else {
-            w &= !Self::TWO_SIDED_MASK;
+            w &= !Self::DOUBLE_SIDED_MASK;
         }
 
         self.v2.w = f32::from_bits(w);

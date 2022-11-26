@@ -1,9 +1,6 @@
 use std::f32::consts::PI;
 use std::time::Duration;
 
-use super::builder::LevelBuilder;
-use super::loader::{LevelLoader, LevelLocator};
-use crate::inventory::Inventory;
 use crate::prelude::*;
 
 pub fn init(
@@ -194,11 +191,9 @@ pub fn init(
         .point_light(vec3(-15.0, 2.0, 0.0), Color::hex(0xff0000), 0.0)
         .id();
 
-    let ent_flashlight = FlashlightPicker::spawn(
-        lvl.assets(),
-        lvl.commands(),
-        vec3(-6.8, 0.0, 0.5),
-    );
+    Picker::flashlight()
+        .with_position(vec2(-6.8, 0.5))
+        .spawn(lvl.assets(), lvl.commands());
 
     // -----
 
@@ -212,7 +207,7 @@ pub fn init(
         .with_scale(vec3(1.0, 1.0, 3.0))
         .with_material(
             Material::default()
-                .two_sided()
+                .double_sided()
                 .with_color(Color::hex(0xffffff) * 0.75)
                 .with_uv_divisor(3, 1)
                 .with_uv_transparency(),
@@ -228,7 +223,6 @@ pub fn init(
         ent_lamp,
         ent_sl0,
         ent_l0,
-        ent_flashlight,
         stage: LevelStage::AwaitingFlashlightPickup,
     });
 }
@@ -240,7 +234,6 @@ pub struct LevelState {
     ent_lamp: Entity,
     ent_sl0: Entity,
     ent_l0: Entity,
-    ent_flashlight: Entity,
     stage: LevelStage,
 }
 
@@ -251,6 +244,7 @@ enum LevelStage {
     AwaitingMothsDeath { moths: Vec<Entity> },
     AwaitingZoneEnter,
     AwaitingKeyPickup,
+    AwaitingLeaving,
 }
 
 pub fn process(
@@ -334,7 +328,7 @@ pub fn process(
 
                 recalc_nav_data_tx.send(SyncNavData);
 
-                let moths = (1..5).map(|id| {
+                let moths = (1..=2).map(|id| {
                     MothMonster::spawn(
                         &assets,
                         &mut commands,
@@ -376,9 +370,8 @@ pub fn process(
                     LevelGameplayEvent::ZoneEntered(name)
                         if name == "door-a" || name == "door-b" =>
                     {
-                        typewriter_tx.send(TypewriterPrint::new(
-                            "gotcha this time......",
-                        ));
+                        typewriter_tx
+                            .send(TypewriterPrint::new("gotcha this time !!"));
 
                         let (moth_spawn_point, other_door) = if name == "door-a"
                         {
@@ -387,13 +380,11 @@ pub fn process(
                             ("monster-door-b", "door-a")
                         };
 
-                        for tag in [moth_spawn_point, "monster-door"] {
-                            MothMonster::spawn(
-                                &assets,
-                                &mut commands,
-                                level.locator.tag(tag),
-                            );
-                        }
+                        MothMonster::spawn(
+                            &assets,
+                            &mut commands,
+                            level.locator.tag(moth_spawn_point),
+                        );
 
                         for n in 1..=2 {
                             commands
@@ -417,6 +408,30 @@ pub fn process(
         }
 
         LevelStage::AwaitingKeyPickup => {
+            for event in level_tx.iter() {
+                match event {
+                    LevelGameplayEvent::ZoneEntered(name) if name == "key" => {
+                        typewriter_tx.send(TypewriterPrint::new(
+                            "no! you will never beat me.... !!",
+                        ));
+
+                        MothMonster::spawn(
+                            &assets,
+                            &mut commands,
+                            level.locator.tag("monster-key"),
+                        );
+
+                        level.stage = LevelStage::AwaitingLeaving;
+                    }
+
+                    _ => {
+                        //
+                    }
+                }
+            }
+        }
+
+        LevelStage::AwaitingLeaving => {
             //
         }
     }
