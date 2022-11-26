@@ -29,8 +29,8 @@ impl Audio {
 pub struct AudioPlugin;
 
 struct AudioOutput {
-    stream: OutputStream,
-    stream_handle: OutputStreamHandle,
+    _stream: OutputStream,
+    _stream_handle: OutputStreamHandle,
     sinks: Vec<Sink>,
 }
 
@@ -46,8 +46,8 @@ impl FromWorld for AudioOutput {
             .collect();
 
         Self {
-            stream,
-            stream_handle,
+            _stream: stream,
+            _stream_handle: stream_handle,
             sinks,
         }
     }

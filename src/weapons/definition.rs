@@ -20,6 +20,7 @@ pub enum BulletType {
     Rocket { explosion_radius: f32 },
 }
 
+#[allow(unused)]
 impl WeaponDefinition {
     pub fn new() -> Self {
         Self {
