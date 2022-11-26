@@ -8,6 +8,7 @@ use doome_bevy::physics::PhysicsEnabled;
 
 pub use self::cmd::*;
 use crate::inventory::Inventory;
+use crate::music::SwitchTrack;
 use crate::prelude::*;
 use crate::ui;
 use crate::weapons::{PrefabWeapons, Weapon, WeaponDefinition, WeaponSprites};
@@ -31,6 +32,7 @@ pub struct EventWriters<'w, 's> {
     death_tx: EventWriter<'w, 's, Death>,
     sync_nav_data_tx: EventWriter<'w, 's, SyncNavData>,
     goto_level_tx: EventWriter<'w, 's, GotoLevel>,
+    switch_track_tx: EventWriter<'w, 's, SwitchTrack>,
 }
 
 fn handle_commands(
@@ -137,7 +139,9 @@ fn handle_commands(
             }
 
             Command::Kill { entity } => {
-                event_writers.death_tx.send(Death(entity.0));
+                let entity = resolve_entity(entity, &player);
+
+                event_writers.death_tx.send(Death(entity));
             }
 
             Command::SyncNavData => {
@@ -234,6 +238,10 @@ fn handle_commands(
                     inventory.single_mut().keys.push(key);
                 }
             },
+
+            Command::SwitchTrack { track } => {
+                event_writers.switch_track_tx.send(SwitchTrack(track));
+            }
         }
     }
 }

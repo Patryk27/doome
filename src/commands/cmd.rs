@@ -5,6 +5,7 @@ use anyhow::{anyhow, Context};
 use bevy::prelude::Entity;
 use glam::Vec3;
 
+use crate::music::MusicTrack;
 use crate::prelude::*;
 
 #[derive(Debug, Clone)]
@@ -58,7 +59,7 @@ pub enum Command {
     },
 
     Kill {
-        entity: EntityHandle,
+        entity: EntityOrPlayer,
     },
 
     SyncNavData,
@@ -72,6 +73,9 @@ pub enum Command {
 
     Give {
         what: Item,
+    },
+    SwitchTrack {
+        track: MusicTrack,
     },
 }
 
@@ -199,6 +203,13 @@ impl FromStr for Command {
                 Ok(Command::Give { what: item })
             }
 
+            "switch-track" => {
+                let track = parts.next().context("Missing track")?;
+                let track = track.parse()?;
+
+                Ok(Command::SwitchTrack { track })
+            }
+
             _ => Err(anyhow!("Failed to parse command: {s}")),
         }
     }
@@ -279,6 +290,18 @@ impl FromStr for Item {
             "rpg" | "rocket-launcher" => Ok(Item::RocketLauncher),
             "handgun" => Ok(Item::Handgun),
             _ => Err(anyhow!("Invalid item: {s}")),
+        }
+    }
+}
+
+impl FromStr for MusicTrack {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "doome" => Ok(Self::Doome),
+            "chillout" => Ok(Self::Chillout),
+            _ => Err(anyhow!("Invalid music track: {s}")),
         }
     }
 }
