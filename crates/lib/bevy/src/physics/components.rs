@@ -60,7 +60,7 @@ impl Collider {
 
     pub fn line(start: Vec2, end: Vec2) -> Self {
         Self {
-            polygon: Polygon::new(vec![start, end]),
+            polygon: Polygon::line(start, end),
             is_detector: false,
         }
     }

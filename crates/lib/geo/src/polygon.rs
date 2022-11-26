@@ -2,37 +2,52 @@ use std::f32::consts::PI;
 
 use glam::Vec2;
 
+const LINE_THICKNESS: f32 = 0.25;
+
 /// A 2D convex polygon
 #[derive(Debug, Clone)]
 pub struct Polygon {
     points: Vec<Vec2>,
 }
 
+/// A convex polygon with points oriented in a counter-clockwise fashion.
+///
+/// The counter-clockwise arrangement is important for the SAT algorithm to work.
+/// It is because we want the edge normals for collisions to point away from the polygon.
+/// And the `Vec::perp` method returns a vector rotated 90 degrees clockwise.
 impl Polygon {
-    pub fn new(points: Vec<Vec2>) -> Self {
+    pub(crate) fn new(points: Vec<Vec2>) -> Self {
         Self { points }
     }
 
     pub fn rect(half_extents: Vec2) -> Self {
-        Self {
-            points: vec![
-                Vec2::new(-half_extents.x, -half_extents.y),
-                Vec2::new(half_extents.x, -half_extents.y),
-                Vec2::new(half_extents.x, half_extents.y),
-                Vec2::new(-half_extents.x, half_extents.y),
-            ],
-        }
+        Self::new(vec![
+            Vec2::new(-half_extents.x, -half_extents.y),
+            Vec2::new(half_extents.x, -half_extents.y),
+            Vec2::new(half_extents.x, half_extents.y),
+            Vec2::new(-half_extents.x, half_extents.y),
+        ])
+    }
+
+    /// We don't actually support lines with our collision implementation, so lines are just very thin rectangles
+    pub fn line(start: Vec2, end: Vec2) -> Self {
+        let line_vec = end - start;
+        let half_thickness =
+            line_vec.perp().normalize_or_zero() * LINE_THICKNESS * 0.5;
+
+        let start = start - half_thickness;
+        let end = end + half_thickness;
+
+        Self::rect_start_end(start, end)
     }
 
     pub fn rect_start_end(start: Vec2, end: Vec2) -> Self {
-        Self {
-            points: vec![
-                Vec2::new(start.x, start.y),
-                Vec2::new(start.x, end.y),
-                Vec2::new(end.x, end.y),
-                Vec2::new(end.x, start.y),
-            ],
-        }
+        Self::new(vec![
+            Vec2::new(start.x, start.y),
+            Vec2::new(end.x, start.y),
+            Vec2::new(end.x, end.y),
+            Vec2::new(start.x, end.y),
+        ])
     }
 
     pub fn circle(radius: f32, num_points: usize) -> Self {

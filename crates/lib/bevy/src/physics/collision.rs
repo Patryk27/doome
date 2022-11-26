@@ -89,7 +89,7 @@ pub fn resolve_collisions(
                 if body.body_type.is_kinematic()
                     && !passive_entity_collider.is_detector
                 {
-                    active_entity_transform.translation -=
+                    active_entity_transform.translation +=
                         physical_to_graphical(mtv);
 
                     if mtv.length() > MIN_MTV_LENGTH_TO_DECOMPOSE {
