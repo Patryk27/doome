@@ -202,7 +202,7 @@ fn sync_nav_data(
     let mut hivemind = hivemind.single_mut();
 
     let build_time_start = Instant::now();
-    let mut nav_data_builder = NavDataBuilder::new(0.6);
+    let mut nav_data_builder = NavDataBuilder::new(0.75);
 
     for (transform, collider) in walls.iter() {
         let polygon = collider.to_polygon(transform);
@@ -214,7 +214,7 @@ fn sync_nav_data(
 
     let nav_data = nav_data_builder.build();
 
-    // nav_data.rasterize().save("nav_data.png");
+    nav_data.rasterize().save("nav_data.png");
 
     let build_time = build_time_start.elapsed();
 

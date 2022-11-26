@@ -87,7 +87,7 @@ impl Weapon {
         let mut cmds = commands.spawn((
             bullet_transform,
             Material::default().with_uv_transparency().emissive(),
-            Collider::circle(self.definition.collider_radius, 6),
+            Collider::circle(self.definition.collider_radius, 6).detector(),
             Body {
                 acceleration: Vec2::ZERO,
                 velocity: graphical_to_physical(

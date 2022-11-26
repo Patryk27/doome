@@ -86,7 +86,9 @@ pub fn resolve_collisions(
                     entity_b: passive_entity,
                 });
 
-                if body.body_type.is_kinematic() {
+                if body.body_type.is_kinematic()
+                    && !passive_entity_collider.is_detector
+                {
                     active_entity_transform.translation -=
                         physical_to_graphical(mtv);
 

@@ -30,7 +30,7 @@ impl WeaponDefinition {
             bullet_model: None,
             bullet_damage: 10.0,
             bullet_scale: 1.0,
-            collider_radius: 0.75,
+            collider_radius: 0.5,
             limited_ammo: None,
             bullet_type: BulletType::Bullet,
         }

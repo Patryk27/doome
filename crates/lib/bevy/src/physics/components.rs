@@ -39,25 +39,35 @@ pub struct RayCastHit {
 #[derive(Component, Debug)]
 pub struct Collider {
     pub(super) polygon: Polygon,
+    /// Detector colliders are not solid, they only detect collisions
+    pub(super) is_detector: bool,
 }
 
 impl Collider {
     pub fn circle(radius: f32, n: usize) -> Self {
         Self {
             polygon: Polygon::circle(radius, n),
+            is_detector: false,
         }
     }
 
     pub fn rect(width: f32, height: f32) -> Self {
         Self {
             polygon: Polygon::rect(Vec2::new(width, height)),
+            is_detector: false,
         }
     }
 
     pub fn line(start: Vec2, end: Vec2) -> Self {
         Self {
             polygon: Polygon::new(vec![start, end]),
+            is_detector: false,
         }
+    }
+
+    pub fn detector(mut self) -> Self {
+        self.is_detector = true;
+        self
     }
 
     pub fn to_polygon(&self, transform: &Transform) -> Polygon {
