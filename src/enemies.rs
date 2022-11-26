@@ -1,3 +1,5 @@
+use std::f32::consts::E;
+
 use bevy::prelude::*;
 use doome_bevy::convert::{graphical_to_physical, physical_to_graphical};
 use doome_bevy::nav::NavObstacle;
@@ -159,6 +161,8 @@ fn enemy_movement(
     };
 
     for (mut enemy, mut body, mut transform, raycast) in enemies.iter_mut() {
+        body.velocity = Vec2::ZERO;
+
         if let Some(_player_pos) = player_entity_raycast(raycast, player_entity)
         {
             // TODO: Side strafing
@@ -175,22 +179,31 @@ fn follow_path_to_player(
     body: &mut Body,
 ) {
     let Some(path) = &mut enemy.path else { return };
-    let Some(next) = path.first() else {
-        enemy.path = None;
-        return;
-    };
 
     let pos = graphical_to_physical(transform.translation);
+
+    let mut path_items = path.drain(..).peekable();
+    loop {
+        let Some(next) = path_items.peek() else { return }; // return if path is empty
+
+        if pos.distance(*next) >= NEXT_PATH_NODE_PICK_DISTANCE {
+            break;
+        } else {
+            path_items.next().unwrap();
+        }
+    }
+
+    let remaining_path_items = path_items.collect();
+    *path = remaining_path_items;
+
+    let Some(next) = path.first() else { return }; // return if path is empty
 
     let dir = *next - pos;
-    let dir = dir.normalize_or_zero() * FOLLOW_SPEED;
-    body.velocity = dir;
+    let mut dir = dir.normalize_or_zero() * FOLLOW_SPEED;
 
     let pos = graphical_to_physical(transform.translation);
 
-    if pos.distance(*next) < NEXT_PATH_NODE_PICK_DISTANCE {
-        path.remove(0);
-    }
+    body.velocity = dir;
 }
 
 fn player_entity_raycast(
