@@ -18,6 +18,13 @@ use crate::renderer::RendererState;
 
 pub struct DoomeRaytracerPlugin;
 
+#[derive(StageLabel)]
+enum DoomeRaytracingStage {
+    DeleteGeometry,
+    Update,
+    Render,
+}
+
 impl Plugin for DoomeRaytracerPlugin {
     fn build(&self, app: &mut App) {
         let state = {
@@ -38,39 +45,45 @@ impl Plugin for DoomeRaytracerPlugin {
             }
         };
 
-        app.insert_resource(state)
-            .add_stage_after(
-                CoreStage::Update,
-                DoomeRaytracingStage,
-                SystemStage::parallel(),
-            )
-            .add_system_to_stage(DoomeRaytracingStage, sync_deleted_geometry)
-            .add_system_to_stage(
-                DoomeRaytracingStage,
-                sync_created_geometry.after(sync_deleted_geometry),
-            )
-            .add_system_to_stage(
-                DoomeRaytracingStage,
-                sync_updated_geometry.after(sync_deleted_geometry),
-            )
-            .add_system_to_stage(DoomeRaytracingStage, sync_lights)
-            .add_system_to_stage(DoomeRaytracingStage, sync_camera)
-            .add_system_to_stage(
-                CoreStage::PostUpdate,
-                render
-                    .after(sync_deleted_geometry)
-                    .after(sync_created_geometry)
-                    .after(sync_updated_geometry)
-                    .after(sync_lights)
-                    .after(sync_camera),
-            );
+        app.add_stage_after(
+            CoreStage::Update,
+            DoomeRaytracingStage::DeleteGeometry,
+            SystemStage::single_threaded(),
+        );
+
+        app.add_stage_after(
+            DoomeRaytracingStage::DeleteGeometry,
+            DoomeRaytracingStage::Update,
+            SystemStage::parallel(),
+        );
+
+        app.add_stage_after(
+            DoomeRaytracingStage::Update,
+            DoomeRaytracingStage::Render,
+            SystemStage::single_threaded(),
+        );
+
+        app.insert_resource(state);
+
+        app.add_system_to_stage(
+            DoomeRaytracingStage::DeleteGeometry,
+            sync_deleted_geometry,
+        );
+        app.add_system_to_stage(
+            DoomeRaytracingStage::Update,
+            sync_created_geometry,
+        );
+        app.add_system_to_stage(
+            DoomeRaytracingStage::Update,
+            sync_updated_geometry,
+        );
+        app.add_system_to_stage(DoomeRaytracingStage::Update, sync_lights);
+        app.add_system_to_stage(DoomeRaytracingStage::Update, sync_camera);
+        app.add_system_to_stage(DoomeRaytracingStage::Render, render);
 
         app.world.spawn(Camera::default());
     }
 }
-
-#[derive(StageLabel)]
-pub struct DoomeRaytracingStage;
 
 #[derive(Resource)]
 struct State {
