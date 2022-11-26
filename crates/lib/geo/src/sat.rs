@@ -16,12 +16,11 @@ pub fn resolve_sat(a: &Polygon, b: &Polygon) -> Option<Vec2> {
     let mut min_mtv = Vec2::ZERO;
 
     for axis in all_axes {
-        let a_vertices = project_vertices_onto(a.points(), axis);
-        let b_vertices = project_vertices_onto(b.points(), axis);
+        let a_proj = Proj::project(a.points(), axis);
+        let b_proj = Proj::project(b.points(), axis);
 
         // If there's no overlap we'll early return None
-        let (mtv, overlap) =
-            resolve_axis_projections(axis, &a_vertices, &b_vertices)?;
+        let (mtv, overlap) = resolve_axis_projections(axis, a_proj, b_proj)?;
 
         if overlap < min_overlap {
             min_overlap = overlap;
@@ -42,31 +41,27 @@ fn iter_separation_axes(poly: &Polygon) -> impl Iterator<Item = Vec2> + '_ {
 /// otherwise returns None
 fn resolve_axis_projections(
     axis: Vec2,
-    a: &[f32],
-    b: &[f32],
+    a: Proj,
+    b: Proj,
 ) -> Option<(Vec2, f32)> {
-    let a_min = a.iter().copied().fold(f32::NAN, f32::min);
-    let a_max = a.iter().copied().fold(f32::NAN, f32::max);
-    let b_min = b.iter().copied().fold(f32::NAN, f32::min);
-    let b_max = b.iter().copied().fold(f32::NAN, f32::max);
-
-    if a_max < b_min || b_max < a_min {
+    if !a.is_overlapping(b) {
         return None;
     }
 
-    let a_overlap = a_max - b_min;
-    let b_overlap = b_max - a_min;
+    let a_overlap = a.overlap(b);
+    let b_overlap = b.overlap(a);
+
     let mut overlap = a_overlap.min(b_overlap);
+
     let mut sign = 1.0;
 
-    if (a_min >= b_min && a_max <= b_max) || (b_min >= a_min && b_max <= a_max)
-    {
-        let mins = (a_min - b_min).abs();
-        let maxs = (a_max - b_max).abs();
+    if a.contains(b) || b.contains(a) {
+        let mins = (a.min - b.min).abs();
+        let maxs = (a.max - b.max).abs();
 
         if mins < maxs {
             overlap += mins;
-            sign *= -1.0;
+            sign = -1.0;
         } else {
             overlap += maxs;
         }
@@ -75,6 +70,41 @@ fn resolve_axis_projections(
     Some((axis * overlap * sign, overlap))
 }
 
-fn project_vertices_onto(vertices: &[Vec2], axis: Vec2) -> Vec<f32> {
-    vertices.iter().map(|v| axis.dot(*v)).collect::<Vec<_>>()
+/// Projection of polygon points onto an axis
+#[derive(Clone, Copy)]
+struct Proj {
+    min: f32,
+    max: f32,
+}
+
+impl Proj {
+    pub fn project(points: &[Vec2], axis: Vec2) -> Self {
+        let mut min = project_vertex(points[0], axis);
+        let mut max = min;
+
+        for point in points.iter().skip(1) {
+            let proj = project_vertex(*point, axis);
+
+            min = min.min(proj);
+            max = max.max(proj);
+        }
+
+        Self { min, max }
+    }
+
+    pub fn contains(self, other: Self) -> bool {
+        self.min <= other.min && self.max >= other.max
+    }
+
+    pub fn is_overlapping(self, other: Self) -> bool {
+        self.max >= other.min && other.max >= self.min
+    }
+
+    pub fn overlap(self, other: Self) -> f32 {
+        self.max - other.min
+    }
+}
+
+fn project_vertex(v: Vec2, axis: Vec2) -> f32 {
+    v.dot(axis)
 }
