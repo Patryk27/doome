@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use doome_bevy::audio::Audio;
 use doome_bevy::health::Health;
 use doome_bevy::physics::events::Collision;
 use doome_bevy::prelude::Assets;
@@ -38,6 +39,7 @@ impl Plugin for BulletsPlugin {
 fn collide_and_apply_damage(
     mut commands: Commands,
     assets: Res<Assets>,
+    mut audio: ResMut<Audio>,
     mut collisions: EventReader<Collision>,
     mut health: Query<&mut Health>,
     bullets: Query<(&Bullet, &Transform)>,
@@ -54,6 +56,7 @@ fn collide_and_apply_damage(
                 spawn_explosion(
                     &mut commands,
                     &assets,
+                    &mut audio,
                     transform.clone().with_scale(Vec3::ONE * explosion_radius),
                 );
             }

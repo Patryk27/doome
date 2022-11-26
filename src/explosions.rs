@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use doome_bevy::assets::Assets;
+use doome_bevy::audio::Audio;
 use doome_bevy::billboard::Billboard;
 use doome_bevy::components::{GeometryType, Material};
 use doome_bevy::model_animation::{ModelAnimation, ModelAnimationFrame};
@@ -10,6 +11,7 @@ pub struct Explosion;
 pub fn spawn_explosion(
     commands: &mut Commands,
     assets: &Assets,
+    audio: &mut Audio,
     transform: Transform,
 ) {
     let frames = (0..=11)
@@ -30,6 +32,8 @@ pub fn spawn_explosion(
     };
 
     let starting_model = model_animation.frames[5].handle;
+
+    audio.play(assets.load_sound("explosion"));
 
     commands.spawn((
         Explosion,

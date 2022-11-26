@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use doome_bevy::assets::Assets;
+use doome_bevy::audio::Audio;
 use doome_bevy::health::Death;
 
 use crate::enemies::Enemy;
@@ -16,6 +17,7 @@ impl Plugin for CharonPlugin {
 fn handle_enemy_deaths(
     mut commands: Commands,
     assets: Res<Assets>,
+    mut audio: ResMut<Audio>,
     mut deaths: EventReader<Death>,
     enemies: Query<(&Transform, &Enemy)>,
 ) {
@@ -25,7 +27,7 @@ fn handle_enemy_deaths(
             let mut transform = transform.clone().with_scale(Vec3::ONE * 6.0);
             transform.translation += Vec3::Y * 1.0;
 
-            spawn_explosion(&mut commands, &assets, transform);
+            spawn_explosion(&mut commands, &assets, &mut audio, transform);
 
             commands.entity(death.0).despawn();
         }
