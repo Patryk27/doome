@@ -1,5 +1,3 @@
-use std::f32::consts::E;
-
 use bevy::prelude::*;
 use doome_bevy::convert::{graphical_to_physical, physical_to_graphical};
 use doome_bevy::nav::NavObstacle;
@@ -147,12 +145,9 @@ const FOLLOW_SPEED: f32 = 4.0;
 const NEXT_PATH_NODE_PICK_DISTANCE: f32 = 0.5;
 
 fn enemy_movement(
-    time: Res<Time>,
     hivemind: Query<&Hivemind>,
     mut enemies: Query<(&mut Enemy, &mut Body, &mut Transform, &RayCast)>,
 ) {
-    let delta = time.delta_seconds();
-
     let hivemind = hivemind.single();
 
     let Some(player_entity) = hivemind.player_entity else {
@@ -199,9 +194,7 @@ fn follow_path_to_player(
     let Some(next) = path.first() else { return }; // return if path is empty
 
     let dir = *next - pos;
-    let mut dir = dir.normalize_or_zero() * FOLLOW_SPEED;
-
-    let pos = graphical_to_physical(transform.translation);
+    let dir = dir.normalize_or_zero() * FOLLOW_SPEED;
 
     body.velocity = dir;
 }

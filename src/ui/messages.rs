@@ -23,7 +23,7 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn new(text: impl ToString) -> Self {
+    pub fn _new(text: impl ToString) -> Self {
         Self {
             text: text.to_string(),
             timer: Timer::new(Duration::from_secs(2), TimerMode::Once),

@@ -1,6 +1,5 @@
 use std::io::Cursor;
 
-use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink};
 
@@ -94,15 +93,12 @@ impl Plugin for AudioPlugin {
     }
 }
 
-fn play_audio_players(
-    assets: Res<Assets>,
-    mut audio_players: Query<&AudioPlayer>,
-) {
-    for mut player in audio_players.iter() {
+fn play_audio_players(assets: Res<Assets>, audio_players: Query<&AudioPlayer>) {
+    for player in audio_players.iter() {
         if player.sink.len() < 2 {
             let sound = assets.sound(player.asset);
 
-            let mut source = Decoder::new(Cursor::new(sound.content.clone()))
+            let source = Decoder::new(Cursor::new(sound.content.clone()))
                 .expect("Failed to decode audio");
 
             player.sink.append(source);

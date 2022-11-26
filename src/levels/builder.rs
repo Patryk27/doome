@@ -243,6 +243,7 @@ pub struct LevelModelBuilder<'w, 's, 'a> {
     is_obstacle: bool,
 }
 
+#[allow(unused)]
 impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
     fn new(
         commands: &'a mut Commands<'w, 's>,
