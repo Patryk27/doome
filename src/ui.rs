@@ -1,6 +1,7 @@
 mod angrey;
 mod blood;
 mod command_line;
+mod game_over;
 pub mod gun;
 mod health;
 mod messages;
@@ -48,12 +49,15 @@ impl Plugin for UiPlugin {
             .add_event::<Message>()
             .add_system(messages::update);
 
+        // Blood
+        app.add_startup_system(blood::setup);
+
+        // Game Over
+        app.add_startup_system(game_over::setup);
+
         // Command line
         app.add_startup_system(command_line::setup)
             .add_system(command_line::update);
-
-        // Blood
-        app.add_startup_system(blood::setup);
 
         // Ui rendering systems (strictly ordered)
         app.add_system(ordered_systems! {
@@ -63,6 +67,7 @@ impl Plugin for UiPlugin {
             => angrey::render
             => health::render
             => canvas_render_texts
+            => game_over::render
             => command_line::render
         });
     }
