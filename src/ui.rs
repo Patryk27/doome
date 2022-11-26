@@ -23,6 +23,9 @@ pub use self::typewriter::*;
 use crate::prelude::Inventory;
 use crate::weapons::PrefabWeapons;
 
+pub const HEALTHY_THRESHOLD: f32 = 50.0;
+pub const WOUNDED_THRESHOLD: f32 = 25.0;
+
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
@@ -131,11 +134,19 @@ fn canvas_render_texts(
         let key_image = assets.image(key_image);
 
         for (key_idx, key) in inventory.keys.iter().enumerate() {
-            canvas.blit(
+            let color = key.color();
+            let color = doome_surface::Color {
+                r: (color.r * 255.0) as u8,
+                g: (color.g * 255.0) as u8,
+                b: (color.b * 255.0) as u8,
+                a: 255,
+            };
+
+            canvas.blit_blended(
                 WIDTH - 16 - 5,
                 5 + (key_idx as u16) * 16,
                 key_image,
-                key.color().into_tuple(),
+                color,
             );
         }
     }

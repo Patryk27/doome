@@ -29,7 +29,7 @@ impl Picker {
     pub fn heart() -> Self {
         Self::new("heart").on_pickup(Command::Heal {
             entity: EntityOrPlayer::Player,
-            amount: 35.0,
+            amount: 25.0,
         })
     }
 

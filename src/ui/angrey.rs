@@ -5,6 +5,8 @@ use doome_bevy::health::Health;
 use doome_bevy::prelude::Player;
 use doome_engine::Canvas;
 
+use super::{HEALTHY_THRESHOLD, WOUNDED_THRESHOLD};
+
 const FACE_SWAY_SPEED: f32 = 2.0;
 const ANGRY_JITTER_SPEED: (f32, f32) = (128.7, 120.13);
 
@@ -32,9 +34,9 @@ pub fn render(
     let mehey_face = assets.load_image("mehey");
     let angrey_face = assets.load_image("angrey");
 
-    let state = if health.health > 50.0 {
+    let state = if health.health > HEALTHY_THRESHOLD {
         State::Happy
-    } else if health.health > 25.0 {
+    } else if health.health > WOUNDED_THRESHOLD {
         State::Meh
     } else {
         State::Angrey
@@ -46,14 +48,9 @@ pub fn render(
         State::Angrey => angrey_face,
     };
 
-    canvas.blit(0, 0, assets.image(ui_image), (1.0, 1.0, 1.0));
+    canvas.blit(0, 0, assets.image(ui_image));
 
-    canvas.blit(
-        0,
-        0,
-        assets.image(gun_state.current_weapon.ui_icon),
-        (1.0, 1.0, 1.0),
-    );
+    canvas.blit(0, 0, assets.image(gun_state.current_weapon.ui_icon));
 
     let seconds = time.elapsed_seconds();
     let (x, y) = match state {
@@ -92,5 +89,5 @@ pub fn render(
         }
     };
 
-    canvas.blit(x, y, assets.image(face), (1.0, 1.0, 1.0));
+    canvas.blit(x, y, assets.image(face));
 }

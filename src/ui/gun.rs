@@ -85,12 +85,7 @@ pub fn render(
         state.current_weapon.idle
     };
 
-    canvas.blit(
-        sway_x,
-        sway_y - GUN_OFFSET_Y,
-        assets.image(gun_image),
-        (1.0, 1.0, 1.0),
-    );
+    canvas.blit(sway_x, sway_y - GUN_OFFSET_Y, assets.image(gun_image));
 }
 
 pub fn trigger_animation(

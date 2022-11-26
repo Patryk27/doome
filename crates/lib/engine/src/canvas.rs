@@ -25,6 +25,16 @@ impl<'f, T> Canvas<'f, T> {
         self.frame.fill(0);
     }
 
+    pub fn fill(&mut self, color: Color) {
+        self.frame.fill(color.a);
+        self.frame.chunks_exact_mut(4).for_each(|chunk| {
+            chunk[0] = color.r;
+            chunk[1] = color.g;
+            chunk[2] = color.b;
+            chunk[3] = color.a;
+        });
+    }
+
     pub fn set(&mut self, x: u16, y: u16, color: Color) {
         Surface { frame: self.frame }.set(x, y, color);
     }
@@ -37,12 +47,12 @@ impl<'f, T> Canvas<'f, T> {
         }
     }
 
-    pub fn blit(
+    pub fn blit_blended(
         &mut self,
         x_offset: u16,
         y_offset: u16,
         image: &RgbaImage,
-        (blend_r, blend_g, blend_b): (f32, f32, f32),
+        blend_color: Color,
     ) {
         let (width, height) = image.dimensions();
 
@@ -56,11 +66,15 @@ impl<'f, T> Canvas<'f, T> {
                     b: color[2],
                     a: color[3],
                 }
-                .blend(blend_r, blend_g, blend_b);
+                .blend(blend_color);
 
                 self.set(x_offset + x as u16, y_offset + y as u16, color);
             }
         }
+    }
+
+    pub fn blit(&mut self, x_offset: u16, y_offset: u16, image: &RgbaImage) {
+        self.blit_blended(x_offset, y_offset, image, Color::WHITE)
     }
 }
 
