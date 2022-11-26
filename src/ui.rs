@@ -1,4 +1,5 @@
 mod angrey;
+mod blood;
 mod command_line;
 pub mod gun;
 mod health;
@@ -48,9 +49,13 @@ impl Plugin for UiPlugin {
         app.add_startup_system(command_line::setup)
             .add_system(command_line::update);
 
+        // Blood
+        app.add_startup_system(blood::setup);
+
         // Ui rendering systems (strictly ordered)
         app.add_system(ordered_systems! {
             canvas_clear
+            => blood::render
             => gun::render
             => angrey::render
             => health::render

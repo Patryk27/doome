@@ -63,6 +63,18 @@ impl Assets {
             })?;
         }
 
+        for (name, path) in loader.find("audio", "ogg")? {
+            loader.load_sound(&name, &path).with_context(|| {
+                format!("Couldn't load image: {}", path.display())
+            })?;
+        }
+
+        for (name, path) in loader.find("audio", "mp3")? {
+            loader.load_sound(&name, &path).with_context(|| {
+                format!("Couldn't load image: {}", path.display())
+            })?;
+        }
+
         Ok(loader.build())
     }
 

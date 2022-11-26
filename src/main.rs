@@ -38,6 +38,7 @@ mod prelude {
 
 use bevy::prelude::*;
 use doome_bevy::assets::Assets;
+use doome_bevy::audio::{AudioOutput, AudioPlayer};
 use doome_bevy::text::TextEngine;
 use doome_engine::{HEIGHT, WIDTH};
 
@@ -110,5 +111,20 @@ fn main() {
         .add_system(
             Flashlight::sync_with_player.after(player::process_movement),
         )
+        .add_startup_system(setup_music)
         .run();
+}
+
+// TODO: This is very WIP. We need to control what music is playing in which level
+fn setup_music(
+    mut commands: Commands,
+    audio_output: NonSend<AudioOutput>,
+    assets: Res<Assets>,
+) {
+    let music = assets.load_sound("audiorezout_time_hurries");
+
+    let player = AudioPlayer::new(music, &audio_output);
+    player.set_volume(0.1);
+
+    commands.spawn(player);
 }
