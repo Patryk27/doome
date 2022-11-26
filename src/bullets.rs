@@ -23,8 +23,14 @@ impl Bullet {
 
 pub struct BulletsPlugin;
 
+pub struct DamageDealt {
+    pub amount: f32,
+    pub entity: Entity,
+}
+
 impl Plugin for BulletsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
+        app.add_event::<DamageDealt>();
         app.add_system(collide_and_apply_damage);
     }
 }
@@ -35,6 +41,7 @@ fn collide_and_apply_damage(
     mut collisions: EventReader<Collision>,
     mut health: Query<&mut Health>,
     bullets: Query<(&Bullet, &Transform)>,
+    mut dmg_events: EventWriter<DamageDealt>,
 ) {
     for collision in collisions.iter() {
         if let Ok((bullet, transform)) = bullets.get(collision.entity_a) {
@@ -56,6 +63,10 @@ fn collide_and_apply_damage(
             }
 
             if let Ok(mut health) = health.get_mut(collision.entity_b) {
+                dmg_events.send(DamageDealt {
+                    amount: bullet.damage,
+                    entity: collision.entity_b,
+                });
                 health.health -= bullet.damage;
             }
         }

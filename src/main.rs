@@ -18,6 +18,7 @@ mod markers;
 mod objects;
 mod pickable;
 mod player;
+mod sounds;
 mod ui;
 mod units;
 mod weapons;
@@ -94,6 +95,7 @@ fn main() {
         // ===== //
         // doome //
         .add_plugin(enemies::EnemiesPlugin)
+        .add_plugin(sounds::SoundsPlugin)
         .add_plugin(bullets::BulletsPlugin)
         .add_plugin(weapons::WeaponsPlugin)
         .add_plugin(charon::CharonPlugin)
