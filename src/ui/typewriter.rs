@@ -64,7 +64,7 @@ impl TypewriterText {
             0,
             0,
             WIDTH,
-            5 + LINE_HEIGHT + 5,
+            5 + (self.layout.len() as u16) * LINE_HEIGHT + 5,
             Color {
                 r: 0,
                 g: 0,

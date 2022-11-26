@@ -1,5 +1,3 @@
-//! TODO bring back reflective floor
-
 use std::f32::consts::PI;
 
 use indoc::indoc;
@@ -10,6 +8,8 @@ use crate::prelude::*;
 const INTRO_TEXT: &str = indoc! {r#"
     Hello, Neo.
 
+    The world needs your help... again!%{s0.50}
+
     Move using WASD + mouse or comma / period.
     Shoot using space.
 
@@ -17,21 +17,16 @@ const INTRO_TEXT: &str = indoc! {r#"
 "#};
 
 const OUTRO_TEXT: &str = indoc! {r#"
-    long time ago, in a galaxy not so far away
-    (( planet earth, actually, area 51 ))
+    So:
 
-    there was a fridge
+    On planet Earth, in Area 51, there is a desert.
     %{s0.25}
-    that fridge had an LCD panel, running ubuntu
-    0.69
+    On that desert, there stands a fridge with an
+    LCD panel.
     %{s0.25}
-    on that ubuntu, a minecraft server, running
-    a redstone computer
+    On that panel, there is Windows 4.20.
     %{s0.25}
-    on that redstone computer, a virtual machine
-    emulating windows 4.20
-    %{s0.25}
-    in there? %{s2.0}
+    On its desktop? %{s1.0}
 
 
 
@@ -53,21 +48,27 @@ const OUTRO_TEXT: &str = indoc! {r#"
 
 
 
-    %{c}mr freeman, we are now connecting you to
-    the terminal that will allow you to play that
-    game
+    %{c}Mr Freeman, our intel says someone wants to
+    destroy that fridge, obliterating DOOM from
+    existence -- will you help us?%{s1.0}
 
-    your mission?%{s1.0}
+    Great!
 
-    save the world.%{s0.8}
+    In a moment we will connect you to a hacking
+    terminal - your mission?%{s1.0}
 
-    break a leg
+    Save the world.%{s0.8}
+
+    !! DON'T DIE !!
+    (( break a leg ))
 
     $ ping google.com%{h}
     PING google.com (274.271.61.64) 64(64) bytes
     64 bytes from 1337.g00gl3.net: time=1 ms
-    64 bytes from 1337.g00gl3.net: time=2 ms
-    64 bytes from 1337.g00gl3.net: time=3 ms
+    64 bytes from 1337.g00gl3
+
+    ERROR: communication taken over by a
+    virus, virus, virus, virus......
 "#};
 
 const MAIN_CENTER_Z: f32 = (21.0 + 37.0) / 2.0;
@@ -96,10 +97,16 @@ pub fn init(
 
     let mut lvl = LevelBuilder::new(&mut commands, &assets);
 
-    lvl.floor(-1, -1, 1, 20).spawn();
-    lvl.wall(1, -1, 1, 20, 1).spawn();
-    lvl.wall(-1, -1, 1, -1, 2).spawn();
-    lvl.wall(-1, -1, -1, 20, 3).spawn();
+    lvl.floor(-1, -1, 1, 20)
+        .alter_material(|mat| {
+            mat.with_reflectivity(0.1)
+                .with_reflection_color(Color::hex(0xffffff))
+        })
+        .spawn();
+
+    lvl.wall(2, -1, 2, 20, 1).spawn();
+    lvl.wall(-2, -1, 2, -1, 2).spawn();
+    lvl.wall(-2, -1, -2, 20, 3).spawn();
 
     let corr_sl0 = lvl
         .spot_light(
@@ -147,12 +154,18 @@ pub fn init(
 
     // -----
 
-    lvl.floor(-8, 21, 8, 37).spawn();
-    lvl.wall(-8, 37, 8, 37, 0).spawn();
-    lvl.wall(8, 37, 8, 21, 1).spawn();
-    lvl.wall(-8, 21, -2, 21, 2).spawn();
-    lvl.wall(8, 21, 2, 21, 2).spawn();
-    lvl.wall(-8, 37, -8, 21, 3).spawn();
+    lvl.floor(-8, 21, 8, 37)
+        .alter_material(|mat| {
+            mat.with_reflectivity(0.1)
+                .with_reflection_color(Color::hex(0xffffff))
+        })
+        .spawn();
+
+    lvl.wall(-9, 38, 9, 38, 0).spawn();
+    lvl.wall(9, 38, 9, 21, 1).spawn();
+    lvl.wall(-9, 20, -2, 20, 2).spawn();
+    lvl.wall(9, 20, 2, 20, 2).spawn();
+    lvl.wall(-9, 38, -9, 21, 3).spawn();
 
     lvl.model("elephant")
         .with_translation(vec3(0.0, 1.0, ELEPHANT_Z))
@@ -164,6 +177,7 @@ pub fn init(
                 .with_reflectivity(0.8)
                 .with_reflection_color(Color::hex(0xffffff)),
         )
+        .with_collider(Collider::circle(4.0, 16))
         .spawn();
 
     let main_sl0 = lvl
@@ -245,6 +259,7 @@ pub fn process(
     camera: Query<&Camera>,
     mut typewriter_tx: EventWriter<TypewriterPrint>,
     mut visibilities: Query<&mut Visibility>,
+    mut goto_level_tx: EventWriter<GotoLevel>,
 ) {
     let Ok(mut level) = level.get_single_mut() else { return };
 
@@ -412,7 +427,11 @@ pub fn process(
         }
 
         LevelStage::Outro { tt } => {
-            //
+            *tt += time.delta_seconds();
+
+            if *tt > 60.0 {
+                goto_level_tx.send(GotoLevel::new(Level::l2()));
+            }
         }
     }
 }

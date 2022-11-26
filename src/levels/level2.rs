@@ -296,7 +296,7 @@ pub fn process(
 
             if txt_rise_timer.just_finished() {
                 typewriter_tx.send(TypewriterPrint::new(
-                    "rise and shine mr freeman....... rise and shine....",
+                    "heheh.... rise and shine mr freeman.......",
                 ));
 
                 level.stage = LevelStage::Intro1 {
