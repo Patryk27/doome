@@ -30,6 +30,11 @@ impl MothMonster {
                     hit: None,
                 },
                 Collider::circle(0.5, 6),
+                Body {
+                    acceleration: Vec2::ZERO,
+                    velocity: Vec2::ZERO,
+                    body_type: BodyType::Kinematic,
+                },
                 Weapon::new(Arc::new(weapon)), // TODO: arc is inefficient here
             ))
             .id()

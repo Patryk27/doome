@@ -141,7 +141,7 @@ pub fn handle_shooting(
     }
 
     if mouse.pressed(MouseButton::Left) || keys.pressed(KeyCode::Space) {
-        weapon.shoot(&mut commands, &transform);
+        weapon.shoot(&mut commands, &transform, transform.forward());
         shots.send(PlayerShot);
     }
 }

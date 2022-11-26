@@ -67,7 +67,12 @@ impl Weapon {
         self.ammo.map(|ammo| ammo == 0).unwrap_or(false)
     }
 
-    pub fn shoot(&mut self, commands: &mut Commands, transform: &Transform) {
+    pub fn shoot(
+        &mut self,
+        commands: &mut Commands,
+        transform: &Transform,
+        direction: Vec3,
+    ) {
         self.cooldown_timer = self.definition.cooldown;
 
         if let Some(ammo) = self.ammo.as_mut() {
@@ -91,7 +96,7 @@ impl Weapon {
             Body {
                 acceleration: Vec2::ZERO,
                 velocity: graphical_to_physical(
-                    forward.normalize() * self.definition.bullet_speed,
+                    direction.normalize() * self.definition.bullet_speed,
                 ),
                 body_type: BodyType::Ethereal,
             },
