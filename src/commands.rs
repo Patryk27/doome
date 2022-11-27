@@ -36,6 +36,18 @@ pub struct EventWriters<'w, 's> {
     switch_track_tx: EventWriter<'w, 's, SwitchTrack>,
 }
 
+#[derive(SystemParam)]
+struct Queries<'w, 's> {
+    colliders: Query<'w, 's, &'static Collider>,
+    all_entities: Query<'w, 's, Entity>,
+    player: Query<'w, 's, Entity, With<Player>>,
+    enemies: Query<'w, 's, Entity, With<Enemy>>,
+    weapons: Query<'w, 's, &'static mut Weapon>,
+    transforms: Query<'w, 's, &'static mut Transform>,
+    healths: Query<'w, 's, &'static mut Health>,
+    inventory: Query<'w, 's, &'static mut Inventory>,
+}
+
 fn handle_commands(
     mut game_commands: EventReader<Command>,
     mut commands: Commands,
@@ -47,13 +59,7 @@ fn handle_commands(
     mut input_lock: ResMut<InputLock>,
     mut weapon_sprites: ResMut<ui::gun::State>,
     // Queries
-    colliders: Query<&Collider>,
-    all_entities: Query<Entity>,
-    player: Query<Entity, With<Player>>,
-    mut weapons: Query<&mut Weapon>,
-    mut transforms: Query<&mut Transform>,
-    mut healths: Query<&mut Health>,
-    mut inventory: Query<&mut Inventory>,
+    mut queries: Queries,
     // Event writers
     mut event_writers: EventWriters,
 ) {
@@ -74,7 +80,7 @@ fn handle_commands(
             }
 
             Command::ListEntities => {
-                for entity in all_entities.iter() {
+                for entity in queries.all_entities.iter() {
                     event_writers
                         .output_tx
                         .send(CommandOutput(format!("{}", entity.to_bits())));
@@ -82,8 +88,8 @@ fn handle_commands(
             }
 
             Command::Position { entity } => {
-                let entity = resolve_entity(entity, &player);
-                let transform = transforms.get(entity).unwrap();
+                let entity = resolve_entity(entity, &queries.player);
+                let transform = queries.transforms.get(entity).unwrap();
 
                 event_writers
                     .output_tx
@@ -91,22 +97,24 @@ fn handle_commands(
             }
 
             Command::Move { entity, position } => {
-                let entity = resolve_entity(entity, &player);
-                let mut transform = transforms.get_mut(entity).unwrap();
+                let entity = resolve_entity(entity, &queries.player);
+                let mut transform = queries.transforms.get_mut(entity).unwrap();
 
                 transform.translation = position;
             }
 
             Command::SetHealth { entity, health } => {
-                let entity = resolve_entity(entity, &player);
-                let mut health_component = healths.get_mut(entity).unwrap();
+                let entity = resolve_entity(entity, &queries.player);
+                let mut health_component =
+                    queries.healths.get_mut(entity).unwrap();
 
                 health_component.health = health;
             }
 
             Command::Heal { entity, amount } => {
-                let entity = resolve_entity(entity, &player);
-                let mut health_component = healths.get_mut(entity).unwrap();
+                let entity = resolve_entity(entity, &queries.player);
+                let mut health_component =
+                    queries.healths.get_mut(entity).unwrap();
 
                 health_component.heal(amount);
             }
@@ -140,8 +148,14 @@ fn handle_commands(
                 commands.entity(entity.0).despawn();
             }
 
+            Command::DespawnAllEnemies => {
+                for entity in queries.enemies.iter() {
+                    commands.entity(entity).despawn();
+                }
+            }
+
             Command::Kill { entity } => {
-                let entity = resolve_entity(entity, &player);
+                let entity = resolve_entity(entity, &queries.player);
 
                 event_writers.death_tx.send(Death(entity));
             }
@@ -169,11 +183,11 @@ fn handle_commands(
 
                 let mut n = 0;
                 let mut lines = String::new();
-                for entity in all_entities.iter() {
+                for entity in queries.all_entities.iter() {
                     let mut points = "{polygon}(".to_string();
 
-                    let Ok(transform) = transforms.get(entity) else { continue };
-                    let Ok(collider) = colliders.get(entity) else { continue };
+                    let Ok(transform) = queries.transforms.get(entity) else { continue };
+                    let Ok(collider) = queries.colliders.get(entity) else { continue };
 
                     let polygon = collider.to_polygon(transform);
 
@@ -209,35 +223,35 @@ fn handle_commands(
 
             Command::Give { what } => match what {
                 Item::Flashlight => {
-                    let mut inventory = inventory.single_mut();
+                    let mut inventory = queries.inventory.single_mut();
                     inventory.has_flashlight = true;
                 }
                 Item::Rifle => {
                     give_gun_to_player(
-                        &player,
-                        &mut weapons,
+                        &queries.player,
+                        &mut queries.weapons,
                         &mut weapon_sprites,
                         &prefab_weapons.rifle,
                     );
                 }
                 Item::RocketLauncher => {
                     give_gun_to_player(
-                        &player,
-                        &mut weapons,
+                        &queries.player,
+                        &mut queries.weapons,
                         &mut weapon_sprites,
                         &prefab_weapons.rpg,
                     );
                 }
                 Item::Handgun => {
                     give_gun_to_player(
-                        &player,
-                        &mut weapons,
+                        &queries.player,
+                        &mut queries.weapons,
                         &mut weapon_sprites,
                         &prefab_weapons.handgun,
                     );
                 }
                 Item::Key(key) => {
-                    inventory.single_mut().keys.push(key);
+                    queries.inventory.single_mut().keys.push(key);
                 }
             },
 

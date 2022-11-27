@@ -58,6 +58,9 @@ pub enum Command {
         entity: EntityHandle,
     },
 
+    /// Despawns all enemies
+    DespawnAllEnemies,
+
     Kill {
         entity: EntityOrPlayer,
     },
@@ -179,6 +182,8 @@ impl FromStr for Command {
 
                 Ok(Command::Despawn { entity })
             }
+
+            "despawn-all-enemies" => Ok(Command::DespawnAllEnemies),
 
             "kill" => {
                 let entity = parts.next().context("Missing entity")?.parse()?;
