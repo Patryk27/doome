@@ -70,6 +70,10 @@ impl Collider {
         self
     }
 
+    pub fn is_detector(&self) -> bool {
+        self.is_detector
+    }
+
     pub fn to_polygon(&self, transform: &Transform) -> Polygon {
         let matrix = transform.compute_matrix();
 

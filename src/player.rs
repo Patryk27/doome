@@ -1,6 +1,7 @@
 use bevy::input::mouse::MouseMotion;
 use doome_bevy::convert::graphical_to_physical;
 
+use crate::bullets::DamageDealt;
 use crate::commands::{Command, Item};
 use crate::prelude::*;
 use crate::weapons::{PrefabWeapons, Weapon};
@@ -35,6 +36,7 @@ impl Plugin for PlayerPlugin {
         app.add_system(handle_shooting);
         app.add_system(sync_camera.after(process_movement));
         app.add_system(update_screen_shake);
+        app.add_system(add_screen_shake_on_damage);
     }
 }
 
@@ -203,5 +205,19 @@ pub fn handle_shooting(
     if mouse.pressed(MouseButton::Left) || keys.pressed(KeyCode::Space) {
         weapon.shoot(&mut commands, &transform, transform.forward());
         shots.send(PlayerShot);
+    }
+}
+
+fn add_screen_shake_on_damage(
+    player: Query<(Entity, &Player)>,
+    mut damage_events: EventReader<DamageDealt>,
+    mut screen_shake: EventWriter<AddScreenShake>,
+) {
+    let (player_entity, _) = player.single();
+
+    for ev in damage_events.iter() {
+        if ev.entity == player_entity {
+            screen_shake.send(AddScreenShake(0.2));
+        }
     }
 }

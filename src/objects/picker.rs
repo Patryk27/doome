@@ -92,7 +92,7 @@ impl Picker {
                 .with_texture(texture)
                 .emissive()
                 .with_uv_transparency(),
-            Collider::circle(1.25, 6),
+            Collider::circle(1.25, 6).detector(),
         ));
 
         if let Some(on_pickup) = self.on_pickup {

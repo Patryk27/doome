@@ -227,6 +227,10 @@ fn sync_nav_data(
     let mut nav_data_builder = NavDataBuilder::new(0.75);
 
     for (transform, collider) in walls.iter() {
+        if collider.is_detector() {
+            continue;
+        }
+
         let polygon = collider.to_polygon(transform);
         log::trace!("Adding polygon: {:?}", polygon);
         nav_data_builder.push_polygon(polygon);
