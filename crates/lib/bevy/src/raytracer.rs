@@ -6,15 +6,18 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 use doome_engine::{HEIGHT, WIDTH};
 use doome_raytracer as rt;
-use glam::{vec2, vec3};
+use glam::{vec2, vec3, Vec4Swizzles};
 use instant::Instant;
 
 use self::geometry_manager::*;
 use self::materials_manager::*;
 use crate::assets::{AssetHandle, Assets, Model};
 use crate::components::*;
+use crate::convert::physical_to_graphical;
 use crate::doome::DoomeRenderer;
+use crate::physics::components::Collider;
 use crate::renderer::RendererState;
+use crate::rendering_options::RenderingOptions;
 
 pub struct DoomeRaytracerPlugin;
 
@@ -77,6 +80,11 @@ impl Plugin for DoomeRaytracerPlugin {
             DoomeRaytracingStage::Update,
             sync_updated_geometry,
         );
+        app.add_system_to_stage(
+            DoomeRaytracingStage::Update,
+            update_collider_data_for_debug_pass,
+        );
+
         app.add_system_to_stage(DoomeRaytracingStage::Update, sync_lights);
         app.add_system_to_stage(DoomeRaytracingStage::Update, sync_camera);
         app.add_system_to_stage(DoomeRaytracingStage::Render, render);
@@ -224,7 +232,10 @@ fn sync_lights(
 }
 
 fn sync_camera(
+    rendering_options: Res<RenderingOptions>,
     mut state: ResMut<State>,
+    renderer_state: Res<RendererState>,
+    renderer: Res<DoomeRenderer>,
     camera: Query<&Camera, Changed<Camera>>,
 ) {
     let Ok(camera) = camera.get_single() else { return };
@@ -233,10 +244,58 @@ fn sync_camera(
         *origin = camera.origin;
         *look_at = camera.look_at;
     });
+
+    if rendering_options.debug_pass_enabled {
+        let view_proj = {
+            let offset = Vec3::NEG_Y * 2.0;
+            let view = Mat4::look_at_rh(
+                state.camera.origin.xyz() + offset,
+                state.camera.look_at.xyz() + offset,
+                state.camera.up.xyz(),
+            );
+            let fov = state.camera.viewport_size.z;
+            let aspect =
+                state.camera.viewport_size.x / state.camera.viewport_size.y;
+            let proj = Mat4::perspective_rh(fov, aspect, 0.1, 100.0);
+            proj * view
+        };
+
+        let queue = &renderer_state.queue;
+        renderer.debug_pass.update_projection(queue, view_proj)
+    }
+}
+
+fn update_collider_data_for_debug_pass(
+    rendering_options: Res<RenderingOptions>,
+    renderer: Res<DoomeRenderer>,
+    renderer_state: Res<RendererState>,
+    colliders: Query<(&Collider, &Transform)>,
+) {
+    if !rendering_options.debug_pass_enabled {
+        return;
+    }
+
+    let queue = &renderer_state.queue;
+
+    let mut lines = vec![];
+
+    for (collider, transform) in colliders.iter() {
+        let polygon = collider.to_polygon(transform);
+
+        for (start, end) in polygon.iter_edges() {
+            lines.push(physical_to_graphical(start));
+            lines.push(physical_to_graphical(end));
+        }
+    }
+
+    renderer
+        .debug_pass
+        .update_data(queue, &lines, lines.len() / 2);
 }
 
 fn render(
     time: Res<Time>,
+    rendering_options: Res<RenderingOptions>,
     renderer: Res<DoomeRenderer>,
     renderer_state: Res<RendererState>,
     mut raytracer_state: ResMut<State>,
@@ -254,6 +313,7 @@ fn render(
         raytracer,
         pixels,
         screen_space_effects,
+        debug_pass,
         scaler,
         shader_constants,
         ..
@@ -309,6 +369,11 @@ fn render(
         shader_constants,
         sse_texture,
     );
+
+    if rendering_options.debug_pass_enabled {
+        debug_pass.render(queue, &mut encoder, shader_constants, sse_texture);
+    }
+
     scaler.render(queue, &mut encoder, shader_constants, &texture_view);
 
     renderer_state.queue.submit(vec![encoder.finish()]);

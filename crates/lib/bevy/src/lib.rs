@@ -14,6 +14,7 @@ pub mod player;
 pub mod renderer;
 pub mod simple_animations;
 pub mod text;
+pub mod rendering_options;
 
 mod raytracer;
 

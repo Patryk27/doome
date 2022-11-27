@@ -50,7 +50,7 @@ where
                 .enumerate()
                 .map(|(binding, _)| wgpu::BindGroupLayoutEntry {
                     binding: binding as _,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,

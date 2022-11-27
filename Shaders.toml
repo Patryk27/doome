@@ -17,3 +17,7 @@ target-dir = "crates/lib/pixels/src/shader"
 [[shaders]]
 source-dir = "crates/shaders/crt"
 target-dir = "crates/lib/screen-space-effects/src/crt"
+
+[[shaders]]
+source-dir = "crates/shaders/debug"
+target-dir = "crates/lib/debug-pass/src/debug-pass"
