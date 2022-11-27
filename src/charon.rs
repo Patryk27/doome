@@ -5,6 +5,7 @@ use doome_bevy::health::Death;
 
 use crate::enemies::Enemy;
 use crate::explosions::spawn_explosion;
+use crate::player::AddScreenShake;
 
 pub struct CharonPlugin;
 
@@ -19,6 +20,7 @@ fn handle_enemy_deaths(
     assets: Res<Assets>,
     mut audio: ResMut<Audio>,
     mut deaths: EventReader<Death>,
+    mut screen_shakes: EventWriter<AddScreenShake>,
     enemies: Query<(&Transform, &Enemy)>,
 ) {
     for death in deaths.iter() {
@@ -28,6 +30,7 @@ fn handle_enemy_deaths(
             transform.translation += Vec3::Y * 1.0;
 
             spawn_explosion(&mut commands, &assets, &mut audio, transform);
+            screen_shakes.send(AddScreenShake(0.5));
 
             commands.entity(death.0).despawn();
         }

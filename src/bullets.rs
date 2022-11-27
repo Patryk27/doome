@@ -5,6 +5,7 @@ use doome_bevy::physics::events::Collision;
 use doome_bevy::prelude::Assets;
 
 use crate::explosions::spawn_explosion;
+use crate::player::AddScreenShake;
 use crate::weapons::BulletType;
 
 #[derive(Component)]
@@ -44,6 +45,7 @@ fn collide_and_apply_damage(
     mut health: Query<&mut Health>,
     bullets: Query<(&Bullet, &Transform)>,
     mut dmg_events: EventWriter<DamageDealt>,
+    mut screen_shakes: EventWriter<AddScreenShake>,
 ) {
     for collision in collisions.iter() {
         if let Ok((bullet, transform)) = bullets.get(collision.entity_a) {
@@ -59,6 +61,7 @@ fn collide_and_apply_damage(
                     &mut audio,
                     transform.clone().with_scale(Vec3::ONE * explosion_radius),
                 );
+                screen_shakes.send(AddScreenShake(0.5));
             }
 
             if let Some(mut entity) = commands.get_entity(collision.entity_a) {

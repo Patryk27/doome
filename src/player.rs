@@ -17,13 +17,24 @@ pub struct PlayerPlugin;
 
 pub struct PlayerShot;
 
+pub struct AddScreenShake(pub f32);
+
+#[derive(Resource)]
+struct ScreenShake(f32);
+
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<PlayerShot>();
+        app.add_event::<AddScreenShake>();
+
+        app.insert_resource(ScreenShake(0.0));
+
         app.add_startup_system(spawn);
+
         app.add_system(process_movement);
         app.add_system(handle_shooting);
         app.add_system(sync_camera.after(process_movement));
+        app.add_system(update_screen_shake);
     }
 }
 
@@ -103,8 +114,9 @@ pub fn process_movement(
     }
 }
 
-pub fn sync_camera(
+fn sync_camera(
     time: Res<Time>,
+    screenshake: Res<ScreenShake>,
     mut camera: Query<&mut Camera>,
     player: Query<(&Transform, &Body), With<Player>>,
 ) {
@@ -114,11 +126,42 @@ pub fn sync_camera(
 
     let sway =
         camera_sway(body.velocity.length(), time.elapsed_seconds() * SWAY_FREQ);
+    let screen_shake = screen_shake(time.elapsed_seconds(), screenshake.0);
 
-    let sway = transform.right() * sway.x + transform.up() * sway.y;
+    let camera_effects =
+        map_to_player_transform(sway + screen_shake, transform);
 
-    camera.origin = sway + vec3(pos.x, 1.2, pos.z);
+    camera.origin = camera_effects + vec3(pos.x, 1.2, pos.z);
     camera.look_at = camera.origin + transform.forward() * 5.0;
+}
+
+fn map_to_player_transform(v: Vec2, transform: &Transform) -> Vec3 {
+    let x = transform.right() * v.x;
+    let z = transform.up() * v.y;
+
+    x + z
+}
+
+fn screen_shake(time: f32, factor: f32) -> Vec2 {
+    let x = (time * 123.0).sin() * factor;
+    let y = (time * 164.0).cos() * factor;
+
+    Vec2::new(x, y)
+}
+
+fn update_screen_shake(
+    mut increments: EventReader<AddScreenShake>,
+    time: Res<Time>,
+    mut screen_shake: ResMut<ScreenShake>,
+) {
+    let mut increment = 0.0;
+
+    for ev in increments.iter() {
+        increment += ev.0;
+    }
+
+    screen_shake.0 = (screen_shake.0 + increment).clamp(0.0, 1.0);
+    screen_shake.0 = (screen_shake.0 - time.delta_seconds()).clamp(0.0, 1.0);
 }
 
 fn camera_sway(velocity: f32, time: f32) -> Vec2 {
