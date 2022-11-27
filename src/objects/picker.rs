@@ -90,6 +90,7 @@ impl Picker {
             Material::default()
                 .with_color(self.color)
                 .with_texture(texture)
+                .emissive()
                 .with_uv_transparency(),
             Collider::circle(1.25, 6),
         ));

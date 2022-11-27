@@ -5,6 +5,7 @@ pub use self::coordinator::*;
 pub use self::loader::*;
 pub use self::zone::*;
 
+pub mod level0;
 pub mod level1;
 pub mod level2;
 pub mod level3;
@@ -27,6 +28,7 @@ impl Plugin for LevelsPlugin {
                 CoreStage::PreUpdate,
                 ordered_systems! {
                     LevelsCoordinator::unload
+                    => level0::init
                     => level1::init
                     => level2::init
                     => level3::init
@@ -34,6 +36,8 @@ impl Plugin for LevelsPlugin {
                     => level5::init
                 },
             )
+            .add_system(LevelsCoordinator::handle_game_state)
+            .add_system(level0::process.after(level0::init))
             .add_system(level1::process.after(level1::init))
             .add_system(level2::process.after(level2::init))
             .add_system(level3::process.after(level3::init))

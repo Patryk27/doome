@@ -3,11 +3,46 @@ use std::str::FromStr;
 
 use crate::prelude::*;
 
-pub struct LevelsCoordinator;
+#[derive(Resource)]
+pub struct LevelsCoordinator {
+    pub current_level: Level,
+    pub is_game_over: bool,
+    pub time_in_game_over: f32,
+}
 
 impl LevelsCoordinator {
-    pub fn init(mut goto_level_tx: EventWriter<GotoLevel>) {
-        goto_level_tx.send(GotoLevel::new(Level::l5()));
+    pub fn init(
+        mut commands: Commands,
+        mut goto_level_tx: EventWriter<GotoLevel>,
+    ) {
+        let starting_level = Level::l5();
+
+        let levels_coordinator = LevelsCoordinator {
+            current_level: starting_level,
+            is_game_over: false,
+            time_in_game_over: 0.0,
+        };
+
+        commands.insert_resource(levels_coordinator);
+
+        goto_level_tx.send(GotoLevel::new(starting_level));
+    }
+
+    pub fn handle_game_state(
+        mut this: ResMut<LevelsCoordinator>,
+        mut goto_level_tx: EventReader<GotoLevel>,
+    ) {
+        let last_level = goto_level_tx.iter().last().copied();
+
+        if let Some(level) = last_level {
+            if *level == Level::l0() {
+                this.is_game_over = true;
+                this.time_in_game_over = 0.0;
+            } else {
+                this.is_game_over = false;
+                this.current_level = *level;
+            }
+        }
     }
 
     pub fn process_zones(
@@ -78,6 +113,10 @@ impl LevelsCoordinator {
 pub struct Level(usize);
 
 impl Level {
+    pub fn l0() -> Self {
+        Self(0)
+    }
+
     pub fn l1() -> Self {
         Self(1)
     }
