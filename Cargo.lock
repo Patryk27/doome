@@ -1255,6 +1255,7 @@ dependencies = [
  "itertools",
  "log",
  "quick-xml",
+ "rand",
  "serde",
  "serde_json",
 ]

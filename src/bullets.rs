@@ -70,7 +70,9 @@ fn collide_and_apply_damage(
                     amount: bullet.damage,
                     entity: collision.entity_b,
                 });
-                health.health -= bullet.damage;
+
+                health.health = (health.health - bullet.damage)
+                    .clamp(0.0, health.max_health);
             }
         }
     }

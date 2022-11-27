@@ -19,6 +19,7 @@ mod music;
 mod objects;
 mod pickable;
 mod player;
+mod rng;
 mod sounds;
 mod ui;
 mod units;
@@ -95,6 +96,7 @@ fn main() {
         .add_system(doome_bevy::model_animation::animate)
         // ===== //
         // doome //
+        .add_plugin(rng::RngPlugin)
         .add_plugin(enemies::EnemiesPlugin)
         .add_plugin(sounds::SoundsPlugin)
         .add_plugin(music::MusicPlugin)
