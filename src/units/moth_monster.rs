@@ -12,7 +12,6 @@ impl MothMonster {
         position: Vec3,
     ) -> Entity {
         let model = assets.load_model("moth_monster");
-
         let weapon = crate::weapons::definitions::enemy_fire_spew(&assets);
 
         commands
@@ -29,7 +28,7 @@ impl MothMonster {
                     direction: Vec2::NEG_Y * 20.0,
                     hit: None,
                 },
-                Collider::circle(0.5, 6),
+                Collider::circle(0.75, 6),
                 Body {
                     acceleration: Vec2::ZERO,
                     velocity: Vec2::ZERO,

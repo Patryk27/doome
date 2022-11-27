@@ -1586,8 +1586,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":-85.3333333333333,
-                 "y":766
+                 "x":-97.3333333333333,
+                 "y":746.666666666667
                 }, 
                 {
                  "height":0,
@@ -1598,8 +1598,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":144,
-                 "y":765.333333333333
+                 "x":175.333333333333,
+                 "y":737.333333333333
                 }, 
                 {
                  "height":0,
@@ -1610,8 +1610,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":43,
-                 "y":-456.333333333333
+                 "x":425.666666666667,
+                 "y":755
                 }, 
                 {
                  "height":0,
@@ -1622,8 +1622,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":-19,
-                 "y":-452
+                 "x":15,
+                 "y":-421.333333333333
                 },
             
                 {
@@ -1661,6 +1661,18 @@
                  "width":0,
                  "x":608,
                  "y":-576
+                }, 
+                {
+                 "height":0,
+                 "id":52,
+                 "name":"tag:wave1.loot",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":-178.666666666667,
+                 "y":30.6666666666667
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1669,7 +1681,7 @@
          "y":0
         }],
  "nextlayerid":6,
- "nextobjectid":52,
+ "nextobjectid":53,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.8.4",

@@ -44,7 +44,8 @@ pub struct LevelState {
 enum LevelStage {
     Intro,
     SpawningWave { wave: u8 },
-    AwaitingWaveCompletion { monsters: Vec<Entity>, wave: u8 },
+    SpawningWaveEnemies { delay: Timer, wave: u8 },
+    AwaitingWaveCompletion { enemies: Vec<Entity>, wave: u8 },
     PostWaveCooldown { cooldown: Timer, next_wave: u8 },
     AwaitingLeaving,
 }
@@ -62,6 +63,7 @@ pub fn process(
 ) {
     let Ok(mut level) = level.get_single_mut() else { return };
     let level = &mut *level;
+    let dt = time.delta();
 
     match &mut level.stage {
         LevelStage::Intro => {
@@ -77,7 +79,6 @@ pub fn process(
         LevelStage::SpawningWave { wave } => {
             let prev_wave_name = format!("wave{}", *wave - 1);
             let wave_name = format!("wave{}", *wave);
-            let mut monsters = Vec::new();
 
             for (torch_name, torch_entity) in level.locator.torches() {
                 if torch_name.starts_with(&prev_wave_name) {
@@ -89,10 +90,25 @@ pub fn process(
                 }
             }
 
+            level.stage = LevelStage::SpawningWaveEnemies {
+                delay: Timer::new(Duration::from_secs(1), TimerMode::Once),
+                wave: *wave,
+            };
+        }
+
+        LevelStage::SpawningWaveEnemies { delay, wave } => {
+            delay.tick(dt);
+
+            if !delay.just_finished() {
+                return;
+            }
+
+            let mut enemies = Vec::new();
+
             for (tag_name, tag_position) in level.locator.tags() {
-                if tag_name.starts_with(&wave_name) {
-                    monsters.push(MothMonster::spawn(
-                        &*assets,
+                if tag_name.starts_with(&format!("wave{}.spawn", *wave)) {
+                    enemies.push(MothMonster::spawn(
+                        &assets,
                         &mut commands,
                         tag_position,
                     ));
@@ -100,17 +116,17 @@ pub fn process(
             }
 
             level.stage = LevelStage::AwaitingWaveCompletion {
-                monsters,
+                enemies,
                 wave: *wave,
             };
         }
 
-        LevelStage::AwaitingWaveCompletion { monsters, wave } => {
-            let are_monsters_still_alive = monsters
+        LevelStage::AwaitingWaveCompletion { enemies, wave } => {
+            let are_enemies_still_alive = enemies
                 .iter()
-                .any(|monster| commands.get_entity(*monster).is_some());
+                .any(|enemy| commands.get_entity(*enemy).is_some());
 
-            if are_monsters_still_alive {
+            if are_enemies_still_alive {
                 return;
             }
 
@@ -120,6 +136,10 @@ pub fn process(
                         "ouch.... no worries though, I've got more!!\n\
                          just give me a second",
                     ));
+
+                    Picker::rifle()
+                        .with_position(level.locator.tag("wave1.loot").xz())
+                        .spawn(&assets, &mut commands);
 
                     level.stage = LevelStage::PostWaveCooldown {
                         cooldown: Timer::new(
@@ -170,7 +190,7 @@ pub fn process(
             cooldown,
             next_wave,
         } => {
-            cooldown.tick(time.delta());
+            cooldown.tick(dt);
 
             if cooldown.just_finished() {
                 typewriter_tx.send(TypewriterPrint::new("a ha! -- DIE....."));
@@ -182,8 +202,10 @@ pub fn process(
         LevelStage::AwaitingLeaving => {
             for event in level_rx.iter() {
                 match event {
-                    LevelGameplayEvent::DoorOpened(name) => {
-                        // TODO
+                    LevelGameplayEvent::DoorOpened(_) => {
+                        typewriter_tx.send(TypewriterPrint::new(
+                            "you're getting closer...",
+                        ));
                     }
 
                     LevelGameplayEvent::KeyPicked(name) => {
@@ -201,7 +223,7 @@ pub fn process(
                             }
 
                             MothMonster::spawn(
-                                &*assets,
+                                &assets,
                                 &mut commands,
                                 level.locator.tag(if name == "2" {
                                     "room-a.spawn"
