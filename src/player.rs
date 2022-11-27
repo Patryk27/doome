@@ -37,6 +37,7 @@ impl Plugin for PlayerPlugin {
         app.add_system(sync_camera.after(process_movement));
         app.add_system(update_screen_shake);
         app.add_system(add_screen_shake_on_damage);
+        app.add_system(handle_player_death);
     }
 }
 
@@ -218,6 +219,24 @@ fn add_screen_shake_on_damage(
     for ev in damage_events.iter() {
         if ev.entity == player_entity {
             screen_shake.send(AddScreenShake(0.2));
+        }
+    }
+}
+
+fn handle_player_death(
+    mut game_commands: EventWriter<Command>,
+    mut death_events: EventReader<Death>,
+    player: Query<(Entity, &Player)>,
+) {
+    let (player_entity, _) = player.single();
+
+    for ev in death_events.iter() {
+        if ev.0 == player_entity {
+            game_commands.send(Command::GotoLevel { level: Level::l0() });
+            game_commands.send(Command::SetHealth {
+                entity: EntityOrPlayer::Player,
+                health: 100.0,
+            });
         }
     }
 }
