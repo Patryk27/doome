@@ -78,7 +78,10 @@ pub enum Command {
         track: MusicTrack,
     },
     /// Toggles the debug mode
-    Debug,
+    ToggleDebug,
+
+    /// Toggles screen space effects
+    ToggleSSE,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -212,7 +215,9 @@ impl FromStr for Command {
                 Ok(Command::SwitchTrack { track })
             }
 
-            "debug" => Ok(Command::Debug),
+            "toggle-debug" => Ok(Command::ToggleDebug),
+
+            "toggle-sse" => Ok(Command::ToggleSSE),
 
             _ => Err(anyhow!("Failed to parse command: {s}")),
         }

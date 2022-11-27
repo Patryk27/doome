@@ -30,7 +30,9 @@ pub struct DoomeRenderer {
     pub width: f32,
     pub height: f32,
 
+    pub intermediate_output_texture: wgpu::Texture,
     pub intermediate_output_texture_view: wgpu::TextureView,
+    pub sse_output_texture: wgpu::Texture,
     pub sse_output_texture_view: wgpu::TextureView,
     pub shader_constants: AllocatedUniform<ShaderConstants>,
 }
@@ -103,7 +105,8 @@ impl Plugin for DoomePlugin {
                 format: wgpu::TextureFormat::Rgba8UnormSrgb,
                 usage: wgpu::TextureUsages::COPY_SRC
                     | wgpu::TextureUsages::RENDER_ATTACHMENT
-                    | wgpu::TextureUsages::TEXTURE_BINDING,
+                    | wgpu::TextureUsages::TEXTURE_BINDING
+                    | wgpu::TextureUsages::COPY_DST,
             });
 
         let sse_output_texture_view =
@@ -131,7 +134,9 @@ impl Plugin for DoomePlugin {
             width,
             height,
             shader_constants,
+            intermediate_output_texture,
             intermediate_output_texture_view,
+            sse_output_texture,
             sse_output_texture_view,
         });
 

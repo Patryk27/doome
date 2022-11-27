@@ -245,8 +245,13 @@ fn handle_commands(
                 event_writers.switch_track_tx.send(SwitchTrack(track));
             }
 
-            Command::Debug => {
-                rendering_options.debug_pass_enabled = !rendering_options.debug_pass_enabled;
+            Command::ToggleDebug => {
+                rendering_options.debug_pass_enabled =
+                    !rendering_options.debug_pass_enabled;
+            }
+
+            Command::ToggleSSE => {
+                rendering_options.sse_enabled = !rendering_options.sse_enabled;
             }
         }
     }

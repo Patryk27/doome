@@ -10,7 +10,7 @@ use doome_wgpu_ext::AllocatedUniform;
 pub use self::geometry_indexer::*;
 
 pub const ATLAS_WIDTH: u32 = 2048;
-pub const ATLAS_HEIGHT: u32 = 2048;
+pub const ATLAS_HEIGHT: u32 = 512;
 
 type DescriptorSet0 = AllocatedUniform<StaticGeometry>;
 type DescriptorSet1 =
@@ -71,8 +71,8 @@ impl Raytracer {
             atlas_data,
             wgpu::ImageDataLayout {
                 offset: 0,
-                bytes_per_row: NonZeroU32::new(ATLAS_HEIGHT * 4),
-                rows_per_image: NonZeroU32::new(ATLAS_WIDTH),
+                bytes_per_row: NonZeroU32::new(ATLAS_WIDTH * 4),
+                rows_per_image: NonZeroU32::new(ATLAS_HEIGHT),
             },
             tex_size,
         );

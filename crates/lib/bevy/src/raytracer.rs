@@ -363,12 +363,37 @@ fn render(
     );
 
     pixels.render(queue, &mut encoder, shader_constants, intermediate_texture);
-    screen_space_effects.render(
-        queue,
-        &mut encoder,
-        shader_constants,
-        sse_texture,
-    );
+
+    if rendering_options.sse_enabled {
+        screen_space_effects.render(
+            queue,
+            &mut encoder,
+            shader_constants,
+            sse_texture,
+        );
+    } else {
+        // unfortunately we have to copy the intermediate_texture to the sse_texture
+        // queue.write_texture(texture, data, data_layout, size)
+        encoder.copy_texture_to_texture(
+            wgpu::ImageCopyTexture {
+                texture: &renderer.intermediate_output_texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            wgpu::ImageCopyTexture {
+                texture: &renderer.sse_output_texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            wgpu::Extent3d {
+                width: WIDTH as _,
+                height: HEIGHT as _,
+                depth_or_array_layers: 1,
+            },
+        );
+    }
 
     if rendering_options.debug_pass_enabled {
         debug_pass.render(queue, &mut encoder, shader_constants, sse_texture);
