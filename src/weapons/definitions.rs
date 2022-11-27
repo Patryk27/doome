@@ -19,6 +19,7 @@ pub fn rifle(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     };
 
     let definition = WeaponDefinition::new()
+        .with_model(assets.load_model("bullet"))
         .with_cooldown(0.3)
         .with_speed(50.0)
         .with_damage(35.0)
@@ -44,6 +45,7 @@ pub fn handgun(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     };
 
     let definition = WeaponDefinition::new()
+        .with_model(assets.load_model("bullet"))
         .with_cooldown(0.6)
         .with_speed(50.0)
         .with_damage(35.0)
@@ -79,7 +81,7 @@ pub fn enemy_fire_spew(assets: &Assets) -> WeaponDefinition {
     WeaponDefinition::new()
         .with_model(assets.load_model("fireball"))
         .with_cooldown(1.0)
-        .with_speed(10.0)
-        .with_damage(10.0)
+        .with_speed(17.5)
+        .with_damage(15.0)
         .with_collider_radius(0.5)
 }
