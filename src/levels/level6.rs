@@ -1,4 +1,7 @@
+use std::f32::consts::PI;
 use std::time::Duration;
+
+use doome_bevy::convert::{graphical_to_physical, physical_to_graphical};
 
 use crate::prelude::*;
 
@@ -375,26 +378,69 @@ pub fn process(
                 return;
             }
 
-            let vs = ViewportSpawner::new(*player.single(), 3.5, 1.5, 10);
-
-            for rpg_idx in 0..10 {
-                let rpg_pos = vs.pos(rpg_idx);
-
-                Picker::rpg()
-                    .with_position(rpg_pos)
-                    .spawn(&assets, &mut commands);
-            }
+            let doome_pos =
+                ViewportSpawner::new(*player.single(), 40.0, 1.0, 1).pos(0);
 
             let doome = {
-                let doome_pos =
-                    ViewportSpawner::new(*player.single(), 40.0, 1.0, 1).pos(0);
-
                 Doome::spawn(
                     &assets,
                     &mut commands,
                     vec3(doome_pos.x, 0.0, doome_pos.y),
                 )
             };
+
+            let doome_pos = physical_to_graphical(doome_pos);
+
+            const DISTANCE_TO_BOSS: f32 = 30.0;
+            const NUM_COVERS: usize = 16;
+            let angle = 2.0 * PI / NUM_COVERS as f32;
+
+            for cover_idx in 0..NUM_COVERS {
+                let angle = angle * cover_idx as f32;
+                let rotation = Quat::from_rotation_y(angle);
+
+                let mut transform = Transform::from_rotation(rotation);
+                let offset = transform.forward() * DISTANCE_TO_BOSS;
+
+                transform.translation = doome_pos + offset;
+
+                for r in 0..4 {
+                    let angle =
+                        angle + (r as f32 * PI / 2.0) + (3.0 * PI / 2.0);
+                    let rotation = Quat::from_rotation_y(angle);
+
+                    let mut transform = transform
+                        .clone()
+                        .with_translation(transform.translation)
+                        .with_rotation(rotation);
+
+                    transform.translation += transform.forward();
+                    let mut lvl = LevelBuilder::new(&mut commands, &assets);
+
+                    lvl.model("wall")
+                        .with_transform(transform)
+                        .obstacle()
+                        .with_material(
+                            Material::default()
+                                .with_color(Color::hex(0xffffffff))
+                                .emissive(),
+                        )
+                        .with_collider(Collider::line(
+                            vec2(-1.0, 0.0),
+                            vec2(1.0, 0.0),
+                        ))
+                        .spawn();
+                }
+
+                if cover_idx % 4 == 0 {
+                    Picker::rpg()
+                        .with_position(graphical_to_physical(
+                            transform.translation + transform.forward() * 2.0,
+                        ))
+                        .infinite()
+                        .spawn(&assets, &mut commands);
+                }
+            }
 
             level.stage = LevelStage::AwaitingBossDeath { doome };
         }

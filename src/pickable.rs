@@ -24,7 +24,10 @@ fn handle_pickables(
         if player.get(collision.entity_a).is_ok() {
             if let Ok(pickable) = pickables.get(collision.entity_b) {
                 game_commands.send(pickable.on_pickup.clone());
-                commands.entity(collision.entity_b).despawn();
+
+                if !pickable.infinite {
+                    commands.entity(collision.entity_b).despawn();
+                }
 
                 if let Command::Give {
                     what: Item::Key(key),
@@ -42,4 +45,5 @@ fn handle_pickables(
 #[derive(Component)]
 pub struct Pickable {
     pub on_pickup: Command,
+    pub infinite: bool,
 }

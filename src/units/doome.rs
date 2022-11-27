@@ -33,7 +33,7 @@ impl Doome {
         commands
             .spawn((
                 this,
-                Enemy::new(),
+                Enemy::new().with_follows_player(false),
                 model,
                 Material::default()
                     .with_texture(texture)

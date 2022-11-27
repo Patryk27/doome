@@ -14,11 +14,20 @@ pub struct EnemiesPlugin;
 #[derive(Component)]
 pub struct Enemy {
     path: Option<Vec<Vec2>>,
+    follows_player: bool,
 }
 
 impl Enemy {
     pub fn new() -> Self {
-        Self { path: None }
+        Self {
+            path: None,
+            follows_player: true,
+        }
+    }
+
+    pub fn with_follows_player(mut self, follows_player: bool) -> Self {
+        self.follows_player = follows_player;
+        self
     }
 }
 
@@ -159,6 +168,10 @@ fn enemy_movement(
 
     for (mut enemy, mut body, mut transform, raycast) in enemies.iter_mut() {
         body.velocity = Vec2::ZERO;
+
+        if !enemy.follows_player {
+            continue;
+        }
 
         if let Some(_player_pos) = player_entity_raycast(raycast, player_entity)
         {

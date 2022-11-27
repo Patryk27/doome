@@ -91,7 +91,7 @@ pub fn doome_fire_spew(assets: &Assets) -> WeaponDefinition {
         .with_model(assets.load_model("fireball"))
         .with_cooldown(1.0)
         .with_forward_offset(10.0)
-        .with_speed(17.5)
+        .with_speed(30.0)
         .with_damage(30.0)
         .with_scale(2.0)
         .with_collider_radius(0.5)
