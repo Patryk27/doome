@@ -5,6 +5,14 @@ use crate::commands::{Command, Item};
 use crate::prelude::*;
 use crate::weapons::{PrefabWeapons, Weapon};
 
+const MOUSE_ROTATION_SENSITIVITY: f32 = 0.15;
+const PLANAR_MOVEMENT_SPEED: f32 = 7.5;
+const ROTATION_SPEED: f32 = 2.0;
+const ACCELERATION_SPEED: f32 = 8.0;
+const BRAKING_SPEED: f32 = 24.0;
+const SWAY_FREQ: f32 = 4.0;
+const MAX_SWAY: f32 = 0.3;
+
 pub struct PlayerPlugin;
 
 pub struct PlayerShot;
@@ -41,12 +49,6 @@ pub fn process_movement(
     mut mouse_motion: EventReader<MouseMotion>,
     mut player: Query<(&Player, &mut Body, &mut Transform)>,
 ) {
-    const MOUSE_ROTATION_SENSITIVITY: f32 = 0.15;
-    const PLANAR_MOVEMENT_SPEED: f32 = 7.5;
-    const ROTATION_SPEED: f32 = 2.0;
-    const ACCELERATION_SPEED: f32 = 8.0;
-    const BRAKING_SPEED: f32 = 24.0;
-
     let (player, mut body, mut transform) = player.single_mut();
     let delta = time.delta_seconds();
 
@@ -102,15 +104,30 @@ pub fn process_movement(
 }
 
 pub fn sync_camera(
+    time: Res<Time>,
     mut camera: Query<&mut Camera>,
-    player: Query<&Transform, With<Player>>,
+    player: Query<(&Transform, &Body), With<Player>>,
 ) {
     let Ok(mut camera) = camera.get_single_mut() else { return };
-    let Ok(transform) = player.get_single() else { return };
+    let Ok((transform, body)) = player.get_single() else { return };
     let pos = transform.translation;
 
-    camera.origin = vec3(pos.x, 1.2, pos.z);
+    let sway =
+        camera_sway(body.velocity.length(), time.elapsed_seconds() * SWAY_FREQ);
+
+    let sway = transform.right() * sway.x + transform.up() * sway.y;
+
+    camera.origin = sway + vec3(pos.x, 1.2, pos.z);
     camera.look_at = camera.origin + transform.forward() * 5.0;
+}
+
+fn camera_sway(velocity: f32, time: f32) -> Vec2 {
+    let sway_factor =
+        crate::math::remap(velocity, 0.0, PLANAR_MOVEMENT_SPEED, 0.0, MAX_SWAY);
+
+    // This makes a sideways figure 8
+    // https://www.wolframalpha.com/input?key=&i=x+%3D+sin%28t%29%2C+y+%3D+sin%28t%29+*+cos%28t%29
+    vec2(time.sin(), time.cos() * time.sin()) * sway_factor
 }
 
 pub fn handle_shooting(

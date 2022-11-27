@@ -7,7 +7,6 @@ const SEED: [u8; 32] = *b"Hail Tynan Sylvester the RNG God";
 #[cfg(target_arch = "wasm32")]
 const SEED: [u8; 16] = *b"Hail Tynan Sylve";
 
-
 pub struct RngPlugin;
 
 impl Plugin for RngPlugin {

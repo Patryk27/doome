@@ -15,6 +15,7 @@ mod interaction;
 mod inventory;
 mod levels;
 mod markers;
+mod math;
 mod music;
 mod objects;
 mod pickable;

@@ -42,7 +42,7 @@ pub fn render(
     let pulse = (PULSE_FREQUENCY * time.elapsed_seconds()).sin() * 0.5 + 0.5;
 
     if health > WOUNDED_THRESHOLD {
-        let a = remap(pulse, 0.0, 1.0, 100.0, 120.0) as u8;
+        let a = crate::math::remap(pulse, 0.0, 1.0, 100.0, 120.0) as u8;
         canvas.blit_blended(
             0,
             0,
@@ -55,7 +55,7 @@ pub fn render(
             },
         );
     } else {
-        let a = remap(pulse, 0.0, 1.0, 160.0, 200.0) as u8;
+        let a = crate::math::remap(pulse, 0.0, 1.0, 160.0, 200.0) as u8;
 
         let fill_clor = doome_surface::Color::RED.with_a(4);
 
@@ -73,15 +73,4 @@ pub fn render(
             },
         );
     }
-}
-
-fn remap(
-    v: f32,
-    min_from: f32,
-    max_from: f32,
-    min_to: f32,
-    max_to: f32,
-) -> f32 {
-    let t = (v - min_from) / (max_from - min_from);
-    min_to + t * (max_to - min_to)
 }
