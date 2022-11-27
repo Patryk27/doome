@@ -113,28 +113,34 @@ impl LevelLocator {
                 continue;
             }
 
-            if let Some(spec) = obj_name.strip_prefix("torch:") {
-                let mut opts = spec.split(",");
-
-                let name = opts.next().unwrap();
+            if let Some(spec) = obj_name.strip_prefix("torch") {
+                let mut name = None;
                 let mut active = true;
                 let mut force_active_texture = false;
 
-                for opt in opts {
-                    match opt {
-                        "off" => {
-                            active = false;
-                        }
-                        "force-active-texture" => {
-                            force_active_texture = true;
-                        }
-                        _ => {
-                            panic!(
-                                "Map contains invalid torch definition: {}",
-                                name
-                            );
+                if let Some(spec) = spec.strip_prefix(':') {
+                    let mut opts = spec.split(",");
+
+                    name = opts.next();
+
+                    for opt in opts {
+                        match opt {
+                            "off" => {
+                                active = false;
+                            }
+                            "force-active-texture" => {
+                                force_active_texture = true;
+                            }
+                            _ => {
+                                panic!(
+                                    "Map contains invalid torch definition: {}",
+                                    spec
+                                );
+                            }
                         }
                     }
+                } else {
+                    assert!(spec.is_empty());
                 }
 
                 let rot = if has_wall_at(obj.x - 1, obj.y) {
@@ -154,11 +160,13 @@ impl LevelLocator {
                     .with_rotation(rot)
                     .spawn(lvl.assets(), lvl.commands());
 
-                if self.torches.insert(name.to_owned(), entity).is_some() {
-                    panic!(
-                        "Map contains torch defined multiple times: {}",
-                        name
-                    );
+                if let Some(name) = name {
+                    if self.torches.insert(name.to_owned(), entity).is_some() {
+                        panic!(
+                            "Map contains torch defined multiple times: {}",
+                            name
+                        );
+                    }
                 }
 
                 continue;
@@ -209,6 +217,12 @@ impl LevelLocator {
             })
     }
 
+    pub fn tags(&self) -> impl Iterator<Item = (&str, Vec3)> + '_ {
+        self.tags
+            .iter()
+            .map(|(name, pos)| (name.as_str(), vec3(pos.x, 0.0, pos.y)))
+    }
+
     pub fn torch(&self, name: impl AsRef<str>) -> Entity {
         let name = name.as_ref();
 
@@ -218,7 +232,9 @@ impl LevelLocator {
     }
 
     pub fn torches(&self) -> impl Iterator<Item = (&str, Entity)> + '_ {
-        self.torches.iter().map(|(k, v)| (k.as_str(), *v))
+        self.torches
+            .iter()
+            .map(|(name, entity)| (name.as_str(), *entity))
     }
 }
 

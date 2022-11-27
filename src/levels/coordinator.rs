@@ -7,7 +7,7 @@ pub struct LevelsCoordinator;
 
 impl LevelsCoordinator {
     pub fn init(mut goto_level_tx: EventWriter<GotoLevel>) {
-        goto_level_tx.send(GotoLevel::new(Level::l1()));
+        goto_level_tx.send(GotoLevel::new(Level::l5()));
     }
 
     pub fn process_zones(
@@ -92,6 +92,10 @@ impl Level {
 
     pub fn l4() -> Self {
         Self(4)
+    }
+
+    pub fn l5() -> Self {
+        Self(5)
     }
 }
 

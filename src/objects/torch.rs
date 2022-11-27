@@ -1,4 +1,5 @@
 use std::f32::consts::PI;
+use std::time::Duration;
 
 use crate::prelude::*;
 
@@ -69,7 +70,7 @@ impl Torch {
         ));
 
         if active {
-            torch.insert(TorchActive);
+            torch.insert(TorchActive::now());
         }
 
         torch.add_children(|commands| {
@@ -110,12 +111,13 @@ impl Torch {
         mut torches: Query<(
             &mut Torch,
             &mut Light,
-            Option<&TorchActive>,
+            Option<&mut TorchActive>,
             &Children,
         )>,
         mut torch_textures: Query<&mut Material, With<TorchTexture>>,
     ) {
-        let dt = time.delta_seconds();
+        let dt = time.delta();
+        let dts = time.delta_seconds();
 
         let rand = ((time.elapsed_seconds_f64() * 100000.0) as i32)
             .reflect_hash()
@@ -126,13 +128,25 @@ impl Torch {
         for (mut torch, mut torch_light, torch_active, children) in
             torches.iter_mut()
         {
-            if torch.active != torch_active.is_some() {
-                torch.active = torch_active.is_some();
+            let should_be_active = if let Some(mut torch_active) = torch_active
+            {
+                if torch_active.delay.finished() {
+                    true
+                } else {
+                    torch_active.delay.tick(dt);
+                    false
+                }
+            } else {
+                false
+            };
+
+            if torch.active != should_be_active {
+                torch.active = should_be_active;
 
                 if torch.active {
                     torch.intensity = Animation::GoingUp {
                         to: 1.0,
-                        speed: 1.0,
+                        speed: 0.85,
                     };
                 } else {
                     torch.intensity = Animation::GoingDown {
@@ -158,7 +172,7 @@ impl Torch {
 
             match torch.intensity {
                 Animation::GoingUp { to, speed } => {
-                    torch_light.intensity += dt * speed * 1.25;
+                    torch_light.intensity += dts * speed * 1.25;
 
                     if torch_light.intensity > to {
                         torch.intensity = Animation::GoingDown {
@@ -169,7 +183,7 @@ impl Torch {
                 }
 
                 Animation::GoingDown { to, speed } => {
-                    torch_light.intensity -= dt * speed * 1.25;
+                    torch_light.intensity -= dts * speed * 1.25;
 
                     if torch_light.intensity < to {
                         if torch.active {
@@ -193,7 +207,21 @@ impl Torch {
 }
 
 #[derive(Component)]
-pub struct TorchActive;
+pub struct TorchActive {
+    pub delay: Timer,
+}
+
+impl TorchActive {
+    pub fn now() -> Self {
+        Self::in_ms(0)
+    }
+
+    pub fn in_ms(ms: u64) -> Self {
+        Self {
+            delay: Timer::new(Duration::from_millis(ms), TimerMode::Once),
+        }
+    }
+}
 
 #[derive(Component)]
 pub(super) struct TorchTexture;

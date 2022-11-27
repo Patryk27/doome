@@ -173,7 +173,7 @@ pub fn process(
 
             commands
                 .entity(level.locator.torch(format!("corridor-{}", corridor)))
-                .insert(TorchActive);
+                .insert(TorchActive::now());
 
             level.stage = LevelStage::InsideCorridor {
                 dialog1_said: false,
@@ -246,7 +246,9 @@ pub fn process(
                 } else {
                     if player_xz.distance(torch_xform.translation.xz()) < 7.5 {
                         if torch_actives.get(torch_entity).is_err() {
-                            commands.entity(torch_entity).insert(TorchActive);
+                            commands
+                                .entity(torch_entity)
+                                .insert(TorchActive::now());
                         }
                     } else {
                         if torch_actives.get(torch_entity).is_ok() {
