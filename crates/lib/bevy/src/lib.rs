@@ -12,9 +12,9 @@ pub mod nav;
 pub mod physics;
 pub mod player;
 pub mod renderer;
+pub mod rendering_options;
 pub mod simple_animations;
 pub mod text;
-pub mod rendering_options;
 
 mod raytracer;
 

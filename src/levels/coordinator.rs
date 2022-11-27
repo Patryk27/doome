@@ -52,6 +52,7 @@ impl LevelsCoordinator {
             )>,
         >,
         mut inventory: Query<&mut Inventory>,
+        mut change_hud_visibility_tx: EventWriter<ChangeHudVisibility>,
     ) {
         if goto_level_rx.iter().count() == 0 {
             return;
@@ -68,6 +69,8 @@ impl LevelsCoordinator {
         if let Ok(mut inventory) = inventory.get_single_mut() {
             *inventory = Default::default();
         }
+
+        change_hud_visibility_tx.send(ChangeHudVisibility::show());
     }
 }
 

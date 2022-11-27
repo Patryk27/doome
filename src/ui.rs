@@ -33,8 +33,10 @@ impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         let prefab_weapons = app.world.resource::<PrefabWeapons>();
 
-        app.insert_resource(gun::State::new(&prefab_weapons));
-        app.insert_resource(InputLock { is_locked: false });
+        app.insert_resource(gun::State::new(&prefab_weapons))
+            .insert_resource(InputLock { is_locked: false })
+            .insert_resource(UiState { hud_visible: false })
+            .add_event::<ChangeHudVisibility>();
 
         // Miscellaneous
         app.add_startup_system(hide_cursor).add_system(quit_on_exit);
@@ -42,6 +44,7 @@ impl Plugin for UiPlugin {
         // Typewriter
         app.insert_resource(Typewriter::default())
             .add_event::<TypewriterPrint>()
+            .add_event::<TypewriterPrintingCompleted>()
             .add_system(typewriter::update);
 
         // Messages
@@ -61,7 +64,8 @@ impl Plugin for UiPlugin {
 
         // Ui rendering systems (strictly ordered)
         app.add_system(ordered_systems! {
-            canvas_clear
+            process_events
+            => canvas_clear
             => blood::render
             => gun::render
             => angrey::render
@@ -73,9 +77,28 @@ impl Plugin for UiPlugin {
     }
 }
 
+pub struct ChangeHudVisibility {
+    pub visible: bool,
+}
+
+impl ChangeHudVisibility {
+    pub fn show() -> Self {
+        Self { visible: true }
+    }
+
+    pub fn hide() -> Self {
+        Self { visible: false }
+    }
+}
+
 #[derive(Resource)]
 pub struct InputLock {
     pub is_locked: bool,
+}
+
+#[derive(Resource)]
+pub struct UiState {
+    hud_visible: bool,
 }
 
 fn hide_cursor(mut windows: ResMut<Windows>) {
@@ -88,6 +111,15 @@ fn hide_cursor(mut windows: ResMut<Windows>) {
 fn quit_on_exit(keys: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
     if keys.just_pressed(KeyCode::Escape) {
         exit.send(AppExit);
+    }
+}
+
+fn process_events(
+    mut change_hud_visibility_rx: EventReader<ChangeHudVisibility>,
+    mut ui: ResMut<UiState>,
+) {
+    for event in change_hud_visibility_rx.iter() {
+        ui.hud_visible = event.visible;
     }
 }
 

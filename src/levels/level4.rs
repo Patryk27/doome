@@ -92,6 +92,7 @@ pub fn process(
     mut lights: Query<&mut Light>,
     mut transforms: Query<&mut Transform>,
     mut typewriter_tx: EventWriter<TypewriterPrint>,
+    mut change_hud_visibility_tx: EventWriter<ChangeHudVisibility>,
 ) {
     let Ok(mut level) = level.get_single_mut() else { return };
     let level = &mut *level;
@@ -111,6 +112,10 @@ pub fn process(
 
     match &mut level.stage {
         LevelStage::Booting { tt, timer } => {
+            if *tt == 0.0 {
+                change_hud_visibility_tx.send(ChangeHudVisibility::hide());
+            }
+
             *tt += time.delta_seconds();
             timer.tick(time.delta());
 

@@ -59,7 +59,7 @@ pub fn init(
         .with_rotation(Quat::from_rotation_y(-PI / 2.0))
         .with_scale(Vec3::ONE * 0.6)
         .with_material(Material::default().with_uv_divisor(4, 4))
-        .with_collider(Collider::line(vec2(-1.0, 0.95), vec2(1.0, 0.95)))
+        .with_collider(Collider::line(vec2(-2.0, 0.95), vec2(2.0, 0.95)))
         .spawn();
 
     for n in 0..6 {
@@ -223,7 +223,7 @@ pub fn init(
         ent_lamp,
         ent_sl0,
         ent_l0,
-        stage: LevelStage::AwaitingFlashlightPickup,
+        stage: LevelStage::Intro,
     });
 }
 
@@ -238,9 +238,9 @@ pub struct LevelState {
 }
 
 enum LevelStage {
+    Intro,
     AwaitingFlashlightPickup,
-    Intro0 { txt_rise_timer: Timer },
-    Intro1 { spawn_timer: Timer },
+    AwaitingGateRise { timer: Timer },
     AwaitingMothsDeath { moths: Vec<Entity> },
     AwaitingZoneEnter,
     AwaitingKeyPickup,
@@ -278,29 +278,24 @@ pub fn process(
     // -----
 
     match &mut level.stage {
+        LevelStage::Intro => {
+            typewriter_tx.send(TypewriterPrint::new(
+                "heheheh !!%{s0.8}\n\
+                 mr freeman, finally, after all these years, i've\n\
+                 lured you straight into my game-trap !!\n\n\
+                 (( the hacking terminal was fake !!! ))\n\n\
+                 today is the day you, my mortal enemy, die!!! ......",
+            ));
+
+            level.stage = LevelStage::AwaitingFlashlightPickup;
+        }
+
         LevelStage::AwaitingFlashlightPickup => {
             let Ok(inventory) = inventory.get_single() else { return };
 
             if inventory.has_flashlight {
-                level.stage = LevelStage::Intro0 {
-                    txt_rise_timer: Timer::new(
-                        Duration::from_secs(5),
-                        TimerMode::Once,
-                    ),
-                };
-            }
-        }
-
-        LevelStage::Intro0 { txt_rise_timer } => {
-            txt_rise_timer.tick(dt);
-
-            if txt_rise_timer.just_finished() {
-                typewriter_tx.send(TypewriterPrint::new(
-                    "heheh.... rise and shine mr freeman.......",
-                ));
-
-                level.stage = LevelStage::Intro1 {
-                    spawn_timer: Timer::new(
+                level.stage = LevelStage::AwaitingGateRise {
+                    timer: Timer::new(
                         Duration::from_millis(3150),
                         TimerMode::Once,
                     ),
@@ -308,13 +303,13 @@ pub fn process(
             }
         }
 
-        LevelStage::Intro1 { spawn_timer } => {
-            spawn_timer.tick(dt);
+        LevelStage::AwaitingGateRise { timer } => {
+            timer.tick(dt);
 
             transforms.get_mut(level.ent_gate).unwrap().translation.y +=
                 time.delta_seconds() / 1.2;
 
-            if spawn_timer.just_finished() {
+            if timer.just_finished() {
                 commands.entity(level.ent_gate).remove::<Collider>();
 
                 commands
@@ -371,8 +366,9 @@ pub fn process(
                     LevelGameplayEvent::ZoneEntered(name)
                         if name == "door-a" || name == "door-b" =>
                     {
-                        typewriter_tx
-                            .send(TypewriterPrint::new("gotcha this time !!"));
+                        typewriter_tx.send(TypewriterPrint::new(
+                            "gotcha this time !! DON'T watch your back !!!",
+                        ));
 
                         let (moth_spawn_point, other_door) = if name == "door-a"
                         {

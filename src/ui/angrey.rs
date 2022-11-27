@@ -5,7 +5,7 @@ use doome_bevy::health::Health;
 use doome_bevy::prelude::Player;
 use doome_engine::Canvas;
 
-use super::{HEALTHY_THRESHOLD, WOUNDED_THRESHOLD};
+use super::{UiState, HEALTHY_THRESHOLD, WOUNDED_THRESHOLD};
 
 const FACE_SWAY_SPEED: f32 = 2.0;
 const ANGRY_JITTER_SPEED: (f32, f32) = (128.7, 120.13);
@@ -22,7 +22,12 @@ pub fn render(
     player: Query<(&Player, &Health)>,
     gun_state: Res<super::gun::State>,
     mut renderer: ResMut<DoomeRenderer>,
+    ui: Res<UiState>,
 ) {
+    if !ui.hud_visible {
+        return;
+    }
+
     let frame = &mut renderer.pixels.image_data;
     let mut canvas = Canvas::new(frame);
 

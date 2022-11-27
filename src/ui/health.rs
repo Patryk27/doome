@@ -5,11 +5,18 @@ use doome_bevy::player::Player;
 use doome_bevy::text::TextEngine;
 use doome_engine::{Canvas, HEIGHT};
 
+use super::UiState;
+
 pub fn render(
     mut renderer: ResMut<DoomeRenderer>,
     text_engine: Res<TextEngine>,
     player: Query<(&Player, &Health)>,
+    ui: Res<UiState>,
 ) {
+    if !ui.hud_visible {
+        return;
+    }
+
     let frame = &mut renderer.pixels.image_data;
     let mut canvas = Canvas::new_text(&text_engine, frame);
 

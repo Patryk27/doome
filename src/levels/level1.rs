@@ -68,11 +68,11 @@ const OUTRO_TEXT: &str = indoc! {r#"
     64 bytes from 1337.g00gl3
 
     ERROR: communication taken over by a
-    virus, virus, virus, virus......
+    virus... virus... virus.... virus......
 "#};
 
-const MAIN_CENTER_Z: f32 = (21.0 + 37.0) / 2.0;
-const ELEPHANT_Z: f32 = MAIN_CENTER_Z + 3.0;
+const ROOM_CENTER_Z: f32 = (21.0 + 37.0) / 2.0;
+const ELEPHANT_Z: f32 = ROOM_CENTER_Z + 3.0;
 
 pub fn init(
     mut commands: Commands,
@@ -161,6 +161,13 @@ pub fn init(
         })
         .spawn();
 
+    lvl.ceiling(-8, 18, 8, 37)
+        .alter_material(|mat| {
+            mat.with_reflectivity(0.25)
+                .with_reflection_color(Color::hex(0xffffff))
+        })
+        .spawn();
+
     lvl.wall(-9, 38, 9, 38, 0).spawn();
     lvl.wall(9, 38, 9, 21, 1).spawn();
     lvl.wall(-9, 20, -2, 20, 2).spawn();
@@ -169,7 +176,7 @@ pub fn init(
 
     lvl.model("elephant")
         .with_translation(vec3(0.0, 1.0, ELEPHANT_Z))
-        .with_scale(Vec3::splat(0.4))
+        .with_scale(Vec3::splat(0.32))
         .with_rotation(Quat::from_rotation_y(PI / 2.0))
         .with_material(
             Material::default()
@@ -180,25 +187,25 @@ pub fn init(
         .with_collider(Collider::circle(4.0, 16))
         .spawn();
 
-    let main_sl0 = lvl
+    let room_sl0 = lvl
         .spot_light(
-            vec3(0.0, 4.0, ELEPHANT_Z - 4.0),
+            vec3(0.0, 1.0, ELEPHANT_Z - 4.0),
             vec3(0.0, 0.0, ELEPHANT_Z),
             PI / 2.0,
-            Color::hex(0x990000),
+            Color::hex(0xff0000),
             0.0,
         )
         .insert(LightFade::fade_in_delayed(4.5, 0.1))
         .id();
 
     lvl.complete(LevelState {
-        stage: LevelStage::CorridorIntro {
+        stage: LevelStage::Intro {
             tt: 0.0,
             corr_sl0,
             corr_sl1,
             corr_sl2,
             corr_sl3,
-            main_sl0,
+            room_sl0,
         },
     });
 }
@@ -209,44 +216,37 @@ pub struct LevelState {
 }
 
 enum LevelStage {
-    CorridorIntro {
+    Intro {
         tt: f32,
         corr_sl0: Entity,
         corr_sl1: Entity,
         corr_sl2: Entity,
         corr_sl3: Entity,
-        main_sl0: Entity,
+        room_sl0: Entity,
     },
 
-    Corridor {
+    AwaitingRoomEnter {
+        intro_completed: bool,
         corr_sl0: Entity,
         corr_sl1: Entity,
         corr_sl2: Entity,
         corr_sl3: Entity,
-        main_sl0: Entity,
+        room_sl0: Entity,
     },
 
-    MainIntro0 {
-        tt: f32,
-        main_sl0: Entity,
-        main_sl1: Entity,
-    },
-
-    MainIntro1 {
-        tt: f32,
-        main_sl0: Entity,
-        main_sl1: Entity,
-    },
-
-    Main {
+    AwaitingIntroCompletion {
         txt_elephant: Entity,
-        main_sl0: Entity,
-        main_sl1: Entity,
+        room_sl0: Entity,
+        room_sl1: Entity,
     },
 
-    Outro {
-        tt: f32,
+    InsideRoom {
+        txt_elephant: Entity,
+        room_sl0: Entity,
+        room_sl1: Entity,
     },
+
+    Outro,
 }
 
 pub fn process(
@@ -258,20 +258,26 @@ pub fn process(
     mut player: Query<&mut Player>,
     camera: Query<&Camera>,
     mut typewriter_tx: EventWriter<TypewriterPrint>,
+    mut typewriter_rx: EventReader<TypewriterPrintingCompleted>,
     mut visibilities: Query<&mut Visibility>,
     mut goto_level_tx: EventWriter<GotoLevel>,
+    mut change_hud_visibility_tx: EventWriter<ChangeHudVisibility>,
 ) {
     let Ok(mut level) = level.get_single_mut() else { return };
 
     match &mut level.stage {
-        LevelStage::CorridorIntro {
+        LevelStage::Intro {
             tt,
             corr_sl0,
             corr_sl1,
             corr_sl2,
             corr_sl3,
-            main_sl0,
+            room_sl0,
         } => {
+            if *tt == 0.0 {
+                change_hud_visibility_tx.send(ChangeHudVisibility::hide());
+            }
+
             *tt += time.delta_seconds();
 
             if *tt < 4.5 {
@@ -280,112 +286,48 @@ pub fn process(
 
             player.single_mut().can_move = true;
 
-            level.stage = LevelStage::Corridor {
+            typewriter_tx
+                .send(TypewriterPrint::new(INTRO_TEXT).with_id("intro"));
+
+            level.stage = LevelStage::AwaitingRoomEnter {
+                intro_completed: false,
                 corr_sl0: *corr_sl0,
                 corr_sl1: *corr_sl1,
                 corr_sl2: *corr_sl2,
                 corr_sl3: *corr_sl3,
-                main_sl0: *main_sl0,
+                room_sl0: *room_sl0,
             };
-
-            typewriter_tx.send(TypewriterPrint::new(INTRO_TEXT));
         }
 
-        LevelStage::Corridor {
+        LevelStage::AwaitingRoomEnter {
+            intro_completed,
             corr_sl0,
             corr_sl1,
             corr_sl2,
             corr_sl3,
-            main_sl0,
+            room_sl0,
         } => {
+            if !*intro_completed {
+                *intro_completed =
+                    typewriter_rx.iter().any(|event| event.id == "intro");
+            }
+
             let camera = camera.single().origin;
 
-            if (-3.0..=3.0).contains(&camera.x)
-                && (19.0..=20.0).contains(&camera.z)
+            if !(-3.0..=3.0).contains(&camera.x)
+                || !(20.0..=21.0).contains(&camera.z)
             {
-                for sl in [corr_sl0, corr_sl1, corr_sl2, corr_sl3] {
-                    commands.entity(*sl).insert(LightFade::fade_out(1.0));
-                }
-
-                commands
-                    .entity(*main_sl0)
-                    .insert(LightFade::fade_out_delayed(1.5, 0.5));
-
-                let mut lvl = LevelBuilder::new(&mut commands, &assets);
-
-                let main_sl0 = lvl
-                    .spot_light(
-                        vec3(-8.4, 2.0, ELEPHANT_Z - 8.4),
-                        vec3(0.0, 0.0, ELEPHANT_Z),
-                        PI / 3.0,
-                        Color::hex(0xffffff),
-                        0.0,
-                    )
-                    .insert(LightFade::fade_in_delayed(3.0, 0.15))
-                    .id();
-
-                let main_sl1 = lvl
-                    .spot_light(
-                        vec3(8.4, 2.0, ELEPHANT_Z - 8.4),
-                        vec3(0.0, 0.0, ELEPHANT_Z),
-                        PI / 3.0,
-                        Color::hex(0xffffff),
-                        0.0,
-                    )
-                    .insert(LightFade::fade_in_delayed(3.0, 0.15))
-                    .id();
-
-                player.single_mut().can_move = false;
-
-                level.stage = LevelStage::MainIntro0 {
-                    tt: 0.0,
-                    main_sl0,
-                    main_sl1,
-                };
-            }
-        }
-
-        LevelStage::MainIntro0 {
-            tt,
-            main_sl0,
-            main_sl1,
-        } => {
-            *tt += time.delta_seconds();
-
-            if *tt < 2.0 {
                 return;
             }
 
-            LevelBuilder::new(&mut commands, &assets)
-                .ceiling(-8, 18, 8, 37)
-                .dynamic()
-                .alter_material(|mat| {
-                    mat.with_reflectivity(0.25)
-                        .with_reflection_color(Color::hex(0xffffff))
-                })
-                .spawn();
-
-            level.stage = LevelStage::MainIntro1 {
-                tt: 0.0,
-                main_sl0: *main_sl0,
-                main_sl1: *main_sl1,
-            };
-        }
-
-        LevelStage::MainIntro1 {
-            tt,
-            main_sl0,
-            main_sl1,
-        } => {
-            *tt += time.delta_seconds();
-
-            if *tt < 1.5 {
-                return;
+            for sl in [corr_sl0, corr_sl1, corr_sl2, corr_sl3, room_sl0] {
+                commands.entity(*sl).insert(LightFade::fade_out(0.25));
             }
 
-            player.single_mut().can_move = true;
+            let mut lvl = LevelBuilder::new(&mut commands, &assets);
 
-            let txt_elephant = commands
+            let txt_elephant = lvl
+                .commands()
                 .spawn((
                     Text::new("Press F to address the elephant in the room")
                         .centered(),
@@ -394,17 +336,63 @@ pub fn process(
                 ))
                 .id();
 
-            level.stage = LevelStage::Main {
-                txt_elephant,
-                main_sl0: *main_sl0,
-                main_sl1: *main_sl1,
+            let room_sl0 = lvl
+                .spot_light(
+                    vec3(-8.4, 2.0, ELEPHANT_Z - 8.4),
+                    vec3(0.0, 0.0, ELEPHANT_Z),
+                    PI / 3.0,
+                    Color::hex(0xffffff),
+                    0.0,
+                )
+                .insert(LightFade::fade_in_delayed(0.4, 0.15))
+                .id();
+
+            let room_sl1 = lvl
+                .spot_light(
+                    vec3(8.4, 2.0, ELEPHANT_Z - 8.4),
+                    vec3(0.0, 0.0, ELEPHANT_Z),
+                    PI / 3.0,
+                    Color::hex(0xffffff),
+                    0.0,
+                )
+                .insert(LightFade::fade_in_delayed(0.4, 0.15))
+                .id();
+
+            level.stage = if *intro_completed {
+                LevelStage::InsideRoom {
+                    txt_elephant,
+                    room_sl0,
+                    room_sl1,
+                }
+            } else {
+                LevelStage::AwaitingIntroCompletion {
+                    txt_elephant,
+                    room_sl0,
+                    room_sl1,
+                }
             };
         }
 
-        LevelStage::Main {
+        LevelStage::AwaitingIntroCompletion {
             txt_elephant,
-            main_sl0,
-            main_sl1,
+            room_sl0,
+            room_sl1,
+        } => {
+            let ready = typewriter_rx.iter().any(|event| event.id == "intro");
+
+            if ready {
+                level.stage = LevelStage::InsideRoom {
+                    txt_elephant: *txt_elephant,
+                    room_sl0: *room_sl0,
+                    room_sl1: *room_sl1,
+                };
+            }
+        }
+
+        LevelStage::InsideRoom {
+            txt_elephant,
+            room_sl0,
+            room_sl1,
         } => {
             let is_close_to_elephant =
                 camera.single().origin.distance(vec3(0.0, 0.0, ELEPHANT_Z))
@@ -415,21 +403,25 @@ pub fn process(
 
             txt_elephant_visibility.is_visible = is_close_to_elephant;
 
-            commands.entity(*main_sl0).insert(LightFade::fade_out(3.0));
-            commands.entity(*main_sl1).insert(LightFade::fade_out(3.0));
-
             if is_close_to_elephant && keys.just_pressed(KeyCode::F) {
                 txt_elephant_visibility.is_visible = false;
-                level.stage = LevelStage::Outro { tt: 0.0 };
-                player.single_mut().can_move = true;
-                typewriter_tx.send(TypewriterPrint::new(OUTRO_TEXT));
+
+                commands.entity(*room_sl0).insert(LightFade::fade_out(3.0));
+                commands.entity(*room_sl1).insert(LightFade::fade_out(3.0));
+
+                level.stage = LevelStage::Outro;
+
+                player.single_mut().can_move = false;
+
+                typewriter_tx
+                    .send(TypewriterPrint::new(OUTRO_TEXT).with_id("outro"));
             }
         }
 
-        LevelStage::Outro { tt } => {
-            *tt += time.delta_seconds();
+        LevelStage::Outro => {
+            let ready = typewriter_rx.iter().any(|event| event.id == "outro");
 
-            if *tt > 60.0 {
+            if ready {
                 goto_level_tx.send(GotoLevel::new(Level::l2()));
             }
         }

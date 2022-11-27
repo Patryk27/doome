@@ -1,4 +1,4 @@
-const FUEL_PER_CHARACTER: f32 = 0.07;
+const FUEL_PER_CHARACTER: f32 = 0.06;
 const LINE_HEIGHT: u16 = 12;
 
 use std::collections::VecDeque;
@@ -25,18 +25,26 @@ impl Typewriter {
 
 #[derive(Default)]
 pub struct TypewriterPrint {
+    id: Option<String>,
     text: String,
 }
 
 impl TypewriterPrint {
     pub fn new(text: impl ToString) -> Self {
         Self {
+            id: None,
             text: text.to_string(),
         }
     }
 
+    pub fn with_id(mut self, id: impl ToString) -> Self {
+        self.id = Some(id.to_string());
+        self
+    }
+
     fn build(&self) -> TypewriterText {
         TypewriterText {
+            id: self.id.clone(),
             text: self.text.clone(),
             layout: Default::default(),
             tt: Default::default(),
@@ -47,7 +55,13 @@ impl TypewriterPrint {
 }
 
 #[derive(Clone, Debug)]
+pub struct TypewriterPrintingCompleted {
+    pub id: String,
+}
+
+#[derive(Clone, Debug)]
 struct TypewriterText {
+    id: Option<String>,
     text: String,
     layout: Vec<String>,
     tt: f32,
@@ -176,9 +190,22 @@ pub fn update(
     time: Res<Time>,
     mut state: ResMut<Typewriter>,
     mut events: EventReader<TypewriterPrint>,
+    ui: Res<UiState>,
+    keys: Res<Input<KeyCode>>,
+    mut completed_tx: EventWriter<TypewriterPrintingCompleted>,
 ) {
     if let Some(curr) = &mut state.current {
-        curr.tt += time.delta_seconds();
+        let speed = if ui.hud_visible {
+            1.0
+        } else {
+            if keys.pressed(KeyCode::Space) || keys.pressed(KeyCode::Return) {
+                4.0
+            } else {
+                1.0
+            }
+        };
+
+        curr.tt += speed * time.delta_seconds();
 
         if curr.tt >= curr.relayout_at {
             let (new_layout, remaining_fuel) =
@@ -195,6 +222,12 @@ pub fn update(
 
         if let Some(completed_at) = curr.completed_at {
             if curr.tt > completed_at + 2.0 {
+                if let Some(id) = &curr.id {
+                    completed_tx.send(TypewriterPrintingCompleted {
+                        id: id.to_owned(),
+                    });
+                }
+
                 state.current = state.scheduled.pop_front();
             }
         }

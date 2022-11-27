@@ -46,7 +46,7 @@ impl Door {
                 .double_sided()
                 .with_color(Color::hex(0xffffff))
                 .with_uv_transparency(),
-            Collider::line(vec2(0.0, -1.0), vec2(0.0, 1.0)),
+            Collider::line(vec2(-1.0, 0.0), vec2(1.0, 0.0)),
         ));
 
         if let Some(key) = self.key {

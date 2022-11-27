@@ -8,6 +8,7 @@ use doome_bevy::health::Health;
 use doome_bevy::player::Player;
 use doome_engine::Canvas;
 
+use super::UiState;
 use crate::player::PlayerShot;
 use crate::weapons::{PrefabWeapons, Weapon, WeaponSprites};
 
@@ -47,7 +48,12 @@ pub fn render(
     player: Query<(&Player, &Health, &Weapon)>,
     mut audio: ResMut<Audio>,
     mut shots: EventReader<PlayerShot>,
+    ui: Res<UiState>,
 ) {
+    if !ui.hud_visible {
+        return;
+    }
+
     let State {
         current_weapon,
         anim_state: shooting_anim,
