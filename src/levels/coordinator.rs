@@ -136,6 +136,10 @@ impl Level {
     pub fn l5() -> Self {
         Self(5)
     }
+
+    pub fn l6() -> Self {
+        Self(6)
+    }
 }
 
 impl FromStr for Level {

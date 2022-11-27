@@ -322,7 +322,7 @@ pub fn process(
 
                 commands.entity(level.ent_lamp).despawn();
 
-                sync_nav_data_tx.send(SyncNavData);
+                sync_nav_data_tx.send(SyncNavData::default());
 
                 let moths = (1..=2).map(|id| {
                     MothMonster::spawn(

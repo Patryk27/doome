@@ -22,8 +22,10 @@ impl Enemy {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct SyncNavData;
+#[derive(Clone, Copy, Debug, Default)]
+pub struct SyncNavData {
+    pub force_aabb: Option<(Vec2, Vec2)>,
+}
 
 impl Plugin for EnemiesPlugin {
     fn build(&self, app: &mut App) {
@@ -213,16 +215,23 @@ fn player_entity_raycast(
 }
 
 fn sync_nav_data(
-    mut event_reader: EventReader<SyncNavData>,
+    mut event_rx: EventReader<SyncNavData>,
     mut hivemind: Query<&mut Hivemind>,
     walls: Query<(&Transform, &Collider), With<NavObstacle>>,
 ) {
-    if event_reader.iter().count() == 0 {
+    let mut force_aabb = None;
+    let mut got_something = false;
+
+    for event in event_rx.iter() {
+        got_something = true;
+        force_aabb = event.force_aabb;
+    }
+
+    if !got_something {
         return;
     }
 
     let mut hivemind = hivemind.single_mut();
-
     let build_time_start = Instant::now();
     let mut nav_data_builder = NavDataBuilder::new(0.75);
 
@@ -237,9 +246,7 @@ fn sync_nav_data(
     }
 
     let insert_polygons_time = build_time_start.elapsed();
-
-    let nav_data = nav_data_builder.build();
-
+    let nav_data = nav_data_builder.build(force_aabb);
     let build_time = build_time_start.elapsed();
 
     hivemind.nav_data = Some(nav_data);

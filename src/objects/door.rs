@@ -69,7 +69,8 @@ impl Door {
                             .double_sided()
                             .with_color(key.color())
                             .with_texture(texture)
-                            .with_uv_transparency(),
+                            .with_uv_transparency()
+                            .without_casting_shadows(),
                     ));
                 }
             });

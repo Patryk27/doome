@@ -161,7 +161,7 @@ fn handle_commands(
             }
 
             Command::SyncNavData => {
-                event_writers.sync_nav_data_tx.send(SyncNavData);
+                event_writers.sync_nav_data_tx.send(SyncNavData::default());
             }
 
             Command::NoClip => {

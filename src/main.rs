@@ -98,7 +98,7 @@ fn main() {
         // ===== //
         // doome //
         .add_plugin(rng::RngPlugin)
-        .add_plugin(enemies::EnemiesPlugin)
+        .add_plugin(units::UnitsPlugin)
         .add_plugin(sounds::SoundsPlugin)
         .add_plugin(music::MusicPlugin)
         .add_plugin(bullets::BulletsPlugin)
@@ -111,6 +111,7 @@ fn main() {
         .add_plugin(pickable::PickablePlugin)
         .add_plugin(inventory::InventoryPlugin)
         .add_plugin(objects::ObjectsPlugin)
+        .add_plugin(enemies::EnemiesPlugin)
         .add_system(explosions::update)
         .add_system(
             Flashlight::sync_with_player.after(player::process_movement),

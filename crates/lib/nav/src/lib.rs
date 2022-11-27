@@ -173,9 +173,12 @@ impl NavDataBuilder {
         self.polygons.push(polygon);
     }
 
-    pub fn build(self) -> NavData {
-        let area_start = self.area_start.unwrap();
-        let area_end = self.area_end.unwrap();
+    pub fn build(self, force_aabb: Option<(Vec2, Vec2)>) -> NavData {
+        let area_start =
+            self.area_start.or_else(|| force_aabb.map(|f| f.0)).unwrap();
+
+        let area_end =
+            self.area_end.or_else(|| force_aabb.map(|f| f.1)).unwrap();
 
         let width =
             ((area_end.x - area_start.x) / self.raster_unit).ceil() as usize;

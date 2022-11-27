@@ -44,32 +44,6 @@ impl Ray {
     }
 
     pub fn hits_anything_up_to(self, world: &World, distance: f32) -> bool {
-        // Check dynamic geometry
-        let mut tri_idx = 0;
-
-        while tri_idx < world.dynamic_geo.len() {
-            let tri_id = TriangleId::new_dynamic(tri_idx);
-            let tri = world.dynamic_geo.get(tri_id);
-
-            if tri.casts_shadows() {
-                let hit = tri.hit(self, false);
-
-                if hit.t < distance {
-                    let got_hit = if tri.has_uv_transparency() {
-                        world.atlas_sample(tri_id.into_any(), hit).w > 0.5
-                    } else {
-                        true
-                    };
-
-                    if got_hit {
-                        return true;
-                    }
-                }
-            }
-
-            tri_idx += 1;
-        }
-
         // Check static geometry
         let mut ptr = 0;
 
@@ -114,13 +88,9 @@ impl Ray {
             }
 
             if ptr == 0 {
-                break false;
+                break;
             }
         }
-    }
-
-    pub fn trace(self, world: &World, culling: bool) -> Hit {
-        let mut hit = Hit::none();
 
         // Check dynamic geometry
         let mut tri_idx = 0;
@@ -128,23 +98,31 @@ impl Ray {
         while tri_idx < world.dynamic_geo.len() {
             let tri_id = TriangleId::new_dynamic(tri_idx);
             let tri = world.dynamic_geo.get(tri_id);
-            let curr_hit = tri.hit(self, culling);
 
-            if curr_hit.is_closer_than(hit) {
-                let got_hit = if tri.has_uv_transparency() {
-                    world.atlas_sample(tri_id.into_any(), curr_hit).w > 0.5
-                } else {
-                    true
-                };
+            if tri.casts_shadows() {
+                let hit = tri.hit(self, false);
 
-                if got_hit {
-                    hit = curr_hit;
-                    hit.tri_id = tri_id.into_any();
+                if hit.t < distance {
+                    let got_hit = if tri.has_uv_transparency() {
+                        world.atlas_sample(tri_id.into_any(), hit).w > 0.5
+                    } else {
+                        true
+                    };
+
+                    if got_hit {
+                        return true;
+                    }
                 }
             }
 
             tri_idx += 1;
         }
+
+        false
+    }
+
+    pub fn trace(self, world: &World, culling: bool) -> Hit {
+        let mut hit = Hit::none();
 
         // Check static geometry
         let mut ptr = 0;
@@ -190,6 +168,30 @@ impl Ray {
             if ptr == 0 {
                 break;
             }
+        }
+
+        // Check dynamic geometry
+        let mut tri_idx = 0;
+
+        while tri_idx < world.dynamic_geo.len() {
+            let tri_id = TriangleId::new_dynamic(tri_idx);
+            let tri = world.dynamic_geo.get(tri_id);
+            let curr_hit = tri.hit(self, culling);
+
+            if curr_hit.is_closer_than(hit) {
+                let got_hit = if tri.has_uv_transparency() {
+                    world.atlas_sample(tri_id.into_any(), curr_hit).w > 0.5
+                } else {
+                    true
+                };
+
+                if got_hit {
+                    hit = curr_hit;
+                    hit.tri_id = tri_id.into_any();
+                }
+            }
+
+            tri_idx += 1;
         }
 
         hit

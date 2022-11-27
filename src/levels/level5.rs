@@ -47,7 +47,9 @@ enum LevelStage {
     SpawningWaveEnemies { delay: Timer, wave: u8 },
     AwaitingWaveCompletion { enemies: Vec<Entity>, wave: u8 },
     PostWaveCooldown { cooldown: Timer, next_wave: u8 },
-    AwaitingLeaving,
+    AwaitingGoingThroughDoor,
+    AwaitingLeaving { light: Entity },
+    AwaitingOutro { timer: Timer },
 }
 
 pub fn process(
@@ -59,7 +61,9 @@ pub fn process(
     mut sync_nav_data_tx: EventWriter<SyncNavData>,
     mut command_tx: EventWriter<Command>,
     mut level_rx: EventReader<LevelGameplayEvent>,
-    inventory: Query<&Inventory>,
+    mut inventory: Query<&mut Inventory>,
+    mut goto_level_tx: EventWriter<GotoLevel>,
+    mut player: Query<&mut Player>,
 ) {
     let Ok(mut level) = level.get_single_mut() else { return };
     let level = &mut *level;
@@ -71,7 +75,7 @@ pub fn process(
                 "yes, now it's correct -- DIE.....",
             ));
 
-            sync_nav_data_tx.send(SyncNavData);
+            sync_nav_data_tx.send(SyncNavData::default());
 
             level.stage = LevelStage::SpawningWave { wave: 1 };
         }
@@ -179,7 +183,7 @@ pub fn process(
                         what: Item::Flashlight,
                     });
 
-                    level.stage = LevelStage::AwaitingLeaving;
+                    level.stage = LevelStage::AwaitingGoingThroughDoor;
                 }
 
                 _ => unreachable!(),
@@ -199,27 +203,59 @@ pub fn process(
             }
         }
 
-        LevelStage::AwaitingLeaving => {
+        LevelStage::AwaitingGoingThroughDoor => {
             for event in level_rx.iter() {
                 match event {
-                    LevelGameplayEvent::DoorOpened(_) => {
-                        typewriter_tx.send(TypewriterPrint::new(
-                            "you're getting closer...",
-                        ));
+                    LevelGameplayEvent::DoorOpened(name) => {
+                        match name.as_str() {
+                            "3" => {
+                                typewriter_tx.send(TypewriterPrint::new(
+                                    "whoops, looks like your flashlight broke down\n\
+                                     fortunately, the end is near -- follow the light!",
+                                ));
+
+                                inventory.single_mut().has_flashlight = false;
+
+                                let light =
+                                    LevelBuilder::new(&mut commands, &assets)
+                                        .point_light(
+                                            level.locator.tag("exit-light")
+                                                + vec3(0.0, 1.5, 0.0),
+                                            Color::hex(0xffffff),
+                                            1.0,
+                                        )
+                                        .id();
+
+                                level.stage =
+                                    LevelStage::AwaitingLeaving { light };
+                            }
+
+                            _ => {
+                                //
+                            }
+                        }
                     }
 
                     LevelGameplayEvent::KeyPicked(name) => {
                         let inventory = inventory.single();
 
                         if name == "2" || name == "3" {
-                            if inventory.keys.len() == 2 {
-                                typewriter_tx.send(TypewriterPrint::new(
-                                    "gotcha!! yes... YES......",
-                                ));
-                            } else {
-                                typewriter_tx.send(TypewriterPrint::new(
-                                    "oh well, come see me....",
-                                ));
+                            match inventory.keys.len() {
+                                2 => {
+                                    typewriter_tx.send(TypewriterPrint::new(
+                                        "gotcha!! yes... YES......",
+                                    ));
+                                }
+
+                                3 => {
+                                    typewriter_tx.send(TypewriterPrint::new(
+                                        "oh well, come see me....",
+                                    ));
+                                }
+
+                                _ => {
+                                    //
+                                }
                             }
 
                             MothMonster::spawn(
@@ -238,6 +274,46 @@ pub fn process(
                         //
                     }
                 }
+            }
+        }
+
+        LevelStage::AwaitingLeaving { light } => {
+            let mut ready = false;
+
+            for event in level_rx.iter() {
+                match event {
+                    LevelGameplayEvent::ZoneEntered(name) => {
+                        if name == "end" {
+                            ready = true;
+                        }
+                    }
+
+                    _ => {
+                        //
+                    }
+                }
+            }
+
+            if ready {
+                commands.entity(*light).despawn();
+
+                typewriter_tx.send(TypewriterPrint::new(
+                    "technical problems, SORRY\nfirst time killing somebody",
+                ));
+
+                player.single_mut().can_move = false;
+
+                level.stage = LevelStage::AwaitingOutro {
+                    timer: Timer::new(Duration::from_secs(8), TimerMode::Once),
+                };
+            }
+        }
+
+        LevelStage::AwaitingOutro { timer } => {
+            timer.tick(dt);
+
+            if timer.just_finished() {
+                goto_level_tx.send(GotoLevel::new(Level::l6()));
             }
         }
     }

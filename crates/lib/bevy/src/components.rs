@@ -269,6 +269,16 @@ pub enum GeometryType {
     Dynamic,
 }
 
+impl GeometryType {
+    pub fn is_static(self) -> bool {
+        matches!(self, Self::Static)
+    }
+
+    pub fn is_dynamic(self) -> bool {
+        matches!(self, Self::Dynamic)
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Component)]
 pub struct Visibility {
     pub is_visible: bool,

@@ -30,10 +30,11 @@ indoc = "1.0"
 instant = "0.1"
 itertools = "0.10.5"
 log = "0.4"
+palette = "0.6.1"
 quick-xml = { version = "0.26", features = ["serialize"] }
+rand = { version = "0.8.5", default-features = false, features = ["small_rng"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-rand = { version = "0.8.5", default-features = false, features = [ "small_rng" ] }
 
 [features]
 static-assets = []
