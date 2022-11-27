@@ -10,6 +10,7 @@ doome-pixels = { path = "../pixels" }
 doome-screen-space-effects = { path = "../screen-space-effects" }
 doome-raytracer = { path = "../raytracer" }
 doome-scaler = { path = "../scaler" }
+doome-debug-pass = { path = "../debug-pass" }
 doome-text = { path = "../text" }
 doome-wgpu-ext = { path = "../wgpu-ext" }
 doome-geo = { path = "../geo" }

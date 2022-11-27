@@ -1265,6 +1265,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bevy",
+ "doome-debug-pass",
  "doome-engine",
  "doome-geo",
  "doome-nav",
@@ -1290,6 +1291,25 @@ dependencies = [
 
 [[package]]
 name = "doome-crt-shader"
+version = "0.1.0"
+dependencies = [
+ "doome-shader-common",
+ "spirv-std",
+]
+
+[[package]]
+name = "doome-debug-pass"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "doome-shader-common",
+ "doome-wgpu-ext",
+ "glam",
+ "wgpu",
+]
+
+[[package]]
+name = "doome-debug-shader"
 version = "0.1.0"
 dependencies = [
  "doome-shader-common",

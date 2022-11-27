@@ -5,6 +5,7 @@ use std::sync::Arc;
 use bevy::app::AppExit;
 use bevy::ecs::system::SystemParam;
 use doome_bevy::physics::PhysicsEnabled;
+use doome_bevy::rendering_options::RenderingOptions;
 
 pub use self::cmd::*;
 use crate::inventory::Inventory;
@@ -41,6 +42,7 @@ fn handle_commands(
     assets: Res<Assets>,
     prefab_weapons: Res<PrefabWeapons>,
     // Mutable resources
+    mut rendering_options: ResMut<RenderingOptions>,
     mut physics_enabled: ResMut<PhysicsEnabled>,
     mut input_lock: ResMut<InputLock>,
     mut weapon_sprites: ResMut<ui::gun::State>,
@@ -241,6 +243,15 @@ fn handle_commands(
 
             Command::SwitchTrack { track } => {
                 event_writers.switch_track_tx.send(SwitchTrack(track));
+            }
+
+            Command::ToggleDebug => {
+                rendering_options.debug_pass_enabled =
+                    !rendering_options.debug_pass_enabled;
+            }
+
+            Command::ToggleSSE => {
+                rendering_options.sse_enabled = !rendering_options.sse_enabled;
             }
         }
     }

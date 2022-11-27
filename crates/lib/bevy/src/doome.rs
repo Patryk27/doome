@@ -1,6 +1,7 @@
 use bevy::log;
 use bevy::prelude::*;
 use bevy::window::{WindowResized, WindowScaleFactorChanged};
+use doome_debug_pass::DebugPass;
 use doome_engine::{HEIGHT, WIDTH};
 use doome_pixels::Pixels;
 use doome_raytracer as rt;
@@ -13,6 +14,7 @@ use crate::assets::Assets;
 use crate::components::*;
 use crate::raytracer::DoomeRaytracerPlugin;
 use crate::renderer::RendererState;
+use crate::rendering_options::RenderingOptions;
 use crate::text::TextEngine;
 
 pub struct DoomePlugin;
@@ -22,18 +24,26 @@ pub struct DoomeRenderer {
     pub raytracer: rt::Raytracer,
     pub pixels: Pixels,
     pub screen_space_effects: ScreenSpaceEffects,
+    pub debug_pass: DebugPass,
     pub scaler: Scaler,
 
     pub width: f32,
     pub height: f32,
 
+    pub intermediate_output_texture: wgpu::Texture,
     pub intermediate_output_texture_view: wgpu::TextureView,
+    pub sse_output_texture: wgpu::Texture,
     pub sse_output_texture_view: wgpu::TextureView,
     pub shader_constants: AllocatedUniform<ShaderConstants>,
 }
 
 impl Plugin for DoomePlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
+        app.insert_resource(RenderingOptions {
+            sse_enabled: false,
+            debug_pass_enabled: false,
+        });
+
         let assets = app.world.resource::<Assets>();
         let renderer = app.world.resource::<RendererState>();
         let windows = app.world.resource::<Windows>();
@@ -58,6 +68,8 @@ impl Plugin for DoomePlugin {
 
         let pixels =
             Pixels::new(device, WIDTH as _, HEIGHT as _, &shader_constants);
+
+        let debug_pass = DebugPass::new(device, &shader_constants);
 
         let intermediate_output_texture =
             device.create_texture(&wgpu::TextureDescriptor {
@@ -93,7 +105,8 @@ impl Plugin for DoomePlugin {
                 format: wgpu::TextureFormat::Rgba8UnormSrgb,
                 usage: wgpu::TextureUsages::COPY_SRC
                     | wgpu::TextureUsages::RENDER_ATTACHMENT
-                    | wgpu::TextureUsages::TEXTURE_BINDING,
+                    | wgpu::TextureUsages::TEXTURE_BINDING
+                    | wgpu::TextureUsages::COPY_DST,
             });
 
         let sse_output_texture_view =
@@ -114,13 +127,16 @@ impl Plugin for DoomePlugin {
 
         app.insert_resource(DoomeRenderer {
             raytracer,
-            scaler,
-            screen_space_effects,
             pixels,
+            debug_pass,
+            screen_space_effects,
+            scaler,
             width,
             height,
             shader_constants,
+            intermediate_output_texture,
             intermediate_output_texture_view,
+            sse_output_texture,
             sse_output_texture_view,
         });
 

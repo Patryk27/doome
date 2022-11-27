@@ -3,10 +3,10 @@ use crate::*;
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct Camera {
-    origin: Vec4,
-    look_at: Vec4,
-    up: Vec4,
-    viewport_size: Vec4,
+    pub origin: Vec4,
+    pub look_at: Vec4,
+    pub up: Vec4,
+    pub viewport_size: Vec4,
 
     // Coordinates for the orthonormal basis; since they are somewhat heavy to
     // compute, we keep them here as a cache
