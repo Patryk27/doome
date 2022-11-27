@@ -13,7 +13,7 @@ const INTRO_TEXT: &str = indoc! {r#"
     Move using WASD + mouse or comma / period.
     Shoot using space.
 
-    The rest, find you you will.
+    The rest, find out you will.
 "#};
 
 const OUTRO_TEXT: &str = indoc! {r#"
