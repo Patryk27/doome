@@ -1,10 +1,12 @@
 use std::f32::consts::PI;
 use std::time::Duration;
 
+use crate::music::MusicTrack;
 use crate::prelude::*;
 
 pub fn init(
     mut commands: Commands,
+    mut game_commands: EventWriter<Command>,
     assets: Res<Assets>,
     mut goto_level_rx: EventReader<GotoLevel>,
     mut player: Query<(&mut Player, &mut Transform)>,
@@ -45,6 +47,10 @@ pub fn init(
 
         Column::spawn(lvl.assets(), lvl.commands(), column_pos.xz());
     }
+
+    game_commands.send(Command::SwitchTrack {
+        track: MusicTrack::Chillout,
+    });
 
     lvl.model("wall")
         .with_translation(vec3(0.0, 2.0, -2.4))
@@ -88,6 +94,7 @@ enum LevelStage {
 
 pub fn process(
     time: Res<Time>,
+    mut game_commands: EventWriter<Command>,
     mut level: Query<&mut LevelState>,
     mut lights: Query<&mut Light>,
     mut transforms: Query<&mut Transform>,
@@ -162,6 +169,9 @@ pub fn process(
             }
 
             if *tt > 5.0 {
+                game_commands.send(Command::SwitchTrack {
+                    track: MusicTrack::Doome,
+                });
                 goto_level_tx.send(GotoLevel::new(Level::l5()));
             }
         }
