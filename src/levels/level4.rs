@@ -93,6 +93,7 @@ pub fn process(
     mut transforms: Query<&mut Transform>,
     mut typewriter_tx: EventWriter<TypewriterPrint>,
     mut change_hud_visibility_tx: EventWriter<ChangeHudVisibility>,
+    mut goto_level_tx: EventWriter<GotoLevel>,
 ) {
     let Ok(mut level) = level.get_single_mut() else { return };
     let level = &mut *level;
@@ -158,6 +159,10 @@ pub fn process(
 
             for light in level_lights {
                 lights.get_mut(light).unwrap().intensity = (2.0 - *tt).max(0.0);
+            }
+
+            if *tt > 5.0 {
+                goto_level_tx.send(GotoLevel::new(Level::l5()));
             }
         }
     }

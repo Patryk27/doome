@@ -15,7 +15,7 @@ impl LevelsCoordinator {
         mut commands: Commands,
         mut goto_level_tx: EventWriter<GotoLevel>,
     ) {
-        let starting_level = Level::l5();
+        let starting_level = Level::l1();
 
         let levels_coordinator = LevelsCoordinator {
             current_level: starting_level,
