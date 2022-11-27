@@ -30,7 +30,6 @@ rectangle-pack = "0.4"
 rodio = { version = "0.16", default-features = false, features = [
     "wav",
     "vorbis",
-    "mp3",
     "wasm-bindgen",
 ] }
 tobj = "3.2"
