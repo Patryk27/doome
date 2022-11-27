@@ -90,6 +90,7 @@ pub enum Command {
 #[derive(Debug, Clone, Copy)]
 pub enum Spawnable {
     MothMonster,
+    Doome,
     Heart,
     RpgPickup,
     RiflePickup,
@@ -259,6 +260,7 @@ impl FromStr for Spawnable {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "moth-monster" => Ok(Spawnable::MothMonster),
+            "doome" => Ok(Spawnable::Doome),
             "heart" => Ok(Spawnable::Heart),
             "rpg-pickup" => Ok(Spawnable::RpgPickup),
             "rifle-pickup" => Ok(Spawnable::RiflePickup),

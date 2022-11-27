@@ -85,3 +85,14 @@ pub fn enemy_fire_spew(assets: &Assets) -> WeaponDefinition {
         .with_damage(15.0)
         .with_collider_radius(0.5)
 }
+
+pub fn doome_fire_spew(assets: &Assets) -> WeaponDefinition {
+    WeaponDefinition::new()
+        .with_model(assets.load_model("fireball"))
+        .with_cooldown(1.0)
+        .with_forward_offset(10.0)
+        .with_speed(17.5)
+        .with_damage(30.0)
+        .with_scale(2.0)
+        .with_collider_radius(0.5)
+}

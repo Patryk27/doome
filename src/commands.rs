@@ -127,6 +127,9 @@ fn handle_commands(
                     Spawnable::MothMonster => {
                         MothMonster::spawn(&assets, &mut commands, position)
                     }
+                    Spawnable::Doome => {
+                        Doome::spawn(&assets, &mut commands, position)
+                    }
                     Spawnable::Heart => Picker::heart()
                         .with_position(position.xz())
                         .spawn(&assets, &mut commands),

@@ -27,7 +27,7 @@ impl Doome {
         };
 
         let model = assets.load_model("moth_monster");
-        let weapon = crate::weapons::definitions::enemy_fire_spew(&assets);
+        let weapon = crate::weapons::definitions::doome_fire_spew(&assets);
         let texture = assets.load_texture("enemy.doome");
 
         commands
