@@ -77,6 +77,8 @@ pub enum Command {
     SwitchTrack {
         track: MusicTrack,
     },
+    /// Toggles the debug mode
+    Debug,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -209,6 +211,8 @@ impl FromStr for Command {
 
                 Ok(Command::SwitchTrack { track })
             }
+
+            "debug" => Ok(Command::Debug),
 
             _ => Err(anyhow!("Failed to parse command: {s}")),
         }
