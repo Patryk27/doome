@@ -142,7 +142,9 @@ pub fn process(
 
                     LevelGameplayEvent::ZoneEntered(zone_name) => {
                         if zone_name == "accidental-exit" {
-                            typewriter_tx.send(TypewriterPrint::new("no"));
+                            typewriter_tx.send(TypewriterPrint::new(
+                                "no ! -- there's nothing for you there",
+                            ));
 
                             player.single_mut().1.translation =
                                 Default::default();

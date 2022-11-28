@@ -6,6 +6,7 @@ use doome_bevy::prelude::Player;
 use doome_engine::Canvas;
 
 use super::{UiState, HEALTHY_THRESHOLD, WOUNDED_THRESHOLD};
+use crate::prelude::LevelsCoordinator;
 
 const FACE_SWAY_SPEED: f32 = 2.0;
 const ANGRY_JITTER_SPEED: (f32, f32) = (128.7, 120.13);
@@ -23,8 +24,9 @@ pub fn render(
     gun_state: Res<super::gun::State>,
     mut renderer: ResMut<DoomeRenderer>,
     ui: Res<UiState>,
+    levels_coordinator: Res<LevelsCoordinator>,
 ) {
-    if !ui.hud_visible {
+    if !ui.hud_visible || levels_coordinator.is_game_over {
         return;
     }
 

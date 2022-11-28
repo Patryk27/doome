@@ -1,5 +1,6 @@
 use doome_bevy::doome::DoomeRenderer;
 use doome_engine::Canvas;
+use doome_surface::Color;
 use image::RgbaImage;
 
 use crate::prelude::*;
@@ -9,35 +10,20 @@ pub fn setup(mut commands: Commands, assets: Res<Assets>) {
     let click_to_restart = assets.load_image("click_to_restart");
 
     commands.insert_resource(GameOverAssets {
-        you_died,
-        click_to_restart,
-    });
-
-    commands.insert_resource(GameOverState {
-        timer: 0.0,
-        is_showing_click_to_restart: false,
+        img1: you_died,
+        img2: click_to_restart,
     });
 }
 
 #[derive(Resource)]
 pub struct GameOverAssets {
-    you_died: AssetHandle<RgbaImage>,
-    click_to_restart: AssetHandle<RgbaImage>,
-}
-
-const CLICK_TO_RESTART_SWITCH_TIME: f32 = 1.0;
-
-#[derive(Resource)]
-pub struct GameOverState {
-    timer: f32,
-    is_showing_click_to_restart: bool,
+    img1: AssetHandle<RgbaImage>,
+    img2: AssetHandle<RgbaImage>,
 }
 
 pub fn render(
-    time: Res<Time>,
     assets: Res<Assets>,
     game_over_assets: Res<GameOverAssets>,
-    mut state: ResMut<GameOverState>,
     levels_coordinator: Res<LevelsCoordinator>,
     mut renderer: ResMut<DoomeRenderer>,
 ) {
@@ -45,23 +31,19 @@ pub fn render(
         return;
     }
 
-    let delta = time.delta_seconds();
-    state.timer += delta;
-
-    if state.timer > CLICK_TO_RESTART_SWITCH_TIME {
-        state.timer = 0.0;
-        state.is_showing_click_to_restart = !state.is_showing_click_to_restart;
-    }
-
     let frame = &mut renderer.pixels.image_data;
     let mut canvas = Canvas::new(frame);
 
-    let you_died = assets.image(game_over_assets.you_died);
-    let click_to_restart = assets.image(game_over_assets.click_to_restart);
+    let img1 = assets.image(game_over_assets.img1);
 
-    canvas.blit(0, 0, you_died);
+    let alpha1 =
+        ((levels_coordinator.time_in_game_over - 0.5) * 255.0).min(255.0) as u8;
 
-    if state.is_showing_click_to_restart {
-        canvas.blit(0, 0, click_to_restart);
-    }
+    let img2 = assets.image(game_over_assets.img2);
+
+    let alpha2 =
+        ((levels_coordinator.time_in_game_over - 1.8) * 255.0).min(255.0) as u8;
+
+    canvas.blit_blended(0, 0, img1, Color::WHITE.with_a(alpha1));
+    canvas.blit_blended(0, 0, img2, Color::WHITE.with_a(alpha2));
 }

@@ -10,6 +10,7 @@ use doome_engine::Canvas;
 
 use super::UiState;
 use crate::player::PlayerShot;
+use crate::prelude::LevelsCoordinator;
 use crate::weapons::{PrefabWeapons, Weapon, WeaponSprites};
 
 const GUN_OFFSET_Y: u16 = 16;
@@ -49,8 +50,9 @@ pub fn render(
     mut audio: ResMut<Audio>,
     mut shots: EventReader<PlayerShot>,
     ui: Res<UiState>,
+    levels_coordinator: Res<LevelsCoordinator>,
 ) {
-    if !ui.hud_visible {
+    if !ui.hud_visible || levels_coordinator.is_game_over {
         return;
     }
 

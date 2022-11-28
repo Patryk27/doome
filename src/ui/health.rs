@@ -6,14 +6,16 @@ use doome_bevy::text::TextEngine;
 use doome_engine::{Canvas, HEIGHT};
 
 use super::UiState;
+use crate::prelude::LevelsCoordinator;
 
 pub fn render(
     mut renderer: ResMut<DoomeRenderer>,
     text_engine: Res<TextEngine>,
     player: Query<(&Player, &Health)>,
     ui: Res<UiState>,
+    levels_coordinator: Res<LevelsCoordinator>,
 ) {
-    if !ui.hud_visible {
+    if !ui.hud_visible || levels_coordinator.is_game_over {
         return;
     }
 
