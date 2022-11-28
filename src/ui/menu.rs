@@ -7,13 +7,9 @@ use doome_surface::Color;
 
 use crate::prelude::*;
 
-const ITEMS: &[&[&str]] = &[
-    &["Continue game", "Adjust mouse sensitivity", "Quit game"],
-    &["Increase sensitivity", "Decrease sensitivity", "Confirm"],
-];
-
 #[derive(Default, Resource)]
 pub struct Menu {
+    items: Vec<Vec<MenuItem>>,
     is_visible: bool,
     menu_idx: usize,
     item_idx: usize,
@@ -23,18 +19,170 @@ impl Menu {
     pub fn is_visible(&self) -> bool {
         self.is_visible
     }
+
+    fn add(&mut self, f: impl FnOnce(&mut MenuBuilder)) {
+        let mut menu = MenuBuilder::default();
+
+        f(&mut menu);
+
+        self.items.push(menu.items);
+    }
+}
+
+#[derive(Default)]
+struct MenuBuilder {
+    items: Vec<MenuItem>,
+}
+
+impl MenuBuilder {
+    fn add(&mut self, item: MenuItem) {
+        self.items.push(item);
+    }
+
+    fn add_if(&mut self, cond: bool, item: MenuItem) {
+        if cond {
+            self.add(item);
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+enum MenuItem {
+    MainContinueGame,
+    MainMouseSettings,
+    MainDisplaySettings,
+    MainQuitGame,
+    //
+    MouseIncreaseSensitivity,
+    MouseDecreaseSensitivity,
+    MouseConfirm,
+    //
+    DisplayToggleMode,
+    DisplayConfirm,
+}
+
+impl MenuItem {
+    fn label(&self, windows: &Windows) -> &'static str {
+        match self {
+            MenuItem::MainContinueGame => "Continue game",
+            MenuItem::MainMouseSettings => "Mouse settings",
+            MenuItem::MainDisplaySettings => "Display settings",
+            MenuItem::MainQuitGame => "Quit game",
+            //
+            MenuItem::MouseIncreaseSensitivity => "Increase sensitivity",
+            MenuItem::MouseDecreaseSensitivity => "Decrease sensitivity",
+            MenuItem::MouseConfirm => "Confirm",
+            //
+            MenuItem::DisplayToggleMode => {
+                if windows.get_primary().unwrap().mode()
+                    == WindowMode::Fullscreen
+                {
+                    "Make windowed"
+                } else {
+                    "Make fullscreen"
+                }
+            }
+            MenuItem::DisplayConfirm => "Confirm",
+        }
+    }
+
+    fn exec(
+        &self,
+        windows: &mut Windows,
+        exit: &mut EventWriter<AppExit>,
+        settings: &mut Settings,
+        state: &mut Menu,
+        lock: &mut InputLock,
+    ) {
+        match self {
+            MenuItem::MainContinueGame => {
+                state.is_visible = false;
+                lock.is_locked = state.is_visible;
+            }
+
+            MenuItem::MainMouseSettings => {
+                state.menu_idx = 1;
+                state.item_idx = 0;
+            }
+
+            MenuItem::MainDisplaySettings => {
+                state.menu_idx = 2;
+                state.item_idx = 0;
+            }
+
+            MenuItem::MainQuitGame => {
+                exit.send(AppExit);
+            }
+
+            MenuItem::MouseIncreaseSensitivity => {
+                settings.mouse_sensitivity += 0.05;
+            }
+
+            MenuItem::MouseDecreaseSensitivity => {
+                settings.mouse_sensitivity =
+                    (settings.mouse_sensitivity - 0.05).max(0.05);
+            }
+
+            MenuItem::MouseConfirm => {
+                state.menu_idx = 0;
+                state.item_idx = 0;
+            }
+
+            MenuItem::DisplayToggleMode => {
+                let window = windows.get_primary_mut().unwrap();
+
+                if window.mode() == WindowMode::Fullscreen {
+                    window.set_mode(WindowMode::Windowed);
+                } else {
+                    window.set_mode(WindowMode::Fullscreen);
+                }
+            }
+
+            MenuItem::DisplayConfirm => {
+                state.menu_idx = 0;
+                state.item_idx = 0;
+            }
+        }
+    }
 }
 
 pub fn setup(mut commands: Commands) {
-    commands.insert_resource(Menu::default());
+    let mut menu = Menu::default();
+
+    #[cfg(target_arch = "wasm32")]
+    let is_wasm = true;
+
+    #[cfg(not(target_arch = "wasm32"))]
+    let is_wasm = false;
+
+    menu.add(|menu| {
+        menu.add(MenuItem::MainContinueGame);
+        menu.add(MenuItem::MainMouseSettings);
+        menu.add_if(!is_wasm, MenuItem::MainDisplaySettings);
+        menu.add_if(!is_wasm, MenuItem::MainQuitGame);
+    });
+
+    menu.add(|menu| {
+        menu.add(MenuItem::MouseIncreaseSensitivity);
+        menu.add(MenuItem::MouseDecreaseSensitivity);
+        menu.add(MenuItem::MouseConfirm);
+    });
+
+    menu.add(|menu| {
+        menu.add(MenuItem::DisplayToggleMode);
+        menu.add(MenuItem::DisplayConfirm);
+    });
+
+    commands.insert_resource(menu);
 }
 
 pub fn update(
+    mut windows: ResMut<Windows>,
     keys: Res<Input<KeyCode>>,
     mut mouse_wheel_rx: EventReader<MouseWheel>,
     mouse_button_input: Res<Input<MouseButton>>,
-    mut settings: ResMut<Settings>,
     mut exit: EventWriter<AppExit>,
+    mut settings: ResMut<Settings>,
     mut state: ResMut<Menu>,
     mut lock: ResMut<InputLock>,
 ) {
@@ -91,47 +239,28 @@ pub fn update(
     match action {
         Some(Action::MoveUp) => {
             state.item_idx = if state.item_idx == 0 {
-                ITEMS[state.menu_idx].len() - 1
+                state.items[state.menu_idx].len() - 1
             } else {
                 state.item_idx - 1
             };
         }
 
         Some(Action::MoveDown) => {
-            state.item_idx = (state.item_idx + 1) % ITEMS[state.menu_idx].len();
+            state.item_idx =
+                (state.item_idx + 1) % state.items[state.menu_idx].len();
         }
 
-        Some(Action::Confirm) => match (state.menu_idx, state.item_idx) {
-            (0, 0) => {
-                state.is_visible = false;
-                lock.is_locked = state.is_visible;
-            }
+        Some(Action::Confirm) => {
+            let item = state.items[state.menu_idx][state.item_idx];
 
-            (0, 1) => {
-                state.menu_idx = 1;
-                state.item_idx = 0;
-            }
-
-            (0, 2) => {
-                exit.send(AppExit);
-            }
-
-            (1, 0) => {
-                settings.mouse_sensitivity += 0.05;
-            }
-
-            (1, 1) => {
-                settings.mouse_sensitivity =
-                    (settings.mouse_sensitivity - 0.05).max(0.05);
-            }
-
-            (1, 2) => {
-                state.menu_idx = 0;
-                state.item_idx = 0;
-            }
-
-            _ => unreachable!(),
-        },
+            item.exec(
+                &mut windows,
+                &mut exit,
+                &mut settings,
+                &mut state,
+                &mut lock,
+            );
+        }
 
         None => {
             //
@@ -140,6 +269,7 @@ pub fn update(
 }
 
 pub fn render(
+    windows: Res<Windows>,
     mut renderer: ResMut<DoomeRenderer>,
     text_engine: Res<TextEngine>,
     settings: Res<Settings>,
@@ -154,16 +284,20 @@ pub fn render(
 
     canvas.rect(0, 0, WIDTH, HEIGHT, Color::hex(0x000000ee));
 
-    for (item_idx, item) in ITEMS[state.menu_idx].into_iter().enumerate() {
+    let menu_height = (state.items[state.menu_idx].len() * 20) as u16;
+
+    for (item_idx, item) in state.items[state.menu_idx].iter().enumerate() {
+        let item = item.label(&windows);
+
         let option = if item_idx == state.item_idx {
             format!("> {} <", item)
         } else {
-            item.to_string()
+            item.to_owned()
         };
 
         canvas.text(
             WIDTH / 2,
-            HEIGHT / 2 - 20 + 20 * (item_idx as u16),
+            HEIGHT / 2 - menu_height / 2 + 20 * (item_idx as u16),
             option,
             true,
         );
@@ -172,7 +306,7 @@ pub fn render(
     if state.menu_idx == 1 {
         canvas.text(
             WIDTH / 2,
-            HEIGHT / 2 - 45,
+            HEIGHT / 2 - menu_height / 2 - 30,
             format!("Mouse sensitivity: {:.2}", settings.mouse_sensitivity),
             true,
         );
