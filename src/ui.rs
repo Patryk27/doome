@@ -102,7 +102,7 @@ pub struct InputLock {
 
 #[derive(Resource)]
 pub struct UiState {
-    hud_visible: bool,
+    pub hud_visible: bool,
 }
 
 fn grab_cursor(mut windows: ResMut<Windows>) {

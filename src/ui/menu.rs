@@ -49,6 +49,7 @@ impl MenuBuilder {
 #[derive(Copy, Clone, Debug)]
 enum MenuItem {
     MainContinueGame,
+    MainRestartCurrentLevel,
     MainMouseSettings,
     MainDisplaySettings,
     MainQuitGame,
@@ -65,6 +66,7 @@ impl MenuItem {
     fn label(&self, windows: &Windows) -> &'static str {
         match self {
             MenuItem::MainContinueGame => "Continue game",
+            MenuItem::MainRestartCurrentLevel => "Restart current level",
             MenuItem::MainMouseSettings => "Mouse settings",
             MenuItem::MainDisplaySettings => "Display settings",
             MenuItem::MainQuitGame => "Quit game",
@@ -93,9 +95,20 @@ impl MenuItem {
         settings: &mut Settings,
         state: &mut Menu,
         lock: &mut InputLock,
+        game_commands: &mut EventWriter<Command>,
+        levels_coordinator: &LevelsCoordinator,
     ) {
         match self {
             MenuItem::MainContinueGame => {
+                state.is_visible = false;
+                lock.is_locked = state.is_visible;
+            }
+
+            MenuItem::MainRestartCurrentLevel => {
+                game_commands.send(Command::GotoLevel {
+                    level: levels_coordinator.current_level,
+                });
+
                 state.is_visible = false;
                 lock.is_locked = state.is_visible;
             }
@@ -157,6 +170,7 @@ pub fn setup(mut commands: Commands) {
 
     menu.add(|menu| {
         menu.add(MenuItem::MainContinueGame);
+        menu.add(MenuItem::MainRestartCurrentLevel);
         menu.add(MenuItem::MainMouseSettings);
         menu.add_if(!is_wasm, MenuItem::MainDisplaySettings);
         menu.add_if(!is_wasm, MenuItem::MainQuitGame);
@@ -185,6 +199,8 @@ pub fn update(
     mut settings: ResMut<Settings>,
     mut state: ResMut<Menu>,
     mut lock: ResMut<InputLock>,
+    mut game_commands: EventWriter<Command>,
+    levels_coordinator: Res<LevelsCoordinator>,
 ) {
     if keys.just_pressed(KeyCode::Escape) {
         state.is_visible = !state.is_visible;
@@ -259,6 +275,8 @@ pub fn update(
                 &mut settings,
                 &mut state,
                 &mut lock,
+                &mut game_commands,
+                &levels_coordinator,
             );
         }
 

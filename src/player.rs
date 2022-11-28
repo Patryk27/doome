@@ -183,10 +183,11 @@ pub fn handle_shooting(
     keys: Res<Input<KeyCode>>,
     mut weapon: Query<(&Player, &Transform, &mut Weapon)>,
     mut shots: EventWriter<PlayerShot>,
+    ui: Res<UiState>,
 ) {
-    let (_, transform, mut weapon) = weapon.single_mut();
+    let (player, transform, mut weapon) = weapon.single_mut();
 
-    if input_lock.is_locked {
+    if input_lock.is_locked || !player.can_move || !ui.hud_visible {
         return;
     }
 
