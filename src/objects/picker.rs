@@ -7,7 +7,6 @@ pub struct Picker {
     scale: Vec3,
     color: Color,
     on_pickup: Option<Command>,
-    infinite: bool,
 }
 
 impl Picker {
@@ -18,7 +17,6 @@ impl Picker {
             position: Default::default(),
             scale: Vec3::splat(0.75),
             color: Color::hex(0xffffff),
-            infinite: false,
         }
     }
 
