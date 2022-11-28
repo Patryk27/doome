@@ -432,14 +432,11 @@ pub fn process(
                         .spawn();
                 }
 
-                if cover_idx % 4 == 0 {
-                    Picker::rpg()
-                        .with_position(graphical_to_physical(
-                            transform.translation + transform.forward() * 2.0,
-                        ))
-                        .infinite()
-                        .spawn(&assets, &mut commands);
-                }
+                Picker::rpg()
+                    .with_position(graphical_to_physical(
+                        transform.translation + transform.forward() * 2.0,
+                    ))
+                    .spawn(&assets, &mut commands);
             }
 
             level.stage = LevelStage::AwaitingBossDeath { doome };

@@ -74,11 +74,6 @@ impl Picker {
         self
     }
 
-    pub fn infinite(mut self) -> Self {
-        self.infinite = true;
-        self
-    }
-
     pub fn spawn(self, assets: &Assets, commands: &mut Commands) -> Entity {
         let model = assets.load_model("picker");
         let position = vec3(self.position.x, 1.0, self.position.y);
@@ -103,10 +98,7 @@ impl Picker {
         ));
 
         if let Some(on_pickup) = self.on_pickup {
-            entity.insert(Pickable {
-                on_pickup,
-                infinite: self.infinite,
-            });
+            entity.insert(Pickable { on_pickup });
         }
 
         entity.id()
