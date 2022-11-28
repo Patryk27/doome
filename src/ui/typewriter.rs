@@ -192,6 +192,7 @@ pub fn update(
     mut events: EventReader<TypewriterPrint>,
     ui: Res<UiState>,
     keys: Res<Input<KeyCode>>,
+    mouse_button_input: Res<Input<MouseButton>>,
     mut goto_level_rx: EventReader<GotoLevel>,
     mut completed_tx: EventWriter<TypewriterPrintingCompleted>,
 ) {
@@ -204,8 +205,11 @@ pub fn update(
         let speed = if ui.hud_visible {
             1.0
         } else {
-            if keys.pressed(KeyCode::Space) || keys.pressed(KeyCode::Return) {
-                4.0
+            if keys.pressed(KeyCode::Space)
+                || keys.pressed(KeyCode::Return)
+                || mouse_button_input.pressed(MouseButton::Left)
+            {
+                4.5
             } else {
                 1.0
             }
