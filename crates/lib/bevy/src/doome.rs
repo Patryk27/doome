@@ -53,10 +53,15 @@ impl Plugin for DoomePlugin {
         let shader_constants =
             AllocatedUniform::create(device, "shader_constants");
 
-        let window = windows.get_primary().unwrap();
+        let (width, height) = if let Some(window) = windows.get_primary() {
+            let width = window.physical_width() as f32;
+            let height = window.physical_height() as f32;
 
-        let width = window.physical_width() as f32;
-        let height = window.physical_height() as f32;
+            (width, height)
+        } else {
+            // healthy defaults
+            (1280.0, 720.0)
+        };
 
         let raytracer = rt::Raytracer::new(
             device,
