@@ -104,6 +104,7 @@ pub fn update(
 }
 
 pub fn render(
+    time: Res<Time>,
     mut renderer: ResMut<DoomeRenderer>,
     text_engine: Res<TextEngine>,
     state: Res<Console>,
@@ -116,8 +117,19 @@ pub fn render(
     let frame = &mut renderer.pixels.image_data;
     let mut canvas = TextCanvas::new_text(&text_engine, frame);
 
-    canvas.rect(0, 0, WIDTH, HEIGHT, Color::hex(0x00000066));
-    canvas.text(5, HEIGHT - 21, format!("$ {}", state.current), false);
+    canvas.rect(0, 0, WIDTH, HEIGHT, Color::hex(0x000000ee));
+
+    let prompt = {
+        let caret = if time.elapsed_seconds() % 1.00 < 0.5 {
+            '_'
+        } else {
+            ' '
+        };
+
+        format!("$ {}{}", state.current, caret)
+    };
+
+    canvas.text(5, HEIGHT - 21, prompt, false);
 
     for (i, line) in state.buffer.iter().rev().enumerate() {
         if i > 10 {

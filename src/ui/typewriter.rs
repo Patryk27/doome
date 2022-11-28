@@ -192,8 +192,14 @@ pub fn update(
     mut events: EventReader<TypewriterPrint>,
     ui: Res<UiState>,
     keys: Res<Input<KeyCode>>,
+    mut goto_level_rx: EventReader<GotoLevel>,
     mut completed_tx: EventWriter<TypewriterPrintingCompleted>,
 ) {
+    if goto_level_rx.iter().count() > 0 {
+        *state = Default::default();
+        return;
+    }
+
     if let Some(curr) = &mut state.current {
         let speed = if ui.hud_visible {
             1.0

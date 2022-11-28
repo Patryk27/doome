@@ -199,6 +199,14 @@ fn sync_lights(
     mut state: ResMut<State>,
     lights: Query<(&Light, &Transform, &Color, Option<&Visibility>)>,
 ) {
+    fn ease_in_ease_out(x: f32) -> f32 {
+        if x < 0.5 {
+            4.0 * x * x * x
+        } else {
+            1.0 - (-2.0 * x + 2.0).powi(3) / 2.0
+        }
+    }
+
     state.lights = Default::default();
 
     let lights = lights
@@ -208,13 +216,14 @@ fn sync_lights(
 
     for (light, transform, color, _) in lights {
         let position = transform.translation;
+        let intensity = ease_in_ease_out(light.intensity);
 
         match light.kind {
             LightKind::Point => {
                 state.lights.push(rt::Light::point(
                     position,
                     color.into_vec3(),
-                    light.intensity,
+                    intensity,
                 ));
             }
 
@@ -224,7 +233,7 @@ fn sync_lights(
                     point_at,
                     angle,
                     color.into_vec3(),
-                    light.intensity,
+                    intensity,
                 ));
             }
         }

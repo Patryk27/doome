@@ -141,7 +141,7 @@ fn toggle_options(
         game_commands.send(Command::ToggleSSE);
     }
 
-    if keys.just_pressed(KeyCode::I) {
+    if keys.just_pressed(KeyCode::L) {
         game_commands.send(Command::ToggleDebug);
     }
 }

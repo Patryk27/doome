@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use crate::prelude::*;
 
 #[derive(Component)]
@@ -16,10 +18,11 @@ impl Column {
             .spawn((
                 model,
                 Transform::from_translation(position)
-                    .with_scale(vec3(0.25, 0.33, 0.25)),
+                    .with_scale(vec3(0.25, 0.33, 0.25))
+                    .with_rotation(Quat::from_rotation_y(PI)),
                 GeometryType::Static,
                 Material::default().with_color(Color::hex(0xffffff)),
-                Collider::line(vec2(0.0, -1.0), vec2(0.0, 1.0)),
+                Collider::rect(2.0, 2.0),
             ))
             .id()
     }

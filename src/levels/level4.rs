@@ -19,7 +19,7 @@ pub fn init(
 
     let (mut player, mut player_xform) = player.single_mut();
 
-    player.can_move = false;
+    player.can_move = true;
     *player_xform = Transform::default().with_translation(vec3(0.0, 0.0, 2.0));
 
     // -----
@@ -112,8 +112,8 @@ pub fn process(
         let t = time.elapsed_seconds() + (light_idx as f32 * 2.0 * PI / 3.0);
 
         transforms.get_mut(light).unwrap().translation =
-            Quat::from_rotation_y(t) * vec3(1.0, 0.0, 0.0) * 2.25
-                + vec3(0.0, 1.0, 0.0);
+            Quat::from_rotation_y(t) * vec3(1.0, 0.0, 0.0) * 2.2
+                + vec3(0.0, 1.5 + t.cos() * 0.8, 0.0);
     }
 
     // -----
@@ -165,7 +165,7 @@ pub fn process(
             *tt += time.delta_seconds();
 
             for light in level_lights {
-                lights.get_mut(light).unwrap().intensity = (2.0 - *tt).max(0.0);
+                lights.get_mut(light).unwrap().intensity = (2.5 - *tt).max(0.0);
             }
 
             if *tt > 5.0 {
