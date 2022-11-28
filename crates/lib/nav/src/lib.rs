@@ -1,5 +1,4 @@
-use doome_geo::sat::resolve_sat;
-use doome_geo::Polygon;
+use doome_geo::{diag, Polygon};
 use glam::{vec2, Vec2};
 use image::RgbaImage;
 
@@ -201,7 +200,7 @@ impl NavDataBuilder {
 
                 let mut collides_with_any_polygon = false;
                 for polygon in self.polygons.iter() {
-                    if resolve_sat(polygon, &rect).is_some() {
+                    if diag::resolve_diag(polygon, &rect).is_some() {
                         collides_with_any_polygon = true;
                         break;
                     }

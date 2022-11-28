@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use doome_geo::sat;
+use doome_geo::diag;
 
 use super::components::{Body, Collider};
 use super::events::Collision;
@@ -120,5 +120,5 @@ fn are_colliding(
     let polygon_a = collider_a.to_polygon(transform_a);
     let polygon_b = collider_b.to_polygon(transform_b);
 
-    sat::resolve_sat(&polygon_a, &polygon_b)
+    diag::resolve_diag(&polygon_a, &polygon_b)
 }

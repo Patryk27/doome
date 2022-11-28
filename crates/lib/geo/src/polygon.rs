@@ -2,19 +2,12 @@ use std::f32::consts::PI;
 
 use glam::Vec2;
 
-const LINE_THICKNESS: f32 = 0.25;
-
 /// A 2D convex polygon
 #[derive(Debug, Clone)]
 pub struct Polygon {
     points: Vec<Vec2>,
 }
 
-/// A convex polygon with points oriented in a counter-clockwise fashion.
-///
-/// The counter-clockwise arrangement is important for the SAT algorithm to work.
-/// It is because we want the edge normals for collisions to point away from the polygon.
-/// And the `Vec::perp` method returns a vector rotated 90 degrees clockwise.
 impl Polygon {
     pub(crate) fn new(points: Vec<Vec2>) -> Self {
         Self { points }
@@ -23,30 +16,23 @@ impl Polygon {
     pub fn rect(half_extents: Vec2) -> Self {
         Self::new(vec![
             Vec2::new(-half_extents.x, -half_extents.y),
-            Vec2::new(half_extents.x, -half_extents.y),
-            Vec2::new(half_extents.x, half_extents.y),
             Vec2::new(-half_extents.x, half_extents.y),
+            Vec2::new(half_extents.x, half_extents.y),
+            Vec2::new(half_extents.x, -half_extents.y),
         ])
     }
 
     /// We don't actually support lines with our collision implementation, so lines are just very thin rectangles
     pub fn line(start: Vec2, end: Vec2) -> Self {
-        let line_vec = end - start;
-        let half_thickness =
-            line_vec.perp().normalize_or_zero() * LINE_THICKNESS * 0.5;
-
-        let start = start - half_thickness;
-        let end = end + half_thickness;
-
-        Self::rect_start_end(start, end)
+        Self::new(vec![start, end])
     }
 
-    pub fn rect_start_end(start: Vec2, end: Vec2) -> Self {
+    pub fn rect_start_end(mut start: Vec2, mut end: Vec2) -> Self {
         Self::new(vec![
             Vec2::new(start.x, start.y),
-            Vec2::new(end.x, start.y),
-            Vec2::new(end.x, end.y),
             Vec2::new(start.x, end.y),
+            Vec2::new(end.x, end.y),
+            Vec2::new(end.x, start.y),
         ])
     }
 
@@ -60,6 +46,14 @@ impl Polygon {
             points.push(Vec2::new(x, y));
         }
         Self { points }
+    }
+
+    pub fn avg(&self) -> Vec2 {
+        let mut sum = Vec2::ZERO;
+        for point in self.points.iter() {
+            sum += *point;
+        }
+        sum / self.points.len() as f32
     }
 
     pub fn offset(mut self, offset: Vec2) -> Self {

@@ -65,6 +65,11 @@ impl Collider {
         }
     }
 
+    pub fn offset(mut self, offset: Vec2) -> Self {
+        self.polygon = self.polygon.offset(offset);
+        self
+    }
+
     pub fn detector(mut self) -> Self {
         self.is_detector = true;
         self
