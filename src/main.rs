@@ -6,6 +6,7 @@
 #[macro_use]
 mod utils;
 
+mod args;
 mod bullets;
 mod charon;
 mod commands;
@@ -21,6 +22,7 @@ mod objects;
 mod pickable;
 mod player;
 mod rng;
+mod settings;
 mod sounds;
 mod ui;
 mod units;
@@ -30,21 +32,25 @@ mod prelude {
     pub use bevy::prelude::*;
     pub use doome_bevy::prelude::*;
 
+    pub use crate::bullets::*;
     pub use crate::commands::*;
     pub use crate::enemies::*;
     pub use crate::inventory::*;
     pub use crate::levels::*;
     pub use crate::objects::*;
+    pub use crate::rng::*;
+    pub use crate::settings::*;
     pub use crate::ui::*;
     pub use crate::units::*;
+    pub use crate::weapons::*;
 }
 
 use bevy::prelude::*;
 use commands::Command;
 use doome_bevy::assets::Assets;
 use doome_bevy::text::TextEngine;
-use doome_engine::{HEIGHT, WIDTH};
 
+use self::args::*;
 use self::objects::Flashlight;
 
 // TODO: Right now we're including files like .gitignore or *.blend (and the pesky *.blend1)
@@ -52,9 +58,9 @@ use self::objects::Flashlight;
 #[cfg(feature = "static-assets")]
 const ASSETS: include_dir::Dir<'static> = include_dir::include_dir!("assets");
 
-const WINDOW_SCALE: f32 = 4.0;
-
 fn main() {
+    let args = Args::get();
+
     #[cfg(feature = "static-assets")]
     let assets = Assets::init_static(&ASSETS).unwrap();
 
@@ -74,8 +80,9 @@ fn main() {
         .add_plugin(bevy::window::WindowPlugin {
             window: WindowDescriptor {
                 title: "Doomé".to_string(),
-                width: WIDTH as f32 * WINDOW_SCALE,
-                height: HEIGHT as f32 * WINDOW_SCALE,
+                width: args.width(),
+                height: args.height(),
+                mode: args.mode(),
                 ..Default::default()
             },
             ..Default::default()
@@ -98,6 +105,7 @@ fn main() {
         .add_system(doome_bevy::model_animation::animate)
         // ===== //
         // doome //
+        .insert_resource(settings::Settings::default())
         .add_plugin(rng::RngPlugin)
         .add_plugin(units::UnitsPlugin)
         .add_plugin(sounds::SoundsPlugin)
@@ -125,6 +133,10 @@ fn toggle_options(
     keys: Res<Input<KeyCode>>,
     mut game_commands: EventWriter<Command>,
 ) {
+    if !keys.pressed(KeyCode::LControl) && !keys.pressed(KeyCode::RControl) {
+        return;
+    }
+
     if keys.just_pressed(KeyCode::K) {
         game_commands.send(Command::ToggleSSE);
     }

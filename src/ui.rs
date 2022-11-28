@@ -1,14 +1,14 @@
 mod angrey;
 mod blood;
-mod command_line;
+mod console;
 mod game_over;
 pub mod gun;
 mod health;
+mod menu;
 mod messages;
 mod text;
 mod typewriter;
 
-use bevy::app::AppExit;
 use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
 use doome_bevy::components::*;
@@ -39,7 +39,7 @@ impl Plugin for UiPlugin {
             .add_event::<ChangeHudVisibility>();
 
         // Miscellaneous
-        app.add_startup_system(hide_cursor).add_system(quit_on_exit);
+        app.add_startup_system(grab_cursor);
 
         // Typewriter
         app.insert_resource(Typewriter::default())
@@ -58,9 +58,12 @@ impl Plugin for UiPlugin {
         // Game Over
         app.add_startup_system(game_over::setup);
 
-        // Command line
-        app.add_startup_system(command_line::setup)
-            .add_system(command_line::update);
+        // Console
+        app.add_startup_system(console::setup)
+            .add_system(console::update);
+
+        // Menu
+        app.add_startup_system(menu::setup).add_system(menu::update);
 
         // Ui rendering systems (strictly ordered)
         app.add_system(ordered_systems! {
@@ -72,7 +75,8 @@ impl Plugin for UiPlugin {
             => health::render
             => canvas_render_texts
             => game_over::render
-            => command_line::render
+            => console::render
+            => menu::render
         });
     }
 }
@@ -101,17 +105,11 @@ pub struct UiState {
     hud_visible: bool,
 }
 
-fn hide_cursor(mut windows: ResMut<Windows>) {
+fn grab_cursor(mut windows: ResMut<Windows>) {
     let window = windows.get_primary_mut().unwrap();
 
     window.set_cursor_grab_mode(CursorGrabMode::Confined);
     window.set_cursor_visibility(false);
-}
-
-fn quit_on_exit(keys: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
-    if keys.just_pressed(KeyCode::Escape) {
-        exit.send(AppExit);
-    }
 }
 
 fn process_events(

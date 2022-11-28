@@ -1,12 +1,8 @@
 use bevy::input::mouse::MouseMotion;
 use doome_bevy::convert::graphical_to_physical;
 
-use crate::bullets::DamageDealt;
-use crate::commands::{Command, Item};
 use crate::prelude::*;
-use crate::weapons::{PrefabWeapons, Weapon};
 
-const MOUSE_ROTATION_SENSITIVITY: f32 = 0.15;
 const PLANAR_MOVEMENT_SPEED: f32 = 7.5;
 const ROTATION_SPEED: f32 = 2.0;
 const ACCELERATION_SPEED: f32 = 8.0;
@@ -15,13 +11,6 @@ const SWAY_FREQ: f32 = 4.0;
 const MAX_SWAY: f32 = 0.3;
 
 pub struct PlayerPlugin;
-
-pub struct PlayerShot;
-
-pub struct AddScreenShake(pub f32);
-
-#[derive(Resource)]
-struct ScreenShake(f32);
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
@@ -41,6 +30,13 @@ impl Plugin for PlayerPlugin {
     }
 }
 
+pub struct PlayerShot;
+
+pub struct AddScreenShake(pub f32);
+
+#[derive(Resource)]
+struct ScreenShake(f32);
+
 pub fn spawn(mut commands: Commands, prefab_weapons: Res<PrefabWeapons>) {
     commands.spawn((
         Player::new(),
@@ -57,29 +53,30 @@ pub fn spawn(mut commands: Commands, prefab_weapons: Res<PrefabWeapons>) {
 }
 
 pub fn process_movement(
-    input_lock: Res<InputLock>,
     time: Res<Time>,
     keys: Res<Input<KeyCode>>,
-    mut mouse_motion: EventReader<MouseMotion>,
+    settings: Res<Settings>,
+    input_lock: Res<InputLock>,
+    mut mouse_motion_rx: EventReader<MouseMotion>,
     mut player: Query<(&Player, &mut Body, &mut Transform)>,
 ) {
     let (player, mut body, mut transform) = player.single_mut();
     let delta = time.delta_seconds();
-
-    for ev in mouse_motion.iter() {
-        transform.rotate_axis(
-            Vec3::Y,
-            MOUSE_ROTATION_SENSITIVITY * ev.delta.x * delta,
-        );
-    }
-
     let mut desired_velocity = Vec2::ZERO;
 
     body.acceleration = Vec2::ZERO;
 
     if !input_lock.is_locked {
+        for ev in mouse_motion_rx.iter() {
+            transform.rotate_axis(
+                Vec3::Y,
+                settings.mouse_sensitivity * ev.delta.x * delta,
+            );
+        }
+
         if keys.pressed(KeyCode::W) || keys.pressed(KeyCode::S) {
             let sign = if keys.pressed(KeyCode::W) { 1.0 } else { -1.0 };
+
             desired_velocity +=
                 graphical_to_physical(transform.forward() * sign);
         }
@@ -96,6 +93,7 @@ pub fn process_movement(
 
         if keys.pressed(KeyCode::A) || keys.pressed(KeyCode::D) {
             let sign = if keys.pressed(KeyCode::A) { -1.0 } else { 1.0 };
+
             desired_velocity += graphical_to_physical(transform.left() * sign);
         }
     }
@@ -105,6 +103,7 @@ pub fn process_movement(
 
     if desired_velocity.length() > 0.0 {
         let diff = desired_velocity - body.velocity;
+
         body.acceleration = diff * ACCELERATION_SPEED;
     } else {
         body.acceleration =

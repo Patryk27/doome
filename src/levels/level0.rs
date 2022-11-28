@@ -33,16 +33,16 @@ pub fn process(
     mut coordinator: ResMut<LevelsCoordinator>,
     mut game_commands: EventWriter<Command>,
     mut goto_level_rx: EventReader<GotoLevel>,
-    mut key_events: EventReader<KeyboardInput>,
-    mut mouse_button_events: EventReader<MouseButtonInput>,
+    mut keyboard_rx: EventReader<KeyboardInput>,
+    mut mouse_button_rx: EventReader<MouseButtonInput>,
 ) {
     if goto_level_rx.iter().any(|level| **level != Level::l0()) {
         // Unlock input for the next level
         game_commands.send(Command::UnlockInput);
     }
 
-    let num_key_events = key_events.iter().count();
-    let num_mouse_button_events = mouse_button_events.iter().count();
+    let num_keyboard_events = keyboard_rx.iter().count();
+    let num_mouse_button_events = mouse_button_rx.iter().count();
 
     if !coordinator.is_game_over {
         return;
@@ -51,7 +51,7 @@ pub fn process(
     coordinator.time_in_game_over += time.delta_seconds();
 
     if coordinator.time_in_game_over > MIN_TIME_IN_GAME_OVER {
-        let total = num_key_events + num_mouse_button_events;
+        let total = num_keyboard_events + num_mouse_button_events;
 
         if total != 0 {
             game_commands.send(Command::GotoLevel {

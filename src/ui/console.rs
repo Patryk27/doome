@@ -1,58 +1,59 @@
-use bevy::prelude::*;
 use doome_bevy::doome::DoomeRenderer;
 use doome_bevy::text::TextEngine;
 use doome_engine::{TextCanvas, HEIGHT, WIDTH};
 use doome_surface::Color;
 
-use crate::commands::{Command, CommandOutput};
+use super::menu::Menu;
+use crate::prelude::*;
 
-#[derive(Resource)]
-pub struct CommandLine {
-    is_shown: bool,
+#[derive(Default, Resource)]
+pub struct Console {
+    is_visible: bool,
     current: String,
     buffer: Vec<Line>,
 }
 
-pub struct Line {
-    pub text: String,
-    pub was_input: bool,
+struct Line {
+    text: String,
+    was_input: bool,
 }
 
 pub fn setup(mut commands: Commands) {
-    commands.insert_resource(CommandLine {
-        is_shown: false,
-        current: String::new(),
-        buffer: vec![],
-    });
+    commands.insert_resource(Console::default());
 }
 
 pub fn update(
-    mut cmd_line: ResMut<CommandLine>,
+    mut state: ResMut<Console>,
+    menu: Res<Menu>,
     mut commands: EventWriter<Command>,
     mut char_evr: EventReader<ReceivedCharacter>,
     mut outputs: EventReader<CommandOutput>,
     keys: Res<Input<KeyCode>>,
 ) {
-    let cmd_line = cmd_line.as_mut();
+    if menu.is_visible() {
+        return;
+    }
+
+    let state = state.as_mut();
 
     for ev in char_evr.iter() {
-        if cmd_line.is_shown {
-            cmd_line.current.push(ev.char);
+        if state.is_visible {
+            state.current.push(ev.char);
         }
     }
 
     for ev in outputs.iter() {
-        cmd_line.buffer.push(Line {
+        state.buffer.push(Line {
             text: ev.0.clone(),
             was_input: false,
         });
     }
 
     if keys.just_pressed(KeyCode::Grave) {
-        cmd_line.is_shown = !cmd_line.is_shown;
+        state.is_visible = !state.is_visible;
 
-        if cmd_line.is_shown {
-            cmd_line.current.clear();
+        if state.is_visible {
+            state.current.clear();
             commands.send(Command::LockInput);
         } else {
             commands.send(Command::UnlockInput);
@@ -60,30 +61,30 @@ pub fn update(
     }
 
     if keys.just_pressed(KeyCode::Up) {
-        if let Some(cmd) = cmd_line.buffer.iter().rev().find(|x| x.was_input) {
-            cmd_line.current = cmd.text.clone();
+        if let Some(cmd) = state.buffer.iter().rev().find(|x| x.was_input) {
+            state.current = cmd.text.clone();
         }
     }
 
-    if !cmd_line.is_shown {
+    if !state.is_visible {
         return;
     }
 
     if keys.just_pressed(KeyCode::Back) {
-        cmd_line.current.pop();
-        cmd_line.current.pop();
+        state.current.pop();
+        state.current.pop();
     }
 
     if keys.just_pressed(KeyCode::Return) {
-        match cmd_line.current.trim().parse::<Command>() {
+        match state.current.trim().parse::<Command>() {
             Ok(cmd) => {
-                cmd_line.buffer.push(Line {
-                    text: cmd_line.current.trim().to_owned(),
+                state.buffer.push(Line {
+                    text: state.current.trim().to_owned(),
                     was_input: true,
                 });
 
-                cmd_line.is_shown = false;
-                cmd_line.current.clear();
+                state.is_visible = false;
+                state.current.clear();
                 commands.send(cmd);
                 commands.send(Command::UnlockInput);
             }
@@ -91,12 +92,12 @@ pub fn update(
             Err(e) => {
                 log::error!("Invalid command: {e:?}");
 
-                cmd_line.buffer.push(Line {
+                state.buffer.push(Line {
                     text: format!("Error: {}", e),
                     was_input: false,
                 });
 
-                cmd_line.current.clear();
+                state.current.clear();
             }
         }
     }
@@ -105,9 +106,10 @@ pub fn update(
 pub fn render(
     mut renderer: ResMut<DoomeRenderer>,
     text_engine: Res<TextEngine>,
-    cmd_line: Res<CommandLine>,
+    state: Res<Console>,
+    menu: Res<Menu>,
 ) {
-    if !cmd_line.is_shown {
+    if menu.is_visible() || !state.is_visible {
         return;
     }
 
@@ -115,9 +117,9 @@ pub fn render(
     let mut canvas = TextCanvas::new_text(&text_engine, frame);
 
     canvas.rect(0, 0, WIDTH, HEIGHT, Color::hex(0x00000066));
-    canvas.text(5, HEIGHT - 21, format!("$ {}", cmd_line.current), false);
+    canvas.text(5, HEIGHT - 21, format!("$ {}", state.current), false);
 
-    for (i, line) in cmd_line.buffer.iter().rev().enumerate() {
+    for (i, line) in state.buffer.iter().rev().enumerate() {
         if i > 10 {
             break;
         }

@@ -15,17 +15,6 @@ impl ScreenSpaceEffects {
         let shader =
             device.create_shader_module(wgpu::include_spirv!("./crt.spv"));
 
-        // let shader_bytes =
-        //     std::fs::read("crates/lib/screen-space-effects/src/crt.spv")
-        //         .unwrap();
-
-        // let shader_module_descriptor = wgpu::ShaderModuleDescriptor {
-        //     label: Some("ScreenSpaceEffects shader"),
-        //     source: wgpu::util::make_spirv(&shader_bytes),
-        // };
-
-        // let shader = device.create_shader_module(shader_module_descriptor);
-
         let sampler = &device.create_sampler(&wgpu::SamplerDescriptor {
             address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,

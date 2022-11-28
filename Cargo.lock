@@ -1241,6 +1241,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bevy",
+ "clap",
  "doome-bevy",
  "doome-engine",
  "doome-geo",
