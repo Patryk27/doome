@@ -151,20 +151,36 @@ impl Plugin for DoomePlugin {
 }
 
 fn on_resize(
+    windows: Res<bevy::window::Windows>,
     mut window_resized: EventReader<WindowResized>,
-    renderer: Res<RendererState>,
+    mut renderer: ResMut<RendererState>,
     mut state: ResMut<DoomeRenderer>,
 ) {
     for window_resized in window_resized.iter() {
-        let scale_factor = renderer.window_scale_factor;
+        let window = windows.get(window_resized.id).unwrap();
+
+        let scale_factor = window.scale_factor() as f32;
 
         let width = window_resized.width * scale_factor;
         let height = window_resized.height * scale_factor;
 
         log::info!("Window resized to ({width}, {height}) with scale factor {scale_factor}");
 
+        let surface = if let Some(surface) = renderer.surface.as_ref() {
+            surface
+        } else {
+            let surface = unsafe {
+                renderer
+                    .instance
+                    .create_surface(&window.raw_handle().unwrap().get_handle())
+            };
+
+            renderer.surface = Some(surface);
+
+            renderer.surface.as_ref().unwrap()
+        };
+
         let RendererState {
-            surface,
             device,
             output_texture_format,
             ..

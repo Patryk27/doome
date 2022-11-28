@@ -300,7 +300,12 @@ fn render(
     renderer_state: Res<RendererState>,
     mut raytracer_state: ResMut<State>,
 ) {
-    let Ok(current_texture) = renderer_state.surface.get_current_texture() else { return };
+    let Some(surface) = renderer_state.surface.as_ref() else {
+        log::warn!("Surface not yet initialized");
+        return;
+    };
+
+    let Ok(current_texture) = surface.get_current_texture() else { return };
     let device = &renderer_state.device;
     let queue = &renderer_state.queue;
 

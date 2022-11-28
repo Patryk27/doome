@@ -14,7 +14,7 @@ pub struct Args {
     #[arg(long)]
     height: Option<f32>,
 
-    #[arg(long, default_value_t = ArgsWindowMode::Fullscreen)]
+    #[arg(long, default_value_t = ArgsWindowMode::Windowed)]
     mode: ArgsWindowMode,
 }
 
