@@ -40,6 +40,7 @@ mod prelude {
 }
 
 use bevy::prelude::*;
+use commands::Command;
 use doome_bevy::assets::Assets;
 use doome_bevy::text::TextEngine;
 use doome_engine::{HEIGHT, WIDTH};
@@ -116,5 +117,19 @@ fn main() {
         .add_system(
             Flashlight::sync_with_player.after(player::process_movement),
         )
+        .add_system(toggle_options)
         .run();
+}
+
+fn toggle_options(
+    keys: Res<Input<KeyCode>>,
+    mut game_commands: EventWriter<Command>,
+) {
+    if keys.just_pressed(KeyCode::K) {
+        game_commands.send(Command::ToggleSSE);
+    }
+
+    if keys.just_pressed(KeyCode::I) {
+        game_commands.send(Command::ToggleDebug);
+    }
 }
