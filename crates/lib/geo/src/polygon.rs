@@ -27,7 +27,7 @@ impl Polygon {
         Self::new(vec![start, end])
     }
 
-    pub fn rect_start_end(mut start: Vec2, mut end: Vec2) -> Self {
+    pub fn rect_start_end(start: Vec2, end: Vec2) -> Self {
         Self::new(vec![
             Vec2::new(start.x, start.y),
             Vec2::new(start.x, end.y),

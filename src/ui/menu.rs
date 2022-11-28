@@ -1,6 +1,7 @@
 use bevy::app::AppExit;
 use bevy::input::mouse::MouseWheel;
 use doome_bevy::doome::DoomeRenderer;
+use doome_bevy::rendering_options::RenderingOptions;
 use doome_bevy::text::TextEngine;
 use doome_engine::{TextCanvas, HEIGHT, WIDTH};
 use doome_surface::Color;
@@ -58,12 +59,13 @@ enum MenuItem {
     MouseDecreaseSensitivity,
     MouseConfirm,
     //
+    DisplayToggleSSE,
     DisplayToggleMode,
     DisplayConfirm,
 }
 
 impl MenuItem {
-    fn label(&self, windows: &Windows) -> &'static str {
+    fn label(&self, windows: &Windows, sse_enabled: bool) -> &'static str {
         match self {
             MenuItem::MainContinueGame => "Continue game",
             MenuItem::MainRestartCurrentLevel => "Restart current level",
@@ -84,6 +86,13 @@ impl MenuItem {
                     "Make fullscreen"
                 }
             }
+            MenuItem::DisplayToggleSSE => {
+                if sse_enabled {
+                    "CRT On"
+                } else {
+                    "CRT Off"
+                }
+            }
             MenuItem::DisplayConfirm => "Confirm",
         }
     }
@@ -95,6 +104,7 @@ impl MenuItem {
         settings: &mut Settings,
         state: &mut Menu,
         lock: &mut InputLock,
+        rendering_options: &mut RenderingOptions,
         game_commands: &mut EventWriter<Command>,
         levels_coordinator: &LevelsCoordinator,
     ) {
@@ -141,6 +151,10 @@ impl MenuItem {
                 state.item_idx = 0;
             }
 
+            MenuItem::DisplayToggleSSE => {
+                rendering_options.sse_enabled = !rendering_options.sse_enabled;
+            }
+
             MenuItem::DisplayToggleMode => {
                 let window = windows.get_primary_mut().unwrap();
 
@@ -183,6 +197,7 @@ pub fn setup(mut commands: Commands) {
     });
 
     menu.add(|menu| {
+        menu.add(MenuItem::DisplayToggleSSE);
         menu.add(MenuItem::DisplayToggleMode);
         menu.add(MenuItem::DisplayConfirm);
     });
@@ -200,6 +215,7 @@ pub fn update(
     mut state: ResMut<Menu>,
     mut lock: ResMut<InputLock>,
     mut game_commands: EventWriter<Command>,
+    mut rendering_options: ResMut<RenderingOptions>,
     levels_coordinator: Res<LevelsCoordinator>,
 ) {
     if keys.just_pressed(KeyCode::Escape) {
@@ -275,6 +291,7 @@ pub fn update(
                 &mut settings,
                 &mut state,
                 &mut lock,
+                &mut rendering_options,
                 &mut game_commands,
                 &levels_coordinator,
             );
@@ -290,6 +307,7 @@ pub fn render(
     windows: Res<Windows>,
     mut renderer: ResMut<DoomeRenderer>,
     text_engine: Res<TextEngine>,
+    rendering_options: Res<RenderingOptions>,
     settings: Res<Settings>,
     state: Res<Menu>,
 ) {
@@ -305,7 +323,7 @@ pub fn render(
     let menu_height = (state.items[state.menu_idx].len() * 20) as u16;
 
     for (item_idx, item) in state.items[state.menu_idx].iter().enumerate() {
-        let item = item.label(&windows);
+        let item = item.label(&windows, rendering_options.sse_enabled);
 
         let option = if item_idx == state.item_idx {
             format!("> {} <", item)
