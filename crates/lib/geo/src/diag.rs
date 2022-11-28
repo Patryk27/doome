@@ -3,6 +3,12 @@ use glam::Vec2;
 use crate::intersect::intersect;
 use crate::Polygon;
 
+/// https://youtu.be/7Ik2vowGcU0?t=1434
+///
+/// Collision resolution method using diagonals
+///
+/// It's actually very simple, we simply take diagonals from an arbitrarily selected "middle point" of a given polygon
+/// and check for intersection with edges of the other polygon.
 pub fn resolve_diag(a: &Polygon, b: &Polygon) -> Option<Vec2> {
     let a_middle = a.avg();
     let b_middle = b.avg();
