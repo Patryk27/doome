@@ -39,6 +39,8 @@ pub struct DoomeRenderer {
 
 impl Plugin for DoomePlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
+        app.init_non_send_resource::<NonSendMarker>();
+
         app.insert_resource(RenderingOptions {
             sse_enabled: false,
             debug_pass_enabled: false,
@@ -155,7 +157,11 @@ impl Plugin for DoomePlugin {
     }
 }
 
+#[derive(Resource, Default)]
+pub struct NonSendMarker;
+
 fn on_resize(
+    _marker: NonSend<NonSendMarker>,
     windows: Res<bevy::window::Windows>,
     mut window_resized: EventReader<WindowResized>,
     mut renderer: ResMut<RendererState>,
