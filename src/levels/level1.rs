@@ -68,7 +68,7 @@ const OUTRO_TEXT: &str = indoc! {r#"
     64 bytes from 1337.g00gl3
 
     ERROR: communication taken over by a
-    virus... virus... virus.... virus......
+    virus...
 "#};
 
 const ROOM_CENTER_Z: f32 = (21.0 + 37.0) / 2.0;

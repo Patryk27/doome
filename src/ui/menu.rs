@@ -88,9 +88,9 @@ impl MenuItem {
             }
             MenuItem::DisplayToggleSSE => {
                 if sse_enabled {
-                    "CRT On"
+                    "Disable CRT-screen effect"
                 } else {
-                    "CRT Off"
+                    "Enable CRT-screen effect"
                 }
             }
             MenuItem::DisplayConfirm => "Confirm",

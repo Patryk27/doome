@@ -10,11 +10,12 @@ pkgs.mkShell {
     fontconfig
     libxkbcommon
     pkg-config
+    spirv-tools
     udev
     udev
     vulkan-loader
+    wasm-bindgen-cli
     xorg.libxcb
-    spirv-tools
   ];
 
   shellHook = ''
