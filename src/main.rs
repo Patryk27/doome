@@ -83,6 +83,7 @@ fn main() {
                 width: args.width(),
                 height: args.height(),
                 mode: args.mode(),
+                fit_canvas_to_parent: true,
                 ..Default::default()
             },
             ..Default::default()

@@ -4,8 +4,6 @@ use bevy::window::WindowMode;
 use clap::{Parser, ValueEnum};
 use doome_engine::{HEIGHT, WIDTH};
 
-use crate::settings::WINDOW_SCALE;
-
 #[derive(Debug, Parser)]
 pub struct Args {
     #[arg(long)]
@@ -34,11 +32,11 @@ impl Args {
     }
 
     pub fn width(&self) -> f32 {
-        self.width.unwrap_or(WIDTH as f32 * WINDOW_SCALE)
+        self.width.unwrap_or(WIDTH as f32)
     }
 
     pub fn height(&self) -> f32 {
-        self.height.unwrap_or(HEIGHT as f32 * WINDOW_SCALE)
+        self.height.unwrap_or(HEIGHT as f32)
     }
 
     pub fn mode(&self) -> WindowMode {
