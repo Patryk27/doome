@@ -7,6 +7,7 @@ pkgs.mkShell {
 
   buildInputs = with pkgs; [
     alsaLib
+    binaryen
     fontconfig
     libxkbcommon
     pkg-config
