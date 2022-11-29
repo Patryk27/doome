@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 use doome_bevy::audio::Audio;
 use doome_bevy::health::Health;
@@ -8,10 +10,21 @@ use crate::explosions::spawn_explosion;
 use crate::player::AddScreenShake;
 use crate::weapons::BulletType;
 
+pub struct BulletsPlugin;
+
+impl Plugin for BulletsPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_event::<DamageDealt>();
+        app.add_system(collide_and_apply_damage);
+        app.add_system(collect_garbage);
+    }
+}
+
 #[derive(Component)]
 pub struct Bullet {
     pub damage: f32,
     pub bullet_type: BulletType,
+    pub lifetime: Timer,
 }
 
 impl Bullet {
@@ -19,22 +32,14 @@ impl Bullet {
         Self {
             damage,
             bullet_type,
+            lifetime: Timer::new(Duration::from_secs(10), TimerMode::Once),
         }
     }
 }
 
-pub struct BulletsPlugin;
-
 pub struct DamageDealt {
     pub amount: f32,
     pub entity: Entity,
-}
-
-impl Plugin for BulletsPlugin {
-    fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_event::<DamageDealt>();
-        app.add_system(collide_and_apply_damage);
-    }
 }
 
 fn collide_and_apply_damage(
@@ -77,6 +82,20 @@ fn collide_and_apply_damage(
                 health.health = (health.health - bullet.damage)
                     .clamp(0.0, health.max_health);
             }
+        }
+    }
+}
+
+fn collect_garbage(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut bullets: Query<(Entity, &mut Bullet)>,
+) {
+    for (bullet_entity, mut bullet) in bullets.iter_mut() {
+        bullet.lifetime.tick(time.delta());
+
+        if bullet.lifetime.just_finished() {
+            commands.entity(bullet_entity).despawn();
         }
     }
 }
