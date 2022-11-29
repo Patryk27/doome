@@ -17,6 +17,9 @@ pub struct Enemy {
     follows_player: bool,
 }
 
+#[derive(Resource)]
+pub struct EnemyAiEnabled(pub bool);
+
 impl Enemy {
     pub fn new() -> Self {
         Self {
@@ -38,6 +41,7 @@ pub struct SyncNavData {
 
 impl Plugin for EnemiesPlugin {
     fn build(&self, app: &mut App) {
+        app.insert_resource(EnemyAiEnabled(true));
         app.add_startup_system(setup);
         app.add_event::<SyncNavData>();
         app.add_system(sync_nav_data);
@@ -82,10 +86,15 @@ fn update_hivemind(
 }
 
 fn update_shooting(
+    ai_enabled: Res<EnemyAiEnabled>,
     mut commands: Commands,
     hivemind: Query<&Hivemind>,
     mut enemies: Query<(&mut Enemy, &mut Weapon, &Transform, &RayCast)>,
 ) {
+    if !ai_enabled.0 {
+        return;
+    }
+
     let hivemind = hivemind.single();
 
     let Some(player_entity) = hivemind.player_entity else {
@@ -116,9 +125,14 @@ fn update_shooting(
 }
 
 fn assign_paths_to_enemies(
+    ai_enabled: Res<EnemyAiEnabled>,
     hivemind: Query<&Hivemind>,
     mut enemies: Query<(&mut Enemy, &Transform)>,
 ) {
+    if !ai_enabled.0 {
+        return;
+    }
+
     let hivemind = hivemind.single();
     let Some(nav_data) = hivemind.nav_data.as_ref() else { return };
 
@@ -156,9 +170,14 @@ const FOLLOW_SPEED: f32 = 4.0;
 const NEXT_PATH_NODE_PICK_DISTANCE: f32 = 0.5;
 
 fn enemy_movement(
+    ai_enabled: Res<EnemyAiEnabled>,
     hivemind: Query<&Hivemind>,
     mut enemies: Query<(&mut Enemy, &mut Body, &mut Transform, &RayCast)>,
 ) {
+    if !ai_enabled.0 {
+        return;
+    }
+
     let hivemind = hivemind.single();
 
     let Some(player_entity) = hivemind.player_entity else {

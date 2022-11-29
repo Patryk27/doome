@@ -58,6 +58,7 @@ fn handle_commands(
     mut physics_enabled: ResMut<PhysicsEnabled>,
     mut input_lock: ResMut<InputLock>,
     mut weapon_sprites: ResMut<ui::gun::State>,
+    mut enemy_ai_enabled: ResMut<EnemyAiEnabled>,
     // Queries
     mut queries: Queries,
     // Event writers
@@ -269,6 +270,10 @@ fn handle_commands(
 
             Command::ToggleSSE => {
                 rendering_options.sse_enabled = !rendering_options.sse_enabled;
+            }
+
+            Command::ToggleAi => {
+                enemy_ai_enabled.0 = !enemy_ai_enabled.0;
             }
         }
     }

@@ -85,6 +85,9 @@ pub enum Command {
 
     /// Toggles screen space effects
     ToggleSSE,
+
+    /// Toggles enemy AI on/off
+    ToggleAi,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -224,6 +227,8 @@ impl FromStr for Command {
             "toggle-debug" => Ok(Command::ToggleDebug),
 
             "toggle-sse" => Ok(Command::ToggleSSE),
+
+            "toggle-ai" => Ok(Command::ToggleAi),
 
             _ => Err(anyhow!("Failed to parse command: {s}")),
         }

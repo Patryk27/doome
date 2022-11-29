@@ -28,7 +28,7 @@ impl MothMonster {
                     direction: Vec2::NEG_Y * 20.0,
                     hit: None,
                 },
-                Collider::circle(0.75, 6),
+                Collider::circle(0.75, 12),
                 Body {
                     acceleration: Vec2::ZERO,
                     velocity: Vec2::ZERO,
