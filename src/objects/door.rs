@@ -45,7 +45,8 @@ impl Door {
             Material::default()
                 .double_sided()
                 .with_color(Color::hex(0xffffff))
-                .with_uv_transparency(),
+                .with_uv_transparency()
+                .without_casting_shadows(),
             Collider::line(vec2(-1.0, 0.0), vec2(1.0, 0.0)),
         ));
 
@@ -94,7 +95,7 @@ impl LockedDoor {
         state: Res<LockedDoorsState>,
         player: Query<&Transform, With<Player>>,
         mut inventory: Query<&mut Inventory>,
-        doors: Query<(Entity, &Transform, &LockedDoor)>,
+        doors: Query<(Entity, &Transform, &LockedDoor, &Children)>,
         mut visibilities: Query<&mut Visibility>,
         mut level_tx: EventWriter<LevelGameplayEvent>,
     ) {
@@ -107,27 +108,35 @@ impl LockedDoor {
 
         let mut nearby_door = None;
 
-        for (door_entity, door_xform, door) in doors.iter() {
+        for (door_entity, door_xform, door, door_children) in doors.iter() {
             let distance = player_xform
                 .translation
                 .xz()
                 .distance(door_xform.translation.xz());
 
             if distance < 3.0 && inventory.has_key(&door.key) {
-                nearby_door = Some((door_entity, door));
+                nearby_door = Some((door_entity, door, door_children));
                 break;
             }
         }
 
         // -----
 
-        let Some((door_entity, door)) = nearby_door else { return };
+        let Some((door_entity, door, door_children)) = nearby_door else { return };
 
         visibilities.get_mut(state.txt_unlock).unwrap().is_visible = true;
 
         if keys.pressed(KeyCode::F) {
             inventory.remove_key(&door.key);
-            commands.entity(door_entity).despawn_recursive();
+
+            commands
+                .entity(door_entity)
+                .remove::<Collider>()
+                .insert(Fade::fade_out(1.25));
+
+            for door_child in door_children {
+                commands.entity(*door_child).insert(Fade::fade_out(1.25));
+            }
 
             level_tx.send(LevelGameplayEvent::DoorOpened(
                 door.key.name().to_owned(),

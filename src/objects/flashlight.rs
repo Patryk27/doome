@@ -19,7 +19,7 @@ impl Flashlight {
             },
             Color::hex(0xffffff) * 0.8,
             Flashlight,
-            LightFade::fade_in(0.1),
+            Fade::fade_in(0.1),
         ));
     }
 

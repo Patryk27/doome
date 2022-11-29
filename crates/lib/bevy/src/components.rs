@@ -88,20 +88,20 @@ pub enum LightKind {
 }
 
 #[derive(Copy, Clone, Component)]
-pub struct LightFade {
+pub struct Fade {
     pub tt: f32,
     pub direction: f32,
     pub start_at: f32,
     pub complete_at: f32,
 }
 
-impl LightFade {
+impl Fade {
     pub fn fade_out(duration: f32) -> Self {
         Self::fade_out_delayed(0.0, duration)
     }
 
     pub fn fade_out_delayed(start_at: f32, duration: f32) -> Self {
-        Self::delayed(-1.0, start_at, duration)
+        Self::new(-1.0, start_at, duration)
     }
 
     pub fn fade_in(duration: f32) -> Self {
@@ -109,10 +109,10 @@ impl LightFade {
     }
 
     pub fn fade_in_delayed(start_at: f32, duration: f32) -> Self {
-        Self::delayed(1.0, start_at, duration)
+        Self::new(1.0, start_at, duration)
     }
 
-    fn delayed(direction: f32, start_at: f32, duration: f32) -> Self {
+    fn new(direction: f32, start_at: f32, duration: f32) -> Self {
         assert!(duration > 0.0);
 
         Self {
@@ -126,12 +126,17 @@ impl LightFade {
     pub(crate) fn animate(
         time: Res<Time>,
         mut commands: Commands,
-        mut lights: Query<(Entity, &mut Self, &mut Light)>,
+        mut objects: Query<(
+            Entity,
+            &mut Self,
+            Option<&mut Light>,
+            Option<&mut Material>,
+        )>,
     ) {
-        for (entity, mut this, mut light) in lights.iter_mut() {
+        for (entity, mut this, mut light, mut material) in objects.iter_mut() {
             this.tt += time.delta_seconds();
 
-            light.intensity = if this.tt < this.start_at {
+            let mut a = if this.tt < this.start_at {
                 0.0
             } else if this.tt > this.complete_at {
                 1.0
@@ -140,7 +145,15 @@ impl LightFade {
             };
 
             if this.direction < 0.0 {
-                light.intensity = 1.0 - light.intensity;
+                a = 1.0 - a;
+            }
+
+            if let Some(light) = light.as_mut() {
+                light.intensity = a;
+            }
+
+            if let Some(material) = material.as_mut() {
+                material.alpha = Some(a);
             }
 
             if this.tt > this.complete_at {

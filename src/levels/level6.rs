@@ -38,7 +38,7 @@ pub fn init(
         Color::hex(0xffffff),
         1.0,
     )
-    .insert(LightFade::fade_in(6.0));
+    .insert(Fade::fade_in(6.0));
 
     // -----
 

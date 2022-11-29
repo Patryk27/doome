@@ -17,7 +17,7 @@ pub fn init(
     let (mut player, mut player_xform) = player.single_mut();
 
     player.can_move = true;
-    *player_xform = Transform::default();
+    *player_xform = Transform::default().with_translation(vec3(0.0, 0.0, 3.0));
 
     // -----
 

@@ -116,7 +116,7 @@ pub fn init(
             Color::hex(0xffffff),
             0.0,
         )
-        .insert(LightFade::fade_in_delayed(0.5, 0.1))
+        .insert(Fade::fade_in_delayed(0.5, 0.1))
         .id();
 
     let corr_sl1 = lvl
@@ -127,7 +127,7 @@ pub fn init(
             Color::hex(0xffffff),
             0.0,
         )
-        .insert(LightFade::fade_in_delayed(1.5, 0.1))
+        .insert(Fade::fade_in_delayed(1.5, 0.1))
         .id();
 
     let corr_sl2 = lvl
@@ -138,7 +138,7 @@ pub fn init(
             Color::hex(0xffffff),
             0.0,
         )
-        .insert(LightFade::fade_in_delayed(2.5, 0.1))
+        .insert(Fade::fade_in_delayed(2.5, 0.1))
         .id();
 
     let corr_sl3 = lvl
@@ -149,7 +149,7 @@ pub fn init(
             Color::hex(0xffffff),
             0.0,
         )
-        .insert(LightFade::fade_in_delayed(3.5, 0.1))
+        .insert(Fade::fade_in_delayed(3.5, 0.1))
         .id();
 
     // -----
@@ -195,7 +195,7 @@ pub fn init(
             Color::hex(0xff0000),
             0.0,
         )
-        .insert(LightFade::fade_in_delayed(4.5, 0.1))
+        .insert(Fade::fade_in_delayed(4.5, 0.1))
         .id();
 
     lvl.complete(LevelState {
@@ -321,7 +321,7 @@ pub fn process(
             }
 
             for sl in [corr_sl0, corr_sl1, corr_sl2, corr_sl3, room_sl0] {
-                commands.entity(*sl).insert(LightFade::fade_out(0.25));
+                commands.entity(*sl).insert(Fade::fade_out(0.25));
             }
 
             let mut lvl = LevelBuilder::new(&mut commands, &assets);
@@ -344,7 +344,7 @@ pub fn process(
                     Color::hex(0xffffff),
                     0.0,
                 )
-                .insert(LightFade::fade_in_delayed(0.4, 0.15))
+                .insert(Fade::fade_in_delayed(0.4, 0.15))
                 .id();
 
             let room_sl1 = lvl
@@ -355,7 +355,7 @@ pub fn process(
                     Color::hex(0xffffff),
                     0.0,
                 )
-                .insert(LightFade::fade_in_delayed(0.4, 0.15))
+                .insert(Fade::fade_in_delayed(0.4, 0.15))
                 .id();
 
             level.stage = if *intro_completed {
@@ -406,8 +406,8 @@ pub fn process(
             if is_close_to_elephant && keys.just_pressed(KeyCode::F) {
                 txt_elephant_visibility.is_visible = false;
 
-                commands.entity(*room_sl0).insert(LightFade::fade_out(3.0));
-                commands.entity(*room_sl1).insert(LightFade::fade_out(3.0));
+                commands.entity(*room_sl0).insert(Fade::fade_out(3.0));
+                commands.entity(*room_sl1).insert(Fade::fade_out(3.0));
 
                 level.stage = LevelStage::Outro;
 

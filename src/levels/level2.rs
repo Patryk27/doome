@@ -184,7 +184,7 @@ pub fn init(
             Color::hex(0xffffff) * 0.75,
             0.0,
         )
-        .insert(LightFade::fade_in(1.5))
+        .insert(Fade::fade_in(1.5))
         .id();
 
     let ent_l0 = lvl
@@ -311,15 +311,8 @@ pub fn process(
 
             if timer.just_finished() {
                 commands.entity(level.ent_gate).remove::<Collider>();
-
-                commands
-                    .entity(level.ent_sl0)
-                    .insert(LightFade::fade_out(0.35));
-
-                commands
-                    .entity(level.ent_l0)
-                    .insert(LightFade::fade_in(0.35));
-
+                commands.entity(level.ent_sl0).insert(Fade::fade_out(0.35));
+                commands.entity(level.ent_l0).insert(Fade::fade_in(0.35));
                 commands.entity(level.ent_lamp).despawn();
 
                 sync_nav_data_tx.send(SyncNavData::default());
@@ -345,9 +338,7 @@ pub fn process(
                 }
             }
 
-            commands
-                .entity(level.ent_l0)
-                .insert(LightFade::fade_out(4.0));
+            commands.entity(level.ent_l0).insert(Fade::fade_out(4.0));
 
             typewriter_tx.send(TypewriterPrint::new(
                 "owww my bones hurt a lot, oww oof my bones...",
@@ -424,6 +415,16 @@ pub fn process(
         LevelStage::AwaitingLeaving => {
             for event in level_rx.iter() {
                 match event {
+                    LevelGameplayEvent::DoorOpened(name) if name == "end" => {
+                        commands
+                            .entity(level.locator.torch("end"))
+                            .insert(TorchActive::now());
+
+                        typewriter_tx.send(TypewriterPrint::new(
+                            "come to the dark side...",
+                        ));
+                    }
+
                     LevelGameplayEvent::ZoneEntered(name) if name == "end" => {
                         goto_level_tx.send(GotoLevel::new(Level::l3()));
                     }

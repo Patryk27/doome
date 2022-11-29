@@ -132,11 +132,15 @@ fn sync_created_geometry(
         let model = assets.model(*model);
         let xform = xform.compute_matrix();
 
-        let mat = {
+        let mut mat = {
             let base_mat = model.material.materialize();
 
             mat.map(|mat| mat.merge_with(base_mat)).unwrap_or(base_mat)
         };
+
+        if let Some(a) = &mut mat.alpha {
+            *a = ease_in_ease_out(*a);
+        }
 
         let mat_id = state.materials.alloc(entity, mat.materialize());
         let tex = mat.texture.map(|tex_id| assets.texture(tex_id));
@@ -180,11 +184,15 @@ fn sync_updated_geometry(
         let model = assets.model(*model);
         let xform = xform.compute_matrix();
 
-        let mat = {
+        let mut mat = {
             let base_mat = model.material.materialize();
 
             mat.map(|mat| mat.merge_with(base_mat)).unwrap_or(base_mat)
         };
+
+        if let Some(a) = &mut mat.alpha {
+            *a = ease_in_ease_out(*a);
+        }
 
         // TODO wasteful
         let mat_id = state.materials.alloc(entity, mat.materialize());
@@ -199,14 +207,6 @@ fn sync_lights(
     mut state: ResMut<State>,
     lights: Query<(&Light, &Transform, &Color, Option<&Visibility>)>,
 ) {
-    fn ease_in_ease_out(x: f32) -> f32 {
-        if x < 0.5 {
-            4.0 * x * x * x
-        } else {
-            1.0 - (-2.0 * x + 2.0).powi(3) / 2.0
-        }
-    }
-
     state.lights = Default::default();
 
     let lights = lights
@@ -419,4 +419,12 @@ fn render(
     current_texture.present();
 
     log::trace!("raytracing-tt={:?}", tt.elapsed());
+}
+
+fn ease_in_ease_out(x: f32) -> f32 {
+    if x < 0.5 {
+        4.0 * x * x * x
+    } else {
+        1.0 - (-2.0 * x + 2.0).powi(3) / 2.0
+    }
 }
