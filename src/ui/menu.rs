@@ -320,7 +320,7 @@ pub fn render(
 
     canvas.rect(0, 0, WIDTH, HEIGHT, Color::hex(0x000000ee));
 
-    let menu_height = (state.items[state.menu_idx].len() * 20) as u16;
+    let menu_height = (state.items[state.menu_idx].len() * 20) as i16;
 
     for (item_idx, item) in state.items[state.menu_idx].iter().enumerate() {
         let item = item.label(&windows, rendering_options.sse_enabled);
@@ -332,8 +332,8 @@ pub fn render(
         };
 
         canvas.text(
-            WIDTH / 2,
-            HEIGHT / 2 - menu_height / 2 + 20 * (item_idx as u16),
+            (WIDTH / 2) as i16,
+            (HEIGHT / 2) as i16 - menu_height / 2 + 20 * (item_idx as i16),
             option,
             true,
         );
@@ -341,8 +341,8 @@ pub fn render(
 
     if state.menu_idx == 1 {
         canvas.text(
-            WIDTH / 2,
-            HEIGHT / 2 - menu_height / 2 - 30,
+            (WIDTH / 2) as i16,
+            (HEIGHT / 2) as i16 - menu_height / 2 - 30,
             format!("Mouse sensitivity: {:.2}", settings.mouse_sensitivity),
             true,
         );

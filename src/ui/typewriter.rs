@@ -1,4 +1,4 @@
-const FUEL_PER_CHARACTER: f32 = 0.06;
+const FUEL_PER_CHARACTER: f32 = 0.052;
 const LINE_HEIGHT: u16 = 12;
 
 use std::collections::VecDeque;
@@ -90,7 +90,7 @@ impl TypewriterText {
         for line in self.layout.iter() {
             canvas.text(x, y, line, false);
 
-            y += LINE_HEIGHT;
+            y += LINE_HEIGHT as i16;
         }
     }
 

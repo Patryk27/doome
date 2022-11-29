@@ -9,8 +9,8 @@ impl TextEngine {
     pub fn draw(
         &self,
         surface: &mut dyn Surface,
-        x: u16,
-        y: u16,
+        x: i16,
+        y: i16,
         text: &str,
         centered: bool,
     ) {
@@ -23,7 +23,7 @@ impl TextEngine {
                 .layout(text, scale, offset)
                 .flat_map(|glyph| glyph.pixel_bounding_box())
                 .last()
-                .map(|bb| bb.max.x as u16)
+                .map(|bb| bb.max.x as i16)
                 .unwrap_or(0);
 
             x - width / 2

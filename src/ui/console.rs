@@ -129,13 +129,18 @@ pub fn render(
         format!("$ {}{}", state.current, caret)
     };
 
-    canvas.text(5, HEIGHT - 21, prompt, false);
+    canvas.text(5, (HEIGHT - 21) as i16, prompt, false);
 
     for (i, line) in state.buffer.iter().rev().enumerate() {
         if i > 10 {
             break;
         }
 
-        canvas.text(5, HEIGHT - 28 - 12 * (i + 1) as u16, &line.text, false);
+        canvas.text(
+            5,
+            (HEIGHT as i16) - 28 - 12 * (i + 1) as i16,
+            &line.text,
+            false,
+        );
     }
 }

@@ -20,10 +20,7 @@ pub fn init(
     let (mut player, mut player_xform) = player.single_mut();
 
     player.can_move = true;
-
-    // We're resetting only translation, so that rotation is preserved from the
-    // previous level
-    player_xform.translation = Default::default();
+    *player_xform = Default::default();
 
     // -----
 
@@ -92,7 +89,10 @@ enum LevelStage {
     AwaitingBossDeath {
         doome: Entity,
     },
-    Outro,
+    AwaitingOutro,
+    Outro {
+        texts: Vec<Entity>,
+    },
 }
 
 pub fn process(
@@ -106,9 +106,10 @@ pub fn process(
     geos: Query<Entity, With<GeometryType>>,
     mut materials: Query<&mut Material>,
     mut sync_nav_data_tx: EventWriter<SyncNavData>,
-    player: Query<&Transform, With<Player>>,
+    mut player: Query<(&mut Player, &Transform)>,
     mut inventory: Query<&mut Inventory>,
     mut change_hud_visibility_tx: EventWriter<ChangeHudVisibility>,
+    mut transforms: Query<&mut Transform, Without<Player>>,
 ) {
     let Ok(mut level) = level.get_single_mut() else { return };
     let level = &mut *level;
@@ -217,13 +218,13 @@ pub fn process(
                 return;
             }
 
-            for geo_entity in geos.iter() {
-                if geo_entity != *rifle && geo_entity != *floor {
-                    commands.entity(geo_entity).despawn();
+            for geo in geos.iter() {
+                if geo != *rifle && geo != *floor {
+                    commands.entity(geo).despawn();
                 }
             }
 
-            // HACK
+            // HACK our raytracer cries when there's no geometry whatsoever
             LevelBuilder::new(&mut commands, &assets)
                 .floor(-1001, -1001, -1001, -1001)
                 .spawn();
@@ -248,7 +249,7 @@ pub fn process(
                 return;
             }
 
-            let vs = ViewportSpawner::new(*player.single(), 14.0, 3.5, 2);
+            let vs = ViewportSpawner::new(*player.single().1, 14.0, 3.5, 2);
 
             let minions = (0..2)
                 .map(|minion_idx| {
@@ -297,7 +298,7 @@ pub fn process(
                 return;
             }
 
-            let vs = ViewportSpawner::new(*player.single(), 8.0, 2.0, 10);
+            let vs = ViewportSpawner::new(*player.single().1, 8.0, 2.0, 10);
 
             let hearts = (0..10)
                 .map(|heart_idx| {
@@ -379,7 +380,7 @@ pub fn process(
             }
 
             let doome_pos =
-                ViewportSpawner::new(*player.single(), 40.0, 1.0, 1).pos(0);
+                ViewportSpawner::new(*player.single().1, 40.0, 1.0, 1).pos(0);
 
             let doome = {
                 Doome::spawn(
@@ -393,6 +394,7 @@ pub fn process(
 
             const DISTANCE_TO_BOSS: f32 = 30.0;
             const NUM_COVERS: usize = 16;
+
             let angle = 2.0 * PI / NUM_COVERS as f32;
 
             for cover_idx in 0..NUM_COVERS {
@@ -407,6 +409,7 @@ pub fn process(
                 for r in 0..4 {
                     let angle =
                         angle + (r as f32 * PI / 2.0) + (3.0 * PI / 2.0);
+
                     let rotation = Quat::from_rotation_y(angle);
 
                     let mut transform = transform
@@ -415,6 +418,7 @@ pub fn process(
                         .with_rotation(rotation);
 
                     transform.translation += transform.forward();
+
                     let mut lvl = LevelBuilder::new(&mut commands, &assets);
 
                     lvl.model("wall")
@@ -462,20 +466,96 @@ pub fn process(
                 "YOU WON",
                 "player AAA: highscore: 100kk",
                 "happy?",
-                "anyway... until we meet again\nand we *will* meet again",
             ];
 
             for dialog in dialogs {
                 typewriter_tx.send(TypewriterPrint::new(dialog));
             }
 
+            typewriter_tx.send(
+                TypewriterPrint::new(
+                    "anyway... until we meet again\nand we *will* meet again",
+                )
+                .with_id("last-dialog"),
+            );
+
             change_hud_visibility_tx.send(ChangeHudVisibility::hide());
 
-            level.stage = LevelStage::Outro;
+            level.stage = LevelStage::AwaitingOutro;
         }
 
-        LevelStage::Outro => {
-            //
+        LevelStage::AwaitingOutro => {
+            let ready =
+                typewriter_rx.iter().any(|event| event.id == "last-dialog");
+
+            if !ready {
+                return;
+            }
+
+            player.single_mut().0.can_move = false;
+
+            for geo in geos.iter() {
+                commands.entity(geo).despawn();
+            }
+
+            // HACK our raytracer cries when there's no geometry whatsoever
+            LevelBuilder::new(&mut commands, &assets)
+                .floor(-1001, -1001, -1001, -1001)
+                .spawn();
+
+            let texts = [
+                "Doome",
+                "",
+                "CAST",
+                "Moth Monster",
+                "The Boss",
+                "",
+                "PRODUCED BY",
+                "dzejkop (Jakub Trad)",
+                "Patryk27 (Patryk Wychowaniec)",
+                "",
+                "LIGHTS, MATERIALS, CAMERAS",
+                ".sin(), .cos(), .tan()",
+                "",
+                "BASED ON THE NOVEL BY",
+                "Id Software",
+                "",
+                "SPECIAL THANKS",
+                "coffee, yerba mate, idk",
+                "",
+                "LINKS",
+                "https://dzejkop.itch.io/doome",
+                "https://github.com/patryk27/doome",
+                "",
+                "Thanks for playing!",
+            ];
+
+            level.stage = LevelStage::Outro {
+                texts: texts
+                    .into_iter()
+                    .enumerate()
+                    .map(|(text_idx, text)| {
+                        commands
+                            .spawn((
+                                Text::new(text).centered(),
+                                Transform::from_translation(vec3(
+                                    0.5,
+                                    1.1 + (text_idx as f32 / 10.0),
+                                    0.0,
+                                )),
+                                Visibility::visible(),
+                            ))
+                            .id()
+                    })
+                    .collect(),
+            };
+        }
+
+        LevelStage::Outro { texts } => {
+            for text in texts {
+                transforms.get_mut(*text).unwrap().translation.y -=
+                    time.delta_seconds() / 8.5;
+            }
         }
     }
 }

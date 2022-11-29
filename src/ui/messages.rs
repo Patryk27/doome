@@ -11,7 +11,7 @@ pub struct Messages {
 impl Messages {
     pub fn render(&self, canvas: &mut TextCanvas) {
         if let Some(item) = self.items.get(0) {
-            canvas.text(5, HEIGHT - 21, &item.text, false);
+            canvas.text(5, (HEIGHT - 21) as i16, &item.text, false);
         }
     }
 }

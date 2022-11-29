@@ -89,8 +89,8 @@ impl<'frame> Canvas<'frame, TextEngine> {
 
     pub fn text(
         &mut self,
-        x: u16,
-        y: u16,
+        x: i16,
+        y: i16,
         text: impl AsRef<str>,
         centered: bool,
     ) {
