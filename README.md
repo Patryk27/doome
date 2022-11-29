@@ -2,6 +2,8 @@
 
 Doom + Cliché = Doomé; a game, made for playing.
 
+https://dzejkop.itch.io/doome
+
 ## Running
 
 Requirements:
