@@ -1,15 +1,17 @@
 # Doomé
 
+![](https://img.itch.zone/aW1nLzEwNjQzNzA3LnBuZw==/original/XLgWmN.png)
+
 Enter the amazing world of Doomé: fight through waves of monsters, discover
-secrets and weapons to reach the final boss and SAVE HUMANITY!
+secrets and weapons to reach the final boss and **SAVE HUMANITY!**
 
 **You are our only hope!**
+
+-----
 
 Play it online and/or get binaries at:
 
 https://dzejkop.itch.io/doome
-
-![](https://img.itch.zone/aW1nLzEwNjQzNzA3LnBuZw==/original/XLgWmN.png)
 
 ## Running
 
