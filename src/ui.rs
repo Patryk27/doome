@@ -39,6 +39,10 @@ impl Plugin for UiPlugin {
             .add_event::<ChangeHudVisibility>();
 
         // Miscellaneous
+        #[cfg(target_arch = "wasm32")]
+        app.add_system(grab_cursor);
+
+        #[cfg(not(target_arch = "wasm32"))]
         app.add_startup_system(grab_cursor);
 
         // Typewriter
@@ -105,11 +109,32 @@ pub struct UiState {
     pub hud_visible: bool,
 }
 
-fn grab_cursor(mut windows: ResMut<Windows>) {
-    let window = windows.get_primary_mut().unwrap();
+#[cfg(target_arch = "wasm32")]
+fn grab_cursor(
+    mut windows: ResMut<Windows>,
+    mouse_button_input: Res<Input<MouseButton>>,
+) {
+    if mouse_button_input.pressed(MouseButton::Left)
+        || mouse_button_input.pressed(MouseButton::Right)
+    {
+        let window = windows.primary_mut();
 
-    window.set_cursor_grab_mode(CursorGrabMode::Confined);
+        window.set_cursor_grab_mode(CursorGrabMode::Locked);
+        window.set_cursor_visibility(false);
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn grab_cursor(mut windows: ResMut<Windows>) {
+    let window = windows.primary_mut();
+
     window.set_cursor_visibility(false);
+
+    #[cfg(target_os = "macos")]
+    window.set_cursor_grab_mode(CursorGrabMode::Locked);
+
+    #[cfg(not(target_os = "macos"))]
+    window.set_cursor_grab_mode(CursorGrabMode::Confined);
 }
 
 fn process_events(
