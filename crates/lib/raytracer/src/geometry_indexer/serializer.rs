@@ -2,7 +2,7 @@ use doome_shader_common::STATIC_GEOMETRY_INDEX_SIZE;
 
 use super::*;
 
-pub fn serialize(fbvh: FlatBvh) -> (StaticGeometryIndex, usize) {
+pub fn serialize(fbvh: RopedBvh) -> (StaticGeometryIndex, usize) {
     let mut out = Vec::new();
 
     for node in fbvh {
@@ -10,7 +10,7 @@ pub fn serialize(fbvh: FlatBvh) -> (StaticGeometryIndex, usize) {
         let v2;
 
         match node {
-            LinearBvhNode::Leaf { triangle, goto_id } => {
+            RopedBvhNode::Leaf { triangle, goto_id } => {
                 let goto_ptr = goto_id.map(|id| id * 2).unwrap_or_default();
 
                 let info = 1
@@ -21,7 +21,7 @@ pub fn serialize(fbvh: FlatBvh) -> (StaticGeometryIndex, usize) {
                 v2 = vec4(0.0, 0.0, 0.0, 0.0);
             }
 
-            LinearBvhNode::NonLeaf {
+            RopedBvhNode::NonLeaf {
                 bb,
                 on_hit_goto_id,
                 on_miss_goto_id,

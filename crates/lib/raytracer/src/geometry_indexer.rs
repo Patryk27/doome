@@ -1,7 +1,7 @@
 mod axis;
 mod bounding_box;
 mod bvh;
-mod flat_bvh;
+mod roped_bvh;
 mod serializer;
 
 use std::fmt;
@@ -13,7 +13,7 @@ use instant::{Duration, Instant};
 use self::axis::*;
 use self::bounding_box::*;
 use self::bvh::*;
-use self::flat_bvh::*;
+use self::roped_bvh::*;
 use crate::{StaticGeometry, StaticGeometryIndex, StaticTriangle, Triangle};
 
 type TriangleId = crate::TriangleId<StaticTriangle>;
@@ -39,15 +39,15 @@ impl GeometryIndexer {
         }
 
         let (bvh, tt_bvh) = Self::measure(|| Bvh::build(geometry));
-        let (fbvh, tt_fbvh) = Self::measure(|| FlatBvh::build(bvh));
+        let (rbvh, tt_rbvh) = Self::measure(|| RopedBvh::build(bvh));
 
         let ((index, index_len), tt_serialize) =
-            Self::measure(|| serializer::serialize(fbvh));
+            Self::measure(|| serializer::serialize(rbvh));
 
         log::info!(
-            "Geometry indexed; tt-bvh = {:?}, tt-fbvh = {:?}, tt-serialize = {:?}, index-size = {}",
+            "Geometry indexed; tt-bvh = {:?}, tt-rbvh = {:?}, tt-serialize = {:?}, index-size = {}",
             tt_bvh,
-            tt_fbvh,
+            tt_rbvh,
             tt_serialize,
             index_len,
         );
@@ -58,6 +58,7 @@ impl GeometryIndexer {
     fn measure<T>(f: impl FnOnce() -> T) -> (T, Duration) {
         let tt = Instant::now();
         let val = f();
+
         (val, tt.elapsed())
     }
 }

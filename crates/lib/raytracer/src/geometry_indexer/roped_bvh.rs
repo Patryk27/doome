@@ -1,4 +1,4 @@
-//! Flattened BVH.
+//! Roped BVH.
 //!
 //! Note that I've basically implemented the algorithm from scratch, merely
 //! imagining how it should work, so the naming nomenclature might be a bit off
@@ -7,19 +7,19 @@
 use super::*;
 
 #[derive(Default)]
-pub struct FlatBvh {
-    nodes: Vec<LinearBvhNode>,
+pub struct RopedBvh {
+    nodes: Vec<RopedBvhNode>,
 }
 
-impl FlatBvh {
+impl RopedBvh {
     pub fn build(bvh: Bvh) -> Self {
         let mut this = Self::default();
 
-        this.flatten(bvh.into_root().deconstruct(), None);
+        this.add(bvh.into_root().deconstruct(), None);
         this
     }
 
-    fn flatten(
+    fn add(
         &mut self,
         bvh: DeconstructedBvhNode,
         backtrack_to: Option<usize>,
@@ -52,8 +52,8 @@ impl FlatBvh {
 
             DeconstructedBvhNode::NonLeaf { bb, left, right } => {
                 let id = self.add_non_leaf(bb);
-                let right_id = self.flatten(*right, backtrack_to);
-                let left_id = self.flatten(*left, Some(right_id));
+                let right_id = self.add(*right, backtrack_to);
+                let left_id = self.add(*left, Some(right_id));
 
                 self.fixup_non_leaf(id, left_id, backtrack_to);
 
@@ -65,7 +65,7 @@ impl FlatBvh {
     fn add_leaf(&mut self, triangle: TriangleId) -> usize {
         let id = self.nodes.len();
 
-        self.nodes.push(LinearBvhNode::Leaf {
+        self.nodes.push(RopedBvhNode::Leaf {
             triangle,
             goto_id: None,
         });
@@ -75,7 +75,7 @@ impl FlatBvh {
 
     fn fixup_leaf(&mut self, id: usize, goto_id_val: usize) {
         match &mut self.nodes[id] {
-            LinearBvhNode::Leaf { goto_id, .. } => {
+            RopedBvhNode::Leaf { goto_id, .. } => {
                 *goto_id = Some(goto_id_val);
             }
             _ => unreachable!(),
@@ -85,7 +85,7 @@ impl FlatBvh {
     fn add_non_leaf(&mut self, bb: BoundingBox) -> usize {
         let id = self.nodes.len();
 
-        self.nodes.push(LinearBvhNode::NonLeaf {
+        self.nodes.push(RopedBvhNode::NonLeaf {
             bb,
             on_hit_goto_id: None,
             on_miss_goto_id: None,
@@ -101,7 +101,7 @@ impl FlatBvh {
         on_miss_goto_it_val: Option<usize>,
     ) {
         match &mut self.nodes[id] {
-            LinearBvhNode::NonLeaf {
+            RopedBvhNode::NonLeaf {
                 on_hit_goto_id,
                 on_miss_goto_id,
                 ..
@@ -114,7 +114,7 @@ impl FlatBvh {
     }
 }
 
-impl fmt::Display for FlatBvh {
+impl fmt::Display for RopedBvh {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (node_id, node) in self.nodes.iter().enumerate() {
             writeln!(f, "[{}]: {}", node_id, node)?;
@@ -124,8 +124,8 @@ impl fmt::Display for FlatBvh {
     }
 }
 
-impl IntoIterator for FlatBvh {
-    type Item = LinearBvhNode;
+impl IntoIterator for RopedBvh {
+    type Item = RopedBvhNode;
     type IntoIter = impl Iterator<Item = Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -133,7 +133,7 @@ impl IntoIterator for FlatBvh {
     }
 }
 
-pub enum LinearBvhNode {
+pub enum RopedBvhNode {
     Leaf {
         triangle: TriangleId,
         goto_id: Option<usize>,
@@ -146,10 +146,10 @@ pub enum LinearBvhNode {
     },
 }
 
-impl fmt::Display for LinearBvhNode {
+impl fmt::Display for RopedBvhNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            LinearBvhNode::Leaf { triangle, goto_id } => {
+            RopedBvhNode::Leaf { triangle, goto_id } => {
                 write!(f, "match-triangle {}", triangle)?;
 
                 if let Some(id) = goto_id {
@@ -157,7 +157,7 @@ impl fmt::Display for LinearBvhNode {
                 }
             }
 
-            LinearBvhNode::NonLeaf {
+            RopedBvhNode::NonLeaf {
                 bb,
                 on_hit_goto_id,
                 on_miss_goto_id,
