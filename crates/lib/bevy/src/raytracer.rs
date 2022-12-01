@@ -416,9 +416,12 @@ fn render(
     scaler.render(queue, &mut encoder, shader_constants, &texture_view);
 
     renderer_state.queue.submit(vec![encoder.finish()]);
-    current_texture.present();
 
-    log::trace!("raytracing-tt={:?}", tt.elapsed());
+    renderer_state.queue.on_submitted_work_done(move || {
+        log::trace!("raytracing-tt={:?}", tt.elapsed());
+    });
+
+    current_texture.present();
 }
 
 fn ease_in_ease_out(x: f32) -> f32 {
