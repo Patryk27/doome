@@ -113,28 +113,12 @@ impl Triangle {
 
         let inv_det = 1.0 / det;
         let tvec = ray.origin() - self.v0.truncate();
-        let mut u = tvec.dot(pvec) * inv_det;
-
-        // Prevents funky black spots that appear when camera is aligned in the
-        // same direction as the triangle
-        if u > -0.0001 && u < 0.0 {
-            u = f32::EPSILON;
-        }
-
-        if u < 0.0 || u > 1.0 {
-            return Hit::none();
-        }
-
+        let u = tvec.dot(pvec) * inv_det;
         let qvec = tvec.cross(v0v1);
         let v = ray.direction().dot(qvec) * inv_det;
-
-        if v < 0.0 || u + v > 1.0 {
-            return Hit::none();
-        }
-
         let t = v0v2.dot(qvec) * inv_det;
 
-        if t < 0.0 {
+        if (u < 0.0) | (u > 1.0) | (v < 0.0) | (u + v > 1.0) | (t < 0.0) {
             return Hit::none();
         }
 
