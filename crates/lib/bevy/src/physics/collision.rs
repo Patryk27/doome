@@ -6,7 +6,7 @@ use super::events::Collision;
 use super::PhysicsEnabled;
 use crate::convert::physical_to_graphical;
 
-const MIN_VELOCITY: f32 = 0.5;
+const MIN_VELOCITY: f32 = 0.1;
 const MIN_MTV_LENGTH_TO_DECOMPOSE: f32 = 0.001;
 
 pub fn resolve_collisions(
