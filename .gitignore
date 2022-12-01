@@ -1,7 +1,6 @@
 /target
 *.glsl
 *.naga
-*.spv
 doome_bg.wasm
 doome_bg.wasm.d.ts
 doome.d.ts
