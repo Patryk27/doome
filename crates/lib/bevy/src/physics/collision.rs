@@ -59,10 +59,6 @@ pub fn resolve_collisions(
         }
 
         for (passive_entity, passive_entity_collider) in colliders.iter() {
-            if body.velocity.length() < f32::EPSILON {
-                break;
-            }
-
             if active_entity == passive_entity {
                 continue;
             }
@@ -96,12 +92,12 @@ pub fn resolve_collisions(
                         body.velocity -=
                             vector_decomposition(body.velocity, mtv);
                     }
-
-                    if body.velocity.length() < MIN_VELOCITY {
-                        body.velocity = Vec2::ZERO;
-                    }
                 }
             }
+        }
+
+        if body.velocity.length() < MIN_VELOCITY {
+            body.velocity = Default::default();
         }
     }
 }
