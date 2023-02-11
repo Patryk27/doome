@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use doome_bevy::assets::Assets;
+use doome_bevy::assets::DoomeAssets;
 use doome_bevy::audio::Audio;
 use doome_bevy::health::Death;
 
@@ -17,7 +17,7 @@ impl Plugin for CharonPlugin {
 
 fn handle_enemy_deaths(
     mut commands: Commands,
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     mut audio: ResMut<Audio>,
     mut deaths: EventReader<Death>,
     mut screen_shakes: EventWriter<AddScreenShake>,

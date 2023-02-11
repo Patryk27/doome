@@ -17,7 +17,7 @@ pub struct WeaponsPlugin;
 
 impl Plugin for WeaponsPlugin {
     fn build(&self, app: &mut App) {
-        let assets = app.world.resource::<Assets>();
+        let assets = app.world.resource::<DoomeAssets>();
 
         app.insert_resource(PrefabWeapons {
             rifle: definitions::rifle(&assets),

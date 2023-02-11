@@ -13,12 +13,12 @@ use image::RgbaImage;
 
 pub use self::source::{AssetsSource, RuntimeSource};
 use super::{
-    AssetHandle, AssetStorageBuilder, Assets, Model, ModelMaterial,
+    DoomeAssetHandle, AssetStorageBuilder, DoomeAssets, Model, ModelMaterial,
     ModelTriangle, Texture,
 };
 use crate::audio::Sound;
 
-pub struct AssetsLoader {
+pub struct DoomeAssetsLoader {
     source: Box<dyn AssetsSource>,
     models: AssetStorageBuilder<Model>,
     images: AssetStorageBuilder<RgbaImage>,
@@ -26,7 +26,7 @@ pub struct AssetsLoader {
     textures: AssetStorageBuilder<RgbaImage>,
 }
 
-impl AssetsLoader {
+impl DoomeAssetsLoader {
     pub fn new(source: impl AssetsSource + 'static) -> Self {
         Self {
             source: Box::new(source),

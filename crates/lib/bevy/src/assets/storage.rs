@@ -4,9 +4,9 @@ use std::marker::PhantomData;
 use bevy::prelude::*;
 
 #[derive(Component, Debug)]
-pub struct AssetHandle<T>(usize, PhantomData<T>);
+pub struct DoomeAssetHandle<T>(usize, PhantomData<T>);
 
-impl<T> AssetHandle<T> {
+impl<T> DoomeAssetHandle<T> {
     pub(super) fn new(index: usize) -> Self {
         Self(index, PhantomData)
     }
@@ -15,20 +15,20 @@ impl<T> AssetHandle<T> {
         self.0
     }
 
-    pub(super) fn transmute<U>(self) -> AssetHandle<U> {
-        AssetHandle(self.0, PhantomData)
+    pub(super) fn transmute<U>(self) -> DoomeAssetHandle<U> {
+        DoomeAssetHandle(self.0, PhantomData)
     }
 }
 
-impl<T> Clone for AssetHandle<T> {
+impl<T> Clone for DoomeAssetHandle<T> {
     fn clone(&self) -> Self {
         Self(self.0, PhantomData)
     }
 }
 
-impl<T> Copy for AssetHandle<T> {}
+impl<T> Copy for DoomeAssetHandle<T> {}
 
-impl<T> PartialEq for AssetHandle<T> {
+impl<T> PartialEq for DoomeAssetHandle<T> {
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
     }
@@ -40,11 +40,11 @@ pub struct AssetStorage<T> {
 }
 
 impl<T> AssetStorage<T> {
-    pub fn by_name(&self, name: &str) -> Option<AssetHandle<T>> {
-        self.index.get(name).cloned().map(AssetHandle::new)
+    pub fn by_name(&self, name: &str) -> Option<DoomeAssetHandle<T>> {
+        self.index.get(name).cloned().map(DoomeAssetHandle::new)
     }
 
-    pub fn by_handle(&self, handle: AssetHandle<T>) -> &T {
+    pub fn by_handle(&self, handle: DoomeAssetHandle<T>) -> &T {
         &self.items[handle.0]
     }
 }
@@ -62,11 +62,11 @@ impl<T> AssetStorageBuilder<T> {
         self.index.insert(name.to_string(), index);
     }
 
-    pub fn try_by_name(&self, name: &str) -> Option<AssetHandle<T>> {
-        self.index.get(name).cloned().map(AssetHandle::new)
+    pub fn try_by_name(&self, name: &str) -> Option<DoomeAssetHandle<T>> {
+        self.index.get(name).cloned().map(DoomeAssetHandle::new)
     }
 
-    pub fn by_handle(&self, handle: AssetHandle<T>) -> (&T, &str) {
+    pub fn by_handle(&self, handle: DoomeAssetHandle<T>) -> (&T, &str) {
         let item = &self.items[handle.0];
 
         let name = self
@@ -79,11 +79,11 @@ impl<T> AssetStorageBuilder<T> {
         (item, name)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (AssetHandle<T>, &T)> + '_ {
+    pub fn iter(&self) -> impl Iterator<Item = (DoomeAssetHandle<T>, &T)> + '_ {
         self.items
             .iter()
             .enumerate()
-            .map(|(id, item)| (AssetHandle::new(id), item))
+            .map(|(id, item)| (DoomeAssetHandle::new(id), item))
     }
 
     pub fn build(self) -> AssetStorage<T> {

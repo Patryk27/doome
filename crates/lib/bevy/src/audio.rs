@@ -3,7 +3,7 @@ use std::io::Cursor;
 use bevy::prelude::*;
 use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink};
 
-use crate::assets::{AssetHandle, Assets};
+use crate::assets::{DoomeAssetHandle, DoomeAssets};
 
 pub struct Sound {
     content: Vec<u8>,
@@ -17,11 +17,11 @@ impl Sound {
 
 #[derive(Resource)]
 pub struct Audio {
-    queue: Vec<AssetHandle<Sound>>,
+    queue: Vec<DoomeAssetHandle<Sound>>,
 }
 
 impl Audio {
-    pub fn play(&mut self, sound: AssetHandle<Sound>) {
+    pub fn play(&mut self, sound: DoomeAssetHandle<Sound>) {
         self.queue.push(sound);
     }
 }
@@ -36,12 +36,12 @@ pub struct AudioOutput {
 
 #[derive(Component)]
 pub struct AudioPlayer {
-    asset: AssetHandle<Sound>,
+    asset: DoomeAssetHandle<Sound>,
     sink: Sink,
 }
 
 impl AudioPlayer {
-    pub fn new(asset: AssetHandle<Sound>, outout: &AudioOutput) -> Self {
+    pub fn new(asset: DoomeAssetHandle<Sound>, outout: &AudioOutput) -> Self {
         let sink = Sink::try_new(&outout.stream_handle).unwrap();
 
         Self { asset, sink }
@@ -93,7 +93,7 @@ impl Plugin for AudioPlugin {
     }
 }
 
-fn play_audio_players(assets: Res<Assets>, audio_players: Query<&AudioPlayer>) {
+fn play_audio_players(assets: Res<DoomeAssets>, audio_players: Query<&AudioPlayer>) {
     for player in audio_players.iter() {
         if player.sink.len() < 2 {
             let sound = assets.sound(player.asset);
@@ -107,7 +107,7 @@ fn play_audio_players(assets: Res<Assets>, audio_players: Query<&AudioPlayer>) {
 }
 
 fn play_queued_audio(
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     mut audio: ResMut<Audio>,
     state: NonSend<AudioOutput>,
 ) {

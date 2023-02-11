@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use doome_bevy::prelude::Assets;
+use doome_bevy::prelude::DoomeAssets;
 
 use super::definition::WeaponDefinition;
 use super::WeaponSprites;
 
-pub fn rifle(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
+pub fn rifle(assets: &DoomeAssets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     let idle = assets.load_image("rifle_0");
     let animation =
         vec![assets.load_image("rifle_1"), assets.load_image("rifle_2")];
@@ -28,7 +28,7 @@ pub fn rifle(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     (Arc::new(definition), Arc::new(sprites))
 }
 
-pub fn handgun(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
+pub fn handgun(assets: &DoomeAssets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     let idle = assets.load_image("gun_1");
     let animation = vec![
         assets.load_image("gun_shoot_1"),
@@ -54,7 +54,7 @@ pub fn handgun(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     (Arc::new(definition), Arc::new(sprites))
 }
 
-pub fn rpg(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
+pub fn rpg(assets: &DoomeAssets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     let idle = assets.load_image("rpg");
     let animation = vec![assets.load_image("rpg")];
 
@@ -77,7 +77,7 @@ pub fn rpg(assets: &Assets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     (Arc::new(definition), Arc::new(sprites))
 }
 
-pub fn enemy_fire_spew(assets: &Assets) -> WeaponDefinition {
+pub fn enemy_fire_spew(assets: &DoomeAssets) -> WeaponDefinition {
     WeaponDefinition::new()
         .with_model(assets.load_model("fireball"))
         .with_cooldown(1.0)
@@ -86,7 +86,7 @@ pub fn enemy_fire_spew(assets: &Assets) -> WeaponDefinition {
         .with_collider_radius(0.5)
 }
 
-pub fn doome_fire_spew(assets: &Assets) -> WeaponDefinition {
+pub fn doome_fire_spew(assets: &DoomeAssets) -> WeaponDefinition {
     WeaponDefinition::new()
         .with_model(assets.load_model("fireball"))
         .with_cooldown(1.0)

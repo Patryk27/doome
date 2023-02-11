@@ -80,7 +80,7 @@ impl LevelsCoordinator {
         entities: Query<
             Entity,
             Or<(
-                With<AssetHandle<Model>>,
+                With<DoomeAssetHandle<Model>>,
                 With<Light>,
                 With<LevelZone>,
                 With<GcAfterLevelUnloaded>,

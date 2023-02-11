@@ -1,9 +1,9 @@
-use doome_bevy::prelude::AssetHandle;
+use doome_bevy::prelude::DoomeAssetHandle;
 use image::RgbaImage;
 
 #[derive(Debug, Clone)]
 pub struct WeaponSprites {
-    pub ui_icon: AssetHandle<RgbaImage>,
-    pub idle: AssetHandle<RgbaImage>,
-    pub animation: Vec<AssetHandle<RgbaImage>>,
+    pub ui_icon: DoomeAssetHandle<RgbaImage>,
+    pub idle: DoomeAssetHandle<RgbaImage>,
+    pub animation: Vec<DoomeAssetHandle<RgbaImage>>,
 }

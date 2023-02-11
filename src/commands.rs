@@ -51,7 +51,7 @@ struct Queries<'w, 's> {
 fn handle_commands(
     mut game_commands: EventReader<Command>,
     mut commands: Commands,
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     prefab_weapons: Res<PrefabWeapons>,
     // Mutable resources
     mut rendering_options: ResMut<RenderingOptions>,

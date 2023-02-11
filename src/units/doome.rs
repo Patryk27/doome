@@ -14,7 +14,7 @@ pub struct Doome {
 
 impl Doome {
     pub fn spawn(
-        assets: &Assets,
+        assets: &DoomeAssets,
         commands: &mut Commands,
         position: Vec3,
     ) -> Entity {

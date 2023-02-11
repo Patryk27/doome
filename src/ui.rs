@@ -13,7 +13,7 @@ use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
 use doome_bevy::components::*;
 use doome_bevy::doome::DoomeRenderer;
-use doome_bevy::prelude::Assets;
+use doome_bevy::prelude::DoomeAssets;
 use doome_bevy::text::TextEngine;
 use doome_engine::{Canvas, HEIGHT, WIDTH};
 use glam::{vec2, Vec3Swizzles};
@@ -157,7 +157,7 @@ fn canvas_clear(
 }
 
 fn canvas_render_texts(
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     mut renderer: ResMut<DoomeRenderer>,
     text_engine: Res<TextEngine>,
     typewriter: Res<Typewriter>,

@@ -11,7 +11,7 @@ use instant::Instant;
 
 use self::geometry_manager::*;
 use self::materials_manager::*;
-use crate::assets::{AssetHandle, Assets, Model};
+use crate::assets::{DoomeAssetHandle, DoomeAssets, Model};
 use crate::components::*;
 use crate::convert::physical_to_graphical;
 use crate::doome::DoomeRenderer;
@@ -114,16 +114,16 @@ fn sync_deleted_geometry(
 fn sync_created_geometry(
     mut commands: Commands,
     mut state: ResMut<State>,
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     models: Query<
         (
             Entity,
             &GeometryType,
-            &AssetHandle<Model>,
+            &DoomeAssetHandle<Model>,
             &Transform,
             Option<&Material>,
         ),
-        Added<AssetHandle<Model>>,
+        Added<DoomeAssetHandle<Model>>,
     >,
 ) {
     let state = &mut *state;
@@ -156,19 +156,19 @@ fn sync_created_geometry(
 
 fn sync_updated_geometry(
     mut state: ResMut<State>,
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     models: Query<
         (
             Entity,
             &GeometryType,
-            &AssetHandle<Model>,
+            &DoomeAssetHandle<Model>,
             &Transform,
             Option<&Material>,
         ),
         Or<(
             Changed<Transform>,
             Changed<Material>,
-            Changed<AssetHandle<Model>>,
+            Changed<DoomeAssetHandle<Model>>,
         )>,
     >,
 ) {

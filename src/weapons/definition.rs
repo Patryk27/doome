@@ -1,9 +1,9 @@
-use doome_bevy::assets::{AssetHandle, Model};
+use doome_bevy::assets::{DoomeAssetHandle, Model};
 
 #[derive(Debug, Clone)]
 pub struct WeaponDefinition {
     pub cooldown: f32,
-    pub bullet_model: Option<AssetHandle<Model>>,
+    pub bullet_model: Option<DoomeAssetHandle<Model>>,
     pub bullet_speed: f32,
     pub bullet_damage: f32,
     pub bullet_scale: f32,
@@ -37,7 +37,7 @@ impl WeaponDefinition {
         }
     }
 
-    pub fn with_model(mut self, model: AssetHandle<Model>) -> Self {
+    pub fn with_model(mut self, model: DoomeAssetHandle<Model>) -> Self {
         self.bullet_model = Some(model);
         self
     }

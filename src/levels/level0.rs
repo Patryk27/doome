@@ -9,7 +9,7 @@ const MIN_TIME_IN_GAME_OVER: f32 = 1.0;
 pub fn init(
     mut commands: Commands,
     mut game_commands: EventWriter<Command>,
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     mut goto_level_rx: EventReader<GotoLevel>,
 ) {
     if !goto_level_rx.iter().any(|level| **level == Level::l0()) {
@@ -20,10 +20,12 @@ pub fn init(
 
     lvl.floor(-1, -1, 1, 20)
         .alter_material(|mat| {
-            mat.with_reflectivity(0.1)
+            mat.with_reflectivity(1.0)
                 .with_reflection_color(Color::hex(0xffffff))
         })
         .spawn();
+
+    lvl.point_light(Vec3::new(0.0, 0.0, 0.0), Color::srgb(1.0, 0.0, 0.0), 10.0);
 
     game_commands.send(Command::LockInput);
 }

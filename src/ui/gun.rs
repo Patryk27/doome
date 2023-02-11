@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use bevy::prelude::*;
-use doome_bevy::assets::Assets;
+use doome_bevy::assets::DoomeAssets;
 use doome_bevy::audio::Audio;
 use doome_bevy::doome::DoomeRenderer;
 use doome_bevy::health::Health;
@@ -43,7 +43,7 @@ impl State {
 
 pub fn render(
     time: Res<Time>,
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     mut state: ResMut<State>,
     mut renderer: ResMut<DoomeRenderer>,
     player: Query<(&Player, &Health, &Weapon)>,
@@ -97,7 +97,7 @@ pub fn render(
 }
 
 pub fn trigger_animation(
-    assets: &Assets,
+    assets: &DoomeAssets,
     shooting_animation: &mut AnimationState,
     audio: &mut Audio,
 ) {

@@ -10,7 +10,7 @@ use doome_screen_space_effects::ScreenSpaceEffects;
 use doome_wgpu_ext::AllocatedUniform;
 use rt::ShaderConstants;
 
-use crate::assets::Assets;
+use crate::assets::DoomeAssets;
 use crate::components::*;
 use crate::raytracer::DoomeRaytracerPlugin;
 use crate::renderer::RendererState;
@@ -46,7 +46,7 @@ impl Plugin for DoomePlugin {
             debug_pass_enabled: false,
         });
 
-        let assets = app.world.resource::<Assets>();
+        let assets = app.world.resource::<DoomeAssets>();
         let renderer = app.world.resource::<RendererState>();
         let windows = app.world.resource::<Windows>();
 

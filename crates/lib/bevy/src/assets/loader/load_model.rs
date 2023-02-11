@@ -4,10 +4,10 @@ use anyhow::{bail, Context, Result};
 use glam::{vec2, vec3};
 use tobj::LoadOptions;
 
-use super::{AssetsLoader, Model, ModelMaterial, ModelTriangle};
+use super::{DoomeAssetsLoader, Model, ModelMaterial, ModelTriangle};
 use crate::components::Color;
 
-impl AssetsLoader {
+impl DoomeAssetsLoader {
     pub fn load_model(&mut self, name: &str, path: &Path) -> Result<()> {
         log::info!("Loading model: {}", path.display());
 

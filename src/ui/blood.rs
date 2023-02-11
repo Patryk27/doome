@@ -8,7 +8,7 @@ use super::{UiState, HEALTHY_THRESHOLD, WOUNDED_THRESHOLD};
 
 const PULSE_FREQUENCY: f32 = 10.0;
 
-pub fn setup(mut commands: Commands, assets: Res<Assets>) {
+pub fn setup(mut commands: Commands, assets: Res<DoomeAssets>) {
     let blood_image = assets.load_image("blood_overlay");
 
     commands.insert_resource(BloodState { blood_image });
@@ -16,11 +16,11 @@ pub fn setup(mut commands: Commands, assets: Res<Assets>) {
 
 #[derive(Resource)]
 pub struct BloodState {
-    blood_image: AssetHandle<RgbaImage>,
+    blood_image: DoomeAssetHandle<RgbaImage>,
 }
 
 pub fn render(
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     state: Res<BloodState>,
     time: Res<Time>,
     mut renderer: ResMut<DoomeRenderer>,

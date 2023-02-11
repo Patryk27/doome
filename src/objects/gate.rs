@@ -5,7 +5,7 @@ pub struct Gate;
 
 impl Gate {
     pub fn spawn(
-        assets: &Assets,
+        assets: &DoomeAssets,
         commands: &mut Commands,
         position: Vec2,
         rotation: Quat,

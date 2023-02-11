@@ -82,7 +82,7 @@ fn update_music(
 fn setup_music(
     mut commands: Commands,
     audio_output: NonSend<AudioOutput>,
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
 ) {
     let doome_music = AudioPlayer::new(
         assets.load_sound("audiorezout_time_hurries"),

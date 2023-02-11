@@ -2,9 +2,9 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 
-use super::AssetsLoader;
+use super::DoomeAssetsLoader;
 
-impl AssetsLoader {
+impl DoomeAssetsLoader {
     pub fn load_image(&mut self, name: &str, path: &Path) -> Result<()> {
         log::info!("Loading image: {}", path.display());
 

@@ -5,12 +5,12 @@ use rectangle_pack::{
     TargetBin,
 };
 
-use super::{AssetHandle, AssetStorageBuilder, Assets, AssetsLoader, Texture};
+use super::{DoomeAssetHandle, AssetStorageBuilder, DoomeAssets, DoomeAssetsLoader, Texture};
 
 const DEPTH: u32 = 1;
 
-impl AssetsLoader {
-    pub fn build(self) -> Assets {
+impl DoomeAssetsLoader {
+    pub fn build(self) -> DoomeAssets {
         let mut rects: GroupedRectsToPlace<_, ()> = GroupedRectsToPlace::new();
 
         for (texture_handle, texture) in self.textures.iter() {
@@ -37,7 +37,7 @@ impl AssetsLoader {
         let mut textures = AssetStorageBuilder::default();
 
         for (texture_id, (_, location)) in rects.packed_locations().iter() {
-            let texture_id = AssetHandle::new(*texture_id);
+            let texture_id = DoomeAssetHandle::new(*texture_id);
             let (texture, texture_name) = self.textures.by_handle(texture_id);
             let (atlas_offset_x, atlas_offset_y) = (location.x(), location.y());
 
@@ -61,7 +61,7 @@ impl AssetsLoader {
             );
         }
 
-        Assets {
+        DoomeAssets {
             models: self.models.build(),
             images: self.images.build(),
             textures: textures.build(),

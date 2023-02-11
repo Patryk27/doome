@@ -2,7 +2,7 @@ use doome_raytracer as rt;
 use glam::{vec2, Mat4, Vec2, Vec3};
 use rt::{ATLAS_HEIGHT, ATLAS_WIDTH};
 
-use super::AssetHandle;
+use super::DoomeAssetHandle;
 use crate::components::{Color, Material};
 
 #[derive(Clone, Debug)]
@@ -48,7 +48,7 @@ impl ModelTriangle {
 #[derive(Clone, Debug, Default)]
 pub struct ModelMaterial {
     pub color: Color,
-    pub texture: Option<AssetHandle<Texture>>,
+    pub texture: Option<DoomeAssetHandle<Texture>>,
 }
 
 impl ModelMaterial {

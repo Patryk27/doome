@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use doome_bevy::audio::Audio;
 use doome_bevy::health::Health;
 use doome_bevy::physics::events::Collision;
-use doome_bevy::prelude::Assets;
+use doome_bevy::prelude::DoomeAssets;
 
 use crate::explosions::spawn_explosion;
 use crate::player::AddScreenShake;
@@ -44,7 +44,7 @@ pub struct DamageDealt {
 
 fn collide_and_apply_damage(
     mut commands: Commands,
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     mut audio: ResMut<Audio>,
     mut collisions: EventReader<Collision>,
     mut health: Query<&mut Health>,

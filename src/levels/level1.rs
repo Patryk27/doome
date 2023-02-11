@@ -76,7 +76,7 @@ const ELEPHANT_Z: f32 = ROOM_CENTER_Z + 3.0;
 
 pub fn init(
     mut commands: Commands,
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     mut goto_level_rx: EventReader<GotoLevel>,
     mut player: Query<(&mut Player, &mut Transform)>,
 ) {
@@ -250,7 +250,7 @@ enum LevelStage {
 }
 
 pub fn process(
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     time: Res<Time>,
     keys: Res<Input<KeyCode>>,
     mut commands: Commands,

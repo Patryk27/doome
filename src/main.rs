@@ -47,7 +47,7 @@ mod prelude {
 
 use bevy::prelude::*;
 use commands::Command;
-use doome_bevy::assets::Assets;
+use doome_bevy::assets::DoomeAssets;
 use doome_bevy::text::TextEngine;
 
 use self::args::*;
@@ -62,10 +62,10 @@ fn main() {
     let args = Args::get();
 
     #[cfg(feature = "static-assets")]
-    let assets = Assets::init_static(&ASSETS).unwrap();
+    let assets = DoomeAssets::init_static(&ASSETS).unwrap();
 
     #[cfg(not(feature = "static-assets"))]
-    let assets = Assets::init("assets").unwrap();
+    let assets = DoomeAssets::init("assets").unwrap();
 
     App::new()
         // ==== //

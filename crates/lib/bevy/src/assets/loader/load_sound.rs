@@ -2,10 +2,10 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use super::AssetsLoader;
+use super::DoomeAssetsLoader;
 use crate::audio::Sound;
 
-impl AssetsLoader {
+impl DoomeAssetsLoader {
     pub fn load_sound(&mut self, name: &str, path: &Path) -> Result<()> {
         log::info!("Loading sound: {}", path.display());
 

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use doome_bevy::assets::Assets;
+use doome_bevy::assets::DoomeAssets;
 use doome_bevy::audio::Audio;
 use doome_bevy::billboard::Billboard;
 use doome_bevy::components::{GeometryType, Material};
@@ -10,7 +10,7 @@ pub struct Explosion;
 
 pub fn spawn_explosion(
     commands: &mut Commands,
-    assets: &Assets,
+    assets: &DoomeAssets,
     audio: &mut Audio,
     transform: Transform,
 ) {

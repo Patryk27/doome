@@ -11,12 +11,12 @@ use include_dir::Dir;
 
 use self::loader::*;
 pub use self::model::*;
-pub use self::storage::AssetHandle;
+pub use self::storage::DoomeAssetHandle;
 use self::storage::{AssetStorage, AssetStorageBuilder};
 use crate::audio::Sound;
 
 #[derive(Resource)]
-pub struct Assets {
+pub struct DoomeAssets {
     atlas: image::RgbaImage,
     models: AssetStorage<Model>,
     images: AssetStorage<RgbaImage>,
@@ -24,21 +24,21 @@ pub struct Assets {
     textures: AssetStorage<Texture>,
 }
 
-impl Assets {
+impl DoomeAssets {
     pub fn init_static(dir: &'static Dir<'static>) -> Result<Self> {
-        let loader = AssetsLoader::new(dir);
+        let loader = DoomeAssetsLoader::new(dir);
 
         Self::init_inner(loader)
     }
 
     pub fn init(path: impl AsRef<Path>) -> Result<Self> {
         let runtime_source = RuntimeSource::new(path);
-        let loader = AssetsLoader::new(runtime_source);
+        let loader = DoomeAssetsLoader::new(runtime_source);
 
         Self::init_inner(loader)
     }
 
-    fn init_inner(mut loader: AssetsLoader) -> Result<Self> {
+    fn init_inner(mut loader: DoomeAssetsLoader) -> Result<Self> {
         for (name, path) in loader.find("models", "png")? {
             loader.load_texture(&name, &path).with_context(|| {
                 format!("Couldn't load texture: {}", path.display())
@@ -82,41 +82,41 @@ impl Assets {
         &self.atlas
     }
 
-    pub(crate) fn model(&self, handle: AssetHandle<Model>) -> &Model {
+    pub(crate) fn model(&self, handle: DoomeAssetHandle<Model>) -> &Model {
         self.models.by_handle(handle)
     }
 
-    pub(crate) fn texture(&self, handle: AssetHandle<Texture>) -> Texture {
+    pub(crate) fn texture(&self, handle: DoomeAssetHandle<Texture>) -> Texture {
         *self.textures.by_handle(handle)
     }
 
-    pub fn image(&self, handle: AssetHandle<RgbaImage>) -> &RgbaImage {
+    pub fn image(&self, handle: DoomeAssetHandle<RgbaImage>) -> &RgbaImage {
         self.images.by_handle(handle)
     }
 
-    pub(crate) fn sound(&self, handle: AssetHandle<Sound>) -> &Sound {
+    pub(crate) fn sound(&self, handle: DoomeAssetHandle<Sound>) -> &Sound {
         self.sounds.by_handle(handle)
     }
 
-    pub fn load_model(&self, name: &str) -> AssetHandle<Model> {
+    pub fn load_model(&self, name: &str) -> DoomeAssetHandle<Model> {
         self.models
             .by_name(name)
             .unwrap_or_else(|| panic!("Unknown model: {}", name))
     }
 
-    pub fn load_texture(&self, name: &str) -> AssetHandle<Texture> {
+    pub fn load_texture(&self, name: &str) -> DoomeAssetHandle<Texture> {
         self.textures
             .by_name(name)
             .unwrap_or_else(|| panic!("Unknown texture: {}", name))
     }
 
-    pub fn load_image(&self, name: &str) -> AssetHandle<RgbaImage> {
+    pub fn load_image(&self, name: &str) -> DoomeAssetHandle<RgbaImage> {
         self.images
             .by_name(name)
             .unwrap_or_else(|| panic!("Unknown image: {}", name))
     }
 
-    pub fn load_sound(&self, name: &str) -> AssetHandle<Sound> {
+    pub fn load_sound(&self, name: &str) -> DoomeAssetHandle<Sound> {
         self.sounds
             .by_name(name)
             .unwrap_or_else(|| panic!("Unknown sound: {}", name))

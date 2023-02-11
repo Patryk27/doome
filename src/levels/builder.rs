@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
-use doome_bevy::assets::{AssetHandle, Assets, Model};
+use doome_bevy::assets::{DoomeAssetHandle, DoomeAssets, Model};
 use doome_bevy::components::*;
 use doome_bevy::nav::NavObstacle;
 use doome_bevy::physics::components::Collider;
@@ -12,11 +12,11 @@ use super::{GcAfterLevelUnloaded, LevelZone};
 
 pub struct LevelBuilder<'p, 'w, 's> {
     commands: &'p mut Commands<'w, 's>,
-    assets: &'p Assets,
+    assets: &'p DoomeAssets,
 }
 
 impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
-    pub fn new(commands: &'p mut Commands<'w, 's>, assets: &'p Assets) -> Self {
+    pub fn new(commands: &'p mut Commands<'w, 's>, assets: &'p DoomeAssets) -> Self {
         Self { commands, assets }
     }
 
@@ -24,7 +24,7 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         &mut self.commands
     }
 
-    pub fn assets(&self) -> &'p Assets {
+    pub fn assets(&self) -> &'p DoomeAssets {
         &self.assets
     }
 
@@ -235,7 +235,7 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
 
 pub struct LevelModelBuilder<'w, 's, 'a> {
     commands: &'a mut Commands<'w, 's>,
-    handle: AssetHandle<Model>,
+    handle: DoomeAssetHandle<Model>,
     geo_type: GeometryType,
     transform: Transform,
     material: Option<Material>,
@@ -247,7 +247,7 @@ pub struct LevelModelBuilder<'w, 's, 'a> {
 impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
     fn new(
         commands: &'a mut Commands<'w, 's>,
-        handle: AssetHandle<Model>,
+        handle: DoomeAssetHandle<Model>,
     ) -> Self {
         Self {
             commands,

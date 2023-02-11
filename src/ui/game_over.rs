@@ -5,7 +5,7 @@ use image::RgbaImage;
 
 use crate::prelude::*;
 
-pub fn setup(mut commands: Commands, assets: Res<Assets>) {
+pub fn setup(mut commands: Commands, assets: Res<DoomeAssets>) {
     let you_died = assets.load_image("you_died");
     let click_to_restart = assets.load_image("click_to_restart");
 
@@ -17,12 +17,12 @@ pub fn setup(mut commands: Commands, assets: Res<Assets>) {
 
 #[derive(Resource)]
 pub struct GameOverAssets {
-    img1: AssetHandle<RgbaImage>,
-    img2: AssetHandle<RgbaImage>,
+    img1: DoomeAssetHandle<RgbaImage>,
+    img2: DoomeAssetHandle<RgbaImage>,
 }
 
 pub fn render(
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     game_over_assets: Res<GameOverAssets>,
     levels_coordinator: Res<LevelsCoordinator>,
     mut renderer: ResMut<DoomeRenderer>,

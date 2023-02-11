@@ -7,7 +7,7 @@ pub struct Column;
 
 impl Column {
     pub fn spawn(
-        assets: &Assets,
+        assets: &DoomeAssets,
         commands: &mut Commands,
         position: Vec2,
     ) -> Entity {

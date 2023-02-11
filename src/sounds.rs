@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use doome_bevy::audio::{Audio, Sound};
-use doome_bevy::prelude::{AssetHandle, Assets, Body};
+use doome_bevy::prelude::{Body, DoomeAssetHandle, DoomeAssets};
 
 use crate::bullets::DamageDealt;
 use crate::prelude::*;
@@ -14,7 +14,7 @@ pub struct SoundsPlugin;
 
 impl Plugin for SoundsPlugin {
     fn build(&self, app: &mut App) {
-        let assets = app.world.resource::<Assets>();
+        let assets = app.world.resource::<DoomeAssets>();
 
         let enemy_damage = assets.load_sound("enemy_dmg");
         let enemy_idle_sound = assets.load_sound("enemy_idle_noise");
@@ -31,6 +31,7 @@ impl Plugin for SoundsPlugin {
             timer: 0.0,
             enemy_idle_sounds_timer: 0.0,
         });
+
         app.add_system(react_to_damage);
         app.add_system(footsteps);
         app.add_system(enemy_idle_noise);
@@ -39,10 +40,10 @@ impl Plugin for SoundsPlugin {
 
 #[derive(Resource)]
 struct Sounds {
-    enemy_damage: AssetHandle<Sound>,
-    enemy_idle_sound: AssetHandle<Sound>,
-    player_damage: AssetHandle<Sound>,
-    footstep: AssetHandle<Sound>,
+    enemy_damage: DoomeAssetHandle<Sound>,
+    enemy_idle_sound: DoomeAssetHandle<Sound>,
+    player_damage: DoomeAssetHandle<Sound>,
+    footstep: DoomeAssetHandle<Sound>,
 }
 
 #[derive(Resource)]

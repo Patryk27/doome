@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use doome_bevy::assets::Assets;
+use doome_bevy::assets::DoomeAssets;
 use doome_bevy::doome::DoomeRenderer;
 use doome_bevy::health::Health;
 use doome_bevy::prelude::Player;
@@ -19,7 +19,7 @@ enum State {
 
 pub fn render(
     time: Res<Time>,
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     player: Query<(&Player, &Health)>,
     gun_state: Res<super::gun::State>,
     mut renderer: ResMut<DoomeRenderer>,

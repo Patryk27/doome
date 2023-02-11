@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 
-use crate::assets::{AssetHandle, Model};
+use crate::assets::{DoomeAssetHandle, Model};
 
 pub fn animate(
     time: Res<Time>,
-    mut anims: Query<(&mut ModelAnimation, &mut AssetHandle<Model>)>,
+    mut anims: Query<(&mut ModelAnimation, &mut DoomeAssetHandle<Model>)>,
 ) {
     for (mut anim, mut model) in anims.iter_mut() {
         if !anim.playing {
@@ -52,5 +52,5 @@ impl ModelAnimation {
 
 pub struct ModelAnimationFrame {
     pub duration: f32,
-    pub handle: AssetHandle<Model>,
+    pub handle: DoomeAssetHandle<Model>,
 }

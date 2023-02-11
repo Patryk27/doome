@@ -2,9 +2,9 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use super::AssetsLoader;
+use super::DoomeAssetsLoader;
 
-impl AssetsLoader {
+impl DoomeAssetsLoader {
     pub fn load_texture(&mut self, name: &str, path: &Path) -> Result<()> {
         log::info!("Loading texture: {}", path.display());
 

@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use doome_raytracer as rt;
 use glam::vec3;
 
-use crate::assets::{AssetHandle, Texture};
+use crate::assets::{DoomeAssetHandle, Texture};
 
 #[derive(Copy, Clone, Debug, PartialEq, Component)]
 pub struct Color {
@@ -181,7 +181,7 @@ pub struct Material {
     pub emissive: bool,
     pub reflectivity: Option<f32>,
     pub reflection_color: Option<Color>,
-    pub texture: Option<AssetHandle<Texture>>,
+    pub texture: Option<DoomeAssetHandle<Texture>>,
     pub texture_enabled: Option<bool>,
     pub casts_shadows: Option<bool>,
     pub uv_divisor: Option<(u8, u8)>,
@@ -214,7 +214,7 @@ impl Material {
         self
     }
 
-    pub fn with_texture(mut self, texture: AssetHandle<Texture>) -> Self {
+    pub fn with_texture(mut self, texture: DoomeAssetHandle<Texture>) -> Self {
         self.texture = Some(texture);
         self.texture_enabled = Some(true);
         self
