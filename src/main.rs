@@ -70,27 +70,28 @@ fn main() {
     App::new()
         // ==== //
         // bevy //
-        .add_plugin(bevy::log::LogPlugin::default())
-        .add_plugin(bevy::core::CorePlugin::default())
-        .add_plugin(bevy::time::TimePlugin::default())
-        .add_plugin(bevy::transform::TransformPlugin::default())
-        .add_plugin(bevy::hierarchy::HierarchyPlugin::default())
-        .add_plugin(bevy::diagnostic::DiagnosticsPlugin::default())
-        .add_plugin(bevy::input::InputPlugin::default())
-        .add_plugin(bevy::window::WindowPlugin {
-            window: WindowDescriptor {
-                title: "Doomé".to_string(),
-                width: args.width(),
-                height: args.height(),
-                mode: args.mode(),
-                fit_canvas_to_parent: true,
-                ..Default::default()
-            },
-            ..Default::default()
-        })
+        .add_plugins(DefaultPlugins)
+        // .add_plugin(bevy::log::LogPlugin::default())
+        // .add_plugin(bevy::core::CorePlugin::default())
+        // .add_plugin(bevy::time::TimePlugin::default())
+        // .add_plugin(bevy::transform::TransformPlugin::default())
+        // .add_plugin(bevy::hierarchy::HierarchyPlugin::default())
+        // .add_plugin(bevy::diagnostic::DiagnosticsPlugin::default())
+        // .add_plugin(bevy::input::InputPlugin::default())
+        // .add_plugin(bevy::window::WindowPlugin {
+        //     window: WindowDescriptor {
+        //         title: "Doomé".to_string(),
+        //         width: args.width(),
+        //         height: args.height(),
+        //         mode: args.mode(),
+        //         fit_canvas_to_parent: true,
+        //         ..Default::default()
+        //     },
+        //     ..Default::default()
+        // })
         .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
-        .add_plugin(bevy::winit::WinitPlugin::default())
+        // .add_plugin(bevy::winit::WinitPlugin::default())
         // ========== //
         // doome_bevy //
         .insert_resource(assets)

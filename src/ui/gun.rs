@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use bevy::prelude::*;
 use doome_bevy::assets::DoomeAssets;
-use doome_bevy::audio::Audio;
+use doome_bevy::audio::DoomeAudio;
 use doome_bevy::doome::DoomeRenderer;
 use doome_bevy::health::Health;
 use doome_bevy::player::Player;
@@ -43,11 +43,12 @@ impl State {
 
 pub fn render(
     time: Res<Time>,
-    assets: Res<DoomeAssets>,
+    assets: Res<AssetServer>,
+    doome_assets: Res<DoomeAssets>,
     mut state: ResMut<State>,
     mut renderer: ResMut<DoomeRenderer>,
     player: Query<(&Player, &Health, &Weapon)>,
-    mut audio: ResMut<Audio>,
+    audio: Res<Audio>,
     mut shots: EventReader<PlayerShot>,
     ui: Res<UiState>,
     levels_coordinator: Res<LevelsCoordinator>,
@@ -62,7 +63,7 @@ pub fn render(
     } = state.as_mut();
 
     if shots.iter().count() > 0 {
-        trigger_animation(&assets, shooting_anim, &mut audio);
+        trigger_animation(&assets, shooting_anim, &audio);
     }
 
     update_animation(&time, shooting_anim);
@@ -93,15 +94,15 @@ pub fn render(
         state.current_weapon.idle
     };
 
-    canvas.blit(sway_x, sway_y - GUN_OFFSET_Y, assets.image(gun_image));
+    canvas.blit(sway_x, sway_y - GUN_OFFSET_Y, doome_assets.image(gun_image));
 }
 
 pub fn trigger_animation(
-    assets: &DoomeAssets,
+    assets: &AssetServer,
     shooting_animation: &mut AnimationState,
-    audio: &mut Audio,
+    audio: &Audio,
 ) {
-    audio.play(assets.load_sound("gun_shoot"));
+    audio.play(assets.load("audio/gun_shoot.wav"));
     shooting_animation.is_firing = true;
     shooting_animation.current_frame = 0;
     shooting_animation.timer = 0.0;

@@ -4,7 +4,7 @@ use crate::prelude::*;
 
 pub fn init(
     mut commands: Commands,
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     mut goto_level_rx: EventReader<GotoLevel>,
     mut player: Query<(&mut Player, &mut Transform)>,
 ) {
@@ -55,7 +55,7 @@ enum LevelStage {
 pub fn process(
     mut commands: Commands,
     time: Res<Time>,
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     mut level: Query<&mut LevelState>,
     mut typewriter_tx: EventWriter<TypewriterPrint>,
     mut sync_nav_data_tx: EventWriter<SyncNavData>,

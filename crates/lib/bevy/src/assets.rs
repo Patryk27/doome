@@ -13,14 +13,14 @@ use self::loader::*;
 pub use self::model::*;
 pub use self::storage::DoomeAssetHandle;
 use self::storage::{AssetStorage, AssetStorageBuilder};
-use crate::audio::Sound;
+use crate::audio::DoomeSound;
 
 #[derive(Resource)]
 pub struct DoomeAssets {
     atlas: image::RgbaImage,
     models: AssetStorage<Model>,
     images: AssetStorage<RgbaImage>,
-    sounds: AssetStorage<Sound>,
+    sounds: AssetStorage<DoomeSound>,
     textures: AssetStorage<Texture>,
 }
 
@@ -94,7 +94,7 @@ impl DoomeAssets {
         self.images.by_handle(handle)
     }
 
-    pub(crate) fn sound(&self, handle: DoomeAssetHandle<Sound>) -> &Sound {
+    pub(crate) fn sound(&self, handle: DoomeAssetHandle<DoomeSound>) -> &DoomeSound {
         self.sounds.by_handle(handle)
     }
 
@@ -116,7 +116,7 @@ impl DoomeAssets {
             .unwrap_or_else(|| panic!("Unknown image: {}", name))
     }
 
-    pub fn load_sound(&self, name: &str) -> DoomeAssetHandle<Sound> {
+    pub fn load_sound(&self, name: &str) -> DoomeAssetHandle<DoomeSound> {
         self.sounds
             .by_name(name)
             .unwrap_or_else(|| panic!("Unknown sound: {}", name))

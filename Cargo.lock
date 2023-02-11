@@ -253,6 +253,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_audio"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "064d3733a2b4396ba0ca27f187d3957b1621c83d9ae65e7da458e57627d3541b"
+dependencies = [
+ "anyhow",
+ "bevy_app",
+ "bevy_asset",
+ "bevy_ecs",
+ "bevy_reflect",
+ "bevy_utils",
+ "parking_lot",
+ "rodio",
+]
+
+[[package]]
 name = "bevy_core"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -390,6 +406,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ff89c2c2644c588d72cf505f15ad515479705c82ad7aa359ad2249646995a76"
 dependencies = [
  "bevy_app",
+ "bevy_asset",
+ "bevy_audio",
  "bevy_core",
  "bevy_core_pipeline",
  "bevy_derive",

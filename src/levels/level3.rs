@@ -4,7 +4,7 @@ use crate::prelude::*;
 
 pub fn init(
     mut commands: Commands,
-    assets: Res<Assets>,
+    assets: Res<DoomeAssets>,
     mut goto_level_rx: EventReader<GotoLevel>,
     mut player: Query<(&mut Player, &mut Transform)>,
 ) {

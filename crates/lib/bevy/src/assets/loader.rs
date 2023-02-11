@@ -16,13 +16,13 @@ use super::{
     DoomeAssetHandle, AssetStorageBuilder, DoomeAssets, Model, ModelMaterial,
     ModelTriangle, Texture,
 };
-use crate::audio::Sound;
+use crate::audio::DoomeSound;
 
 pub struct DoomeAssetsLoader {
     source: Box<dyn AssetsSource>,
     models: AssetStorageBuilder<Model>,
     images: AssetStorageBuilder<RgbaImage>,
-    sounds: AssetStorageBuilder<Sound>,
+    sounds: AssetStorageBuilder<DoomeSound>,
     textures: AssetStorageBuilder<RgbaImage>,
 }
 

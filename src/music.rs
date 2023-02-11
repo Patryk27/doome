@@ -1,5 +1,5 @@
+use bevy::audio::AudioSink;
 use bevy::prelude::*;
-use doome_bevy::audio::{AudioOutput, AudioPlayer};
 use doome_bevy::prelude::*;
 
 const LERP_SPEED: f32 = 1.0;
@@ -68,33 +68,44 @@ fn lerp(v: f32, t: f32, f: f32) -> f32 {
 
 fn update_music(
     music_state: Res<MusicState>,
-    players: Query<(&MusicTrack, &AudioPlayer)>,
+    players: Query<(&MusicTrack, &Handle<AudioSink>)>,
+    audio_sinks: Res<Assets<AudioSink>>,
 ) {
     for (track, player) in players.iter() {
-        if *track == music_state.now_playing {
-            player.set_volume(music_state.current_music_volume * MUSIC_VOLUME);
-        } else {
-            player.set_volume(music_state.other_music_volume * MUSIC_VOLUME);
+        if let Some(player) = audio_sinks.get(player) {
+            if *track == music_state.now_playing {
+                player.set_volume(
+                    music_state.current_music_volume * MUSIC_VOLUME,
+                );
+            } else {
+                player
+                    .set_volume(music_state.other_music_volume * MUSIC_VOLUME);
+            }
         }
     }
 }
 
 fn setup_music(
     mut commands: Commands,
-    audio_output: NonSend<AudioOutput>,
-    assets: Res<DoomeAssets>,
+    assets: Res<AssetServer>,
+    audio: Res<Audio>,
+    audio_sinks: Res<Assets<AudioSink>>,
 ) {
-    let doome_music = AudioPlayer::new(
-        assets.load_sound("audiorezout_time_hurries"),
-        &audio_output,
+    let doome_music = assets.load("audio/audiorezout_time_hurries.ogg");
+    let doome_music = audio.play_with_settings(
+        doome_music,
+        PlaybackSettings::LOOP.with_volume(MUSIC_VOLUME),
     );
+    let doome_music = audio_sinks.get_handle(doome_music);
 
-    let chillout_music = AudioPlayer::new(
-        assets.load_sound(
-            "monplaisir_internet_the_day_when_all_humans_will_disappear",
-        ),
-        &audio_output,
+    let chillout_music = assets.load(
+        "audio/monplaisir_internet_the_day_when_all_humans_will_disappear.ogg",
     );
+    let chillout_music = audio.play_with_settings(
+        chillout_music,
+        PlaybackSettings::LOOP.with_volume(MUSIC_VOLUME),
+    );
+    let chillout_music = audio_sinks.get_handle(chillout_music);
 
     commands.spawn((MusicTrack::Doome, doome_music));
     commands.spawn((MusicTrack::Chillout, chillout_music));

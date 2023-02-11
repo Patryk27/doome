@@ -3,7 +3,7 @@ use std::path::Path;
 use anyhow::Result;
 
 use super::DoomeAssetsLoader;
-use crate::audio::Sound;
+use crate::audio::DoomeSound;
 
 impl DoomeAssetsLoader {
     pub fn load_sound(&mut self, name: &str, path: &Path) -> Result<()> {
@@ -11,7 +11,7 @@ impl DoomeAssetsLoader {
 
         let sound_data = self.source.read_file(path)?;
 
-        self.sounds.push(name, Sound::new(sound_data));
+        self.sounds.push(name, DoomeSound::new(sound_data));
 
         Ok(())
     }

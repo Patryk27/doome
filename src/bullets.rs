@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
-use doome_bevy::audio::Audio;
+use doome_bevy::audio::DoomeAudio;
 use doome_bevy::health::Health;
 use doome_bevy::physics::events::Collision;
 use doome_bevy::prelude::DoomeAssets;
@@ -44,8 +44,9 @@ pub struct DamageDealt {
 
 fn collide_and_apply_damage(
     mut commands: Commands,
-    assets: Res<DoomeAssets>,
-    mut audio: ResMut<Audio>,
+    doome_assets: Res<DoomeAssets>,
+    asset_server: Res<AssetServer>,
+    audio: Res<Audio>,
     mut collisions: EventReader<Collision>,
     mut health: Query<&mut Health>,
     bullets: Query<(&Bullet, &Transform)>,
@@ -62,8 +63,9 @@ fn collide_and_apply_damage(
             {
                 spawn_explosion(
                     &mut commands,
-                    &assets,
-                    &mut audio,
+                    &doome_assets,
+                    &asset_server,
+                    &audio,
                     transform.clone().with_scale(Vec3::ONE * explosion_radius),
                 );
                 screen_shakes.send(AddScreenShake(0.5));

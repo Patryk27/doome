@@ -5,23 +5,23 @@ use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink};
 
 use crate::assets::{DoomeAssetHandle, DoomeAssets};
 
-pub struct Sound {
+pub struct DoomeSound {
     content: Vec<u8>,
 }
 
-impl Sound {
+impl DoomeSound {
     pub fn new(content: Vec<u8>) -> Self {
         Self { content }
     }
 }
 
 #[derive(Resource)]
-pub struct Audio {
-    queue: Vec<DoomeAssetHandle<Sound>>,
+pub struct DoomeAudio {
+    queue: Vec<DoomeAssetHandle<DoomeSound>>,
 }
 
-impl Audio {
-    pub fn play(&mut self, sound: DoomeAssetHandle<Sound>) {
+impl DoomeAudio {
+    pub fn play(&mut self, sound: DoomeAssetHandle<DoomeSound>) {
         self.queue.push(sound);
     }
 }
@@ -36,12 +36,12 @@ pub struct AudioOutput {
 
 #[derive(Component)]
 pub struct AudioPlayer {
-    asset: DoomeAssetHandle<Sound>,
+    asset: DoomeAssetHandle<DoomeSound>,
     sink: Sink,
 }
 
 impl AudioPlayer {
-    pub fn new(asset: DoomeAssetHandle<Sound>, outout: &AudioOutput) -> Self {
+    pub fn new(asset: DoomeAssetHandle<DoomeSound>, outout: &AudioOutput) -> Self {
         let sink = Sink::try_new(&outout.stream_handle).unwrap();
 
         Self { asset, sink }
@@ -86,7 +86,7 @@ impl FromWorld for AudioOutput {
 impl Plugin for AudioPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.init_non_send_resource::<AudioOutput>();
-        app.insert_resource(Audio { queue: Vec::new() });
+        app.insert_resource(DoomeAudio { queue: Vec::new() });
 
         app.add_system_to_stage(CoreStage::PostUpdate, play_queued_audio);
         app.add_system_to_stage(CoreStage::PostUpdate, play_audio_players);
@@ -108,7 +108,7 @@ fn play_audio_players(assets: Res<DoomeAssets>, audio_players: Query<&AudioPlaye
 
 fn play_queued_audio(
     assets: Res<DoomeAssets>,
-    mut audio: ResMut<Audio>,
+    mut audio: ResMut<DoomeAudio>,
     state: NonSend<AudioOutput>,
 ) {
     for handle in audio.queue.drain(..) {

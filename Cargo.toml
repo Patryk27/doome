@@ -1,10 +1,6 @@
 [workspace]
 resolver = "2"
-members = [
-    "crates/lib/*",
-    "crates/bin/*",
-    "crates/shaders/*",
-]
+members = ["crates/lib/*", "crates/bin/*", "crates/shaders/*"]
 
 [package]
 name = "doome"
@@ -22,7 +18,13 @@ doome-geo = { path = "crates/lib/geo" }
 
 # Crates.io
 anyhow = "1.0"
-bevy = { version = "0.9", default-features = false, features = ["bevy_winit"] }
+bevy = { version = "0.9", default-features = false, features = [
+    "bevy_winit",
+    "bevy_asset",
+    "bevy_audio",
+    "wav",
+    "vorbis",
+] }
 clap = { version = "4.0", features = ["derive"] }
 glam = "0.22"
 image = "0.24"
