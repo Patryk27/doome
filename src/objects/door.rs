@@ -31,7 +31,11 @@ impl Door {
         self
     }
 
-    pub fn spawn(self, assets: &DoomeAssets, commands: &mut Commands) -> Entity {
+    pub fn spawn(
+        self,
+        assets: &DoomeAssets,
+        commands: &mut Commands,
+    ) -> Entity {
         let model = assets.load_model("door");
         let position = vec3(self.position.x, 1.0, self.position.y);
         let rotation = self.rotation;

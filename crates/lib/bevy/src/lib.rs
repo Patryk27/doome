@@ -1,7 +1,6 @@
 #![allow(clippy::type_complexity)]
 
 pub mod assets;
-pub mod audio;
 pub mod billboard;
 pub mod components;
 pub mod convert;

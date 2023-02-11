@@ -16,7 +16,10 @@ pub struct LevelBuilder<'p, 'w, 's> {
 }
 
 impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
-    pub fn new(commands: &'p mut Commands<'w, 's>, assets: &'p DoomeAssets) -> Self {
+    pub fn new(
+        commands: &'p mut Commands<'w, 's>,
+        assets: &'p DoomeAssets,
+    ) -> Self {
         Self { commands, assets }
     }
 

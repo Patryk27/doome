@@ -5,7 +5,10 @@ use rectangle_pack::{
     TargetBin,
 };
 
-use super::{DoomeAssetHandle, AssetStorageBuilder, DoomeAssets, DoomeAssetsLoader, Texture};
+use super::{
+    AssetStorageBuilder, DoomeAssetHandle, DoomeAssets, DoomeAssetsLoader,
+    Texture,
+};
 
 const DEPTH: u32 = 1;
 
@@ -65,7 +68,6 @@ impl DoomeAssetsLoader {
             models: self.models.build(),
             images: self.images.build(),
             textures: textures.build(),
-            sounds: self.sounds.build(),
             atlas,
         }
     }

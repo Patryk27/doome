@@ -52,7 +52,11 @@ impl Torch {
         self
     }
 
-    pub fn spawn(self, assets: &DoomeAssets, commands: &mut Commands) -> Entity {
+    pub fn spawn(
+        self,
+        assets: &DoomeAssets,
+        commands: &mut Commands,
+    ) -> Entity {
         let active = self.active;
         let force_active_texture = self.force_active_texture;
         let position = vec3(self.position.x, 2.3, self.position.y);

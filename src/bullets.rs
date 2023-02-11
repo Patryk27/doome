@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
-use doome_bevy::audio::DoomeAudio;
 use doome_bevy::health::Health;
 use doome_bevy::physics::events::Collision;
 use doome_bevy::prelude::DoomeAssets;

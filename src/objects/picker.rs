@@ -72,7 +72,11 @@ impl Picker {
         self
     }
 
-    pub fn spawn(self, assets: &DoomeAssets, commands: &mut Commands) -> Entity {
+    pub fn spawn(
+        self,
+        assets: &DoomeAssets,
+        commands: &mut Commands,
+    ) -> Entity {
         let model = assets.load_model("picker");
         let position = vec3(self.position.x, 1.0, self.position.y);
         let texture = assets.load_texture(&format!("picker.{}", self.texture));

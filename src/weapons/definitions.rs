@@ -5,7 +5,9 @@ use doome_bevy::prelude::DoomeAssets;
 use super::definition::WeaponDefinition;
 use super::WeaponSprites;
 
-pub fn rifle(assets: &DoomeAssets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
+pub fn rifle(
+    assets: &DoomeAssets,
+) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     let idle = assets.load_image("rifle_0");
     let animation =
         vec![assets.load_image("rifle_1"), assets.load_image("rifle_2")];
@@ -28,7 +30,9 @@ pub fn rifle(assets: &DoomeAssets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>
     (Arc::new(definition), Arc::new(sprites))
 }
 
-pub fn handgun(assets: &DoomeAssets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
+pub fn handgun(
+    assets: &DoomeAssets,
+) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     let idle = assets.load_image("gun_1");
     let animation = vec![
         assets.load_image("gun_shoot_1"),
@@ -54,7 +58,9 @@ pub fn handgun(assets: &DoomeAssets) -> (Arc<WeaponDefinition>, Arc<WeaponSprite
     (Arc::new(definition), Arc::new(sprites))
 }
 
-pub fn rpg(assets: &DoomeAssets) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
+pub fn rpg(
+    assets: &DoomeAssets,
+) -> (Arc<WeaponDefinition>, Arc<WeaponSprites>) {
     let idle = assets.load_image("rpg");
     let animation = vec![assets.load_image("rpg")];
 

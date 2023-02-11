@@ -1,6 +1,5 @@
 use bevy::prelude::*;
-use doome_bevy::audio::{DoomeAudio, DoomeSound};
-use doome_bevy::prelude::{Body, DoomeAssetHandle, DoomeAssets};
+use doome_bevy::prelude::Body;
 
 use crate::bullets::DamageDealt;
 use crate::prelude::*;

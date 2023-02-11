@@ -13,14 +13,12 @@ use self::loader::*;
 pub use self::model::*;
 pub use self::storage::DoomeAssetHandle;
 use self::storage::{AssetStorage, AssetStorageBuilder};
-use crate::audio::DoomeSound;
 
 #[derive(Resource)]
 pub struct DoomeAssets {
     atlas: image::RgbaImage,
     models: AssetStorage<Model>,
     images: AssetStorage<RgbaImage>,
-    sounds: AssetStorage<DoomeSound>,
     textures: AssetStorage<Texture>,
 }
 
@@ -57,24 +55,6 @@ impl DoomeAssets {
             })?;
         }
 
-        for (name, path) in loader.find("audio", "wav")? {
-            loader.load_sound(&name, &path).with_context(|| {
-                format!("Couldn't load image: {}", path.display())
-            })?;
-        }
-
-        for (name, path) in loader.find("audio", "ogg")? {
-            loader.load_sound(&name, &path).with_context(|| {
-                format!("Couldn't load image: {}", path.display())
-            })?;
-        }
-
-        for (name, path) in loader.find("audio", "mp3")? {
-            loader.load_sound(&name, &path).with_context(|| {
-                format!("Couldn't load image: {}", path.display())
-            })?;
-        }
-
         Ok(loader.build())
     }
 
@@ -94,10 +74,6 @@ impl DoomeAssets {
         self.images.by_handle(handle)
     }
 
-    pub(crate) fn sound(&self, handle: DoomeAssetHandle<DoomeSound>) -> &DoomeSound {
-        self.sounds.by_handle(handle)
-    }
-
     pub fn load_model(&self, name: &str) -> DoomeAssetHandle<Model> {
         self.models
             .by_name(name)
@@ -114,11 +90,5 @@ impl DoomeAssets {
         self.images
             .by_name(name)
             .unwrap_or_else(|| panic!("Unknown image: {}", name))
-    }
-
-    pub fn load_sound(&self, name: &str) -> DoomeAssetHandle<DoomeSound> {
-        self.sounds
-            .by_name(name)
-            .unwrap_or_else(|| panic!("Unknown sound: {}", name))
     }
 }

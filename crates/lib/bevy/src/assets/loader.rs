@@ -2,7 +2,6 @@ mod build;
 mod load_image;
 mod load_material;
 mod load_model;
-mod load_sound;
 mod load_texture;
 mod source;
 
@@ -13,16 +12,14 @@ use image::RgbaImage;
 
 pub use self::source::{AssetsSource, RuntimeSource};
 use super::{
-    DoomeAssetHandle, AssetStorageBuilder, DoomeAssets, Model, ModelMaterial,
+    AssetStorageBuilder, DoomeAssetHandle, DoomeAssets, Model, ModelMaterial,
     ModelTriangle, Texture,
 };
-use crate::audio::DoomeSound;
 
 pub struct DoomeAssetsLoader {
     source: Box<dyn AssetsSource>,
     models: AssetStorageBuilder<Model>,
     images: AssetStorageBuilder<RgbaImage>,
-    sounds: AssetStorageBuilder<DoomeSound>,
     textures: AssetStorageBuilder<RgbaImage>,
 }
 
@@ -32,7 +29,6 @@ impl DoomeAssetsLoader {
             source: Box::new(source),
             models: Default::default(),
             images: Default::default(),
-            sounds: Default::default(),
             textures: Default::default(),
         }
     }

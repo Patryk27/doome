@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use bevy::prelude::*;
 use doome_bevy::assets::DoomeAssets;
-use doome_bevy::audio::DoomeAudio;
 use doome_bevy::doome::DoomeRenderer;
 use doome_bevy::health::Health;
 use doome_bevy::player::Player;

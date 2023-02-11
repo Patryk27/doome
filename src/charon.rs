@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use doome_bevy::assets::DoomeAssets;
-use doome_bevy::audio::DoomeAudio;
 use doome_bevy::health::Death;
 
 use crate::enemies::Enemy;

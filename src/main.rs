@@ -99,7 +99,6 @@ fn main() {
         .add_plugin(doome_bevy::renderer::RendererPlugin)
         .add_plugin(doome_bevy::doome::DoomePlugin)
         .add_plugin(doome_bevy::physics::PhysicsPlugin::default())
-        .add_plugin(doome_bevy::audio::AudioPlugin)
         .add_plugin(doome_bevy::billboard::BillboardPlugin)
         .add_plugin(doome_bevy::health::HealthPlugin)
         .add_system(doome_bevy::simple_animations::rotate)

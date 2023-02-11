@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use doome_bevy::assets::DoomeAssets;
-use doome_bevy::audio::DoomeAudio;
 use doome_bevy::billboard::Billboard;
 use doome_bevy::components::{GeometryType, Material};
 use doome_bevy::model_animation::{ModelAnimation, ModelAnimationFrame};
