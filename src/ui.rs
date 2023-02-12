@@ -146,12 +146,9 @@ fn process_events(
     }
 }
 
-fn canvas_clear(
-    mut renderer: ResMut<DoomeRenderer>,
-    text_engine: Res<TextEngine>,
-) {
+fn canvas_clear(mut renderer: ResMut<DoomeRenderer>) {
     let frame = &mut renderer.pixels.image_data;
-    let mut canvas = Canvas::new_text(&text_engine, frame);
+    let mut canvas = Canvas::new(frame);
 
     canvas.clear();
 }
