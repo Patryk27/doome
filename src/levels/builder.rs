@@ -63,12 +63,12 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
                 (z1 + z2) as f32 / 2.0,
             ))
             .with_scale(vec3((dx as f32) / 2.0, 1.0, (dz as f32) / 2.0))
-            .with_material(
-                Material::default()
-                    .with_color(Color::hex(0xffffff))
-                    .with_uv_divisor(dx as _, dz as _)
-                    .without_casting_shadows(),
-            )
+        // .with_material(
+        //     Material::default()
+        //         .with_color(Color::hex(0xffffff))
+        //         .with_uv_divisor(dx as _, dz as _)
+        //         .without_casting_shadows(),
+        // )
     }
 
     #[must_use]
@@ -103,11 +103,11 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
                 (z1 + z2) as f32 / 2.0,
             ))
             .with_scale(vec3((dx as f32) / 2.0, 1.0, (dz as f32) / 2.0))
-            .with_material(
-                Material::default()
-                    .with_color(Color::hex(0xffffff))
-                    .with_uv_divisor(dx as _, dz as _),
-            )
+        // .with_material(
+        //     Material::default()
+        //         .with_color(Color::hex(0xffffff))
+        //         .with_uv_divisor(dx as _, dz as _),
+        // )
     }
 
     #[must_use]
@@ -158,11 +158,11 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
             )
             .with_rotation(Quat::from_rotation_y(PI / 2.0 * (rot as f32)))
             .with_scale(vec3((scale as f32) / 2.0, 1.25, 1.0))
-            .with_material(
-                Material::default()
-                    .with_color(Color::hex(0xffffff))
-                    .with_uv_divisor(scale as _, 1),
-            )
+            // .with_material(
+            //     Material::default()
+            //         .with_color(Color::hex(0xffffff))
+            //         .with_uv_divisor(scale as _, 1),
+            // )
             .with_collider(Collider::line(vec2(-1.0, 0.0), vec2(1.0, 0.0)))
     }
 
@@ -172,15 +172,16 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         color: Color,
         intensity: f32,
     ) -> EntityCommands<'w, 's, 'a> {
-        self.commands.spawn((
-            Light {
-                enabled: true,
+        self.commands.spawn(PointLightBundle {
+            transform: Transform::from_translation(pos),
+            point_light: PointLight {
                 intensity,
-                kind: LightKind::Point,
+                color,
+                shadows_enabled: true,
+                ..default()
             },
-            Transform::from_translation(pos),
-            color,
-        ))
+            ..default()
+        })
     }
 
     pub fn spot_light<'a>(
@@ -191,15 +192,16 @@ impl<'p, 'w, 's> LevelBuilder<'p, 'w, 's> {
         color: Color,
         intensity: f32,
     ) -> EntityCommands<'w, 's, 'a> {
-        self.commands.spawn((
-            Light {
-                enabled: true,
+        self.commands.spawn(SpotLightBundle {
+            transform: Transform::from_translation(pos),
+            spot_light: SpotLight {
                 intensity,
-                kind: LightKind::Spot { point_at, angle },
+                color,
+                shadows_enabled: true,
+                ..default()
             },
-            Transform::from_translation(pos),
-            color,
-        ))
+            ..default()
+        })
     }
 
     #[must_use]
@@ -241,7 +243,7 @@ pub struct LevelModelBuilder<'w, 's, 'a> {
     handle: DoomeAssetHandle<Model>,
     geo_type: GeometryType,
     transform: Transform,
-    material: Option<Material>,
+    // material: Option<Material>,
     collider: Option<Collider>,
     is_obstacle: bool,
 }
@@ -257,7 +259,7 @@ impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
             handle,
             geo_type: GeometryType::Static,
             transform: Default::default(),
-            material: Default::default(),
+            // material: Default::default(),
             collider: Default::default(),
             is_obstacle: false,
         }
@@ -293,18 +295,18 @@ impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
         self
     }
 
-    pub fn with_material(mut self, val: Material) -> Self {
-        self.material = Some(val);
-        self
-    }
+    // pub fn with_material(mut self, val: Material) -> Self {
+    //     self.material = Some(val);
+    //     self
+    // }
 
-    pub fn alter_material(
-        mut self,
-        f: impl FnOnce(Material) -> Material,
-    ) -> Self {
-        self.material = self.material.map(f);
-        self
-    }
+    // pub fn alter_material(
+    //     mut self,
+    //     f: impl FnOnce(Material) -> Material,
+    // ) -> Self {
+    //     self.material = self.material.map(f);
+    //     self
+    // }
 
     pub fn with_collider(mut self, val: Collider) -> Self {
         self.collider = Some(val);
@@ -316,9 +318,9 @@ impl<'w, 's, 'a> LevelModelBuilder<'w, 's, 'a> {
             self.commands
                 .spawn((self.handle, self.transform, self.geo_type));
 
-        if let Some(material) = self.material {
-            entity.insert(material);
-        }
+        // if let Some(material) = self.material {
+        //     entity.insert(material);
+        // }
 
         if let Some(collider) = self.collider {
             entity.insert(collider);

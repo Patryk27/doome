@@ -16,7 +16,7 @@ impl Picker {
             on_pickup: Default::default(),
             position: Default::default(),
             scale: Vec3::splat(0.75),
-            color: Color::hex(0xffffff),
+            color: todo!("Color::hex(0xffffff)"),
         }
     }
 
@@ -91,11 +91,11 @@ impl Picker {
             },
             Billboard,
             GeometryType::Dynamic,
-            Material::default()
-                .with_color(self.color)
-                .with_texture(texture)
-                .emissive()
-                .with_uv_transparency(),
+            // Material::default()
+            //     .with_color(self.color)
+            //     .with_texture(texture)
+            //     .emissive()
+            //     .with_uv_transparency(),
             Collider::circle(1.25, 6).detector(),
         ));
 

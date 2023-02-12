@@ -40,8 +40,7 @@ impl LevelLocator {
                         spec.split(",").collect_tuple().unwrap();
 
                     let color = color.strip_prefix("0x").unwrap();
-                    let color = u32::from_str_radix(color, 16).unwrap();
-                    let color = Color::hex(color);
+                    let color = Color::hex(color).expect("Invalid color");
 
                     let key = Key::new(name, color);
 
@@ -94,8 +93,7 @@ impl LevelLocator {
                     });
 
                 let color = color.strip_prefix("0x").unwrap();
-                let color = u32::from_str_radix(color, 16).unwrap();
-                let color = Color::hex(color);
+                let color = Color::hex(color).expect("Invalid color");
 
                 let entity = Picker::key(Key::new(name, color))
                     .with_position(obj.position())

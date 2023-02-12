@@ -86,8 +86,8 @@ impl LevelsCoordinator {
                 With<GcAfterLevelUnloaded>,
             )>,
         >,
-        mut inventory: Query<&mut Inventory>,
-        mut change_hud_visibility_tx: EventWriter<ChangeHudVisibility>,
+        // mut inventory: Query<&mut Inventory>,
+        // mut change_hud_visibility_tx: EventWriter<ChangeHudVisibility>,
     ) {
         if goto_level_rx.iter().count() == 0 {
             return;
@@ -101,11 +101,11 @@ impl LevelsCoordinator {
             commands.entity(entity).despawn_recursive();
         }
 
-        if let Ok(mut inventory) = inventory.get_single_mut() {
-            *inventory = Default::default();
-        }
+        // if let Ok(mut inventory) = inventory.get_single_mut() {
+        //     *inventory = Default::default();
+        // }
 
-        change_hud_visibility_tx.send(ChangeHudVisibility::show());
+        // change_hud_visibility_tx.send(ChangeHudVisibility::show());
     }
 }
 

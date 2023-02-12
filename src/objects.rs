@@ -22,9 +22,9 @@ impl Plugin for ObjectsPlugin {
         let txt_unlock = app
             .world
             .spawn((
-                Text::new("Press F to open the door").centered(),
+                CanvasText::new("Press F to open the door").centered(),
                 Transform::from_translation(vec3(0.5, 0.05, 0.0)),
-                Visibility::invisible(),
+                Visibility::VISIBLE,
             ))
             .id();
 

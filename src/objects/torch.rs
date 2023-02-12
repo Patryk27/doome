@@ -62,51 +62,53 @@ impl Torch {
         let position = vec3(self.position.x, 2.3, self.position.y);
         let rotation = self.rotation;
 
-        let mut torch = commands.spawn((
-            self,
-            Light {
-                enabled: true,
-                intensity: 0.0,
-                kind: LightKind::Point,
-            },
-            Transform::from_translation(position),
-            Color::hex(0xff7714),
-        ));
+        unimplemented!()
 
-        if active {
-            torch.insert(TorchActive::now());
-        }
+        // let mut torch = commands.spawn((
+        //     self,
+        //     Light {
+        //         enabled: true,
+        //         intensity: 0.0,
+        //         kind: LightKind::Point,
+        //     },
+        //     Transform::from_translation(position),
+        //     Color::hex(0xff7714),
+        // ));
 
-        torch.add_children(|commands| {
-            let model = assets.load_model("wall");
+        // if active {
+        //     torch.insert(TorchActive::now());
+        // }
 
-            let texture =
-                assets.load_texture(if active || force_active_texture {
-                    "torch"
-                } else {
-                    "torch.off"
-                });
+        // torch.add_children(|commands| {
+        //     let model = assets.load_model("wall");
 
-            commands.spawn((
-                TorchTexture,
-                model,
-                Transform::from_translation(
-                    position - rotation * vec3(0.3, 0.0, 0.0),
-                )
-                .with_rotation(rotation * Quat::from_rotation_z(PI))
-                .with_scale(Vec3::splat(0.35)),
-                GeometryType::Dynamic,
-                Material::default()
-                    .double_sided()
-                    .emissive()
-                    .with_color(Color::hex(0xffffff))
-                    .with_texture(texture)
-                    .with_uv_transparency()
-                    .without_casting_shadows(),
-            ));
-        });
+        //     let texture =
+        //         assets.load_texture(if active || force_active_texture {
+        //             "torch"
+        //         } else {
+        //             "torch.off"
+        //         });
 
-        torch.id()
+        //     commands.spawn((
+        //         TorchTexture,
+        //         model,
+        //         Transform::from_translation(
+        //             position - rotation * vec3(0.3, 0.0, 0.0),
+        //         )
+        //         .with_rotation(rotation * Quat::from_rotation_z(PI))
+        //         .with_scale(Vec3::splat(0.35)),
+        //         GeometryType::Dynamic,
+        //         Material::default()
+        //             .double_sided()
+        //             .emissive()
+        //             .with_color(Color::hex(0xffffff))
+        //             .with_texture(texture)
+        //             .with_uv_transparency()
+        //             .without_casting_shadows(),
+        //     ));
+        // });
+
+        // torch.id()
     }
 
     pub(super) fn process(
@@ -118,7 +120,7 @@ impl Torch {
             Option<&mut TorchActive>,
             &Children,
         )>,
-        mut torch_textures: Query<&mut Material, With<TorchTexture>>,
+        // mut torch_textures: Query<&mut Material, With<TorchTexture>>,
     ) {
         let dt = time.delta();
         let dts = time.delta_seconds();
@@ -162,15 +164,15 @@ impl Torch {
                 if !torch.force_active_texture {
                     let torch_texture = children.iter().next().unwrap();
 
-                    let mut torch_texture =
-                        torch_textures.get_mut(*torch_texture).unwrap();
+                    // let mut torch_texture =
+                    //     torch_textures.get_mut(*torch_texture).unwrap();
 
-                    torch_texture.texture =
-                        Some(assets.load_texture(if torch.active {
-                            "torch"
-                        } else {
-                            "torch.off"
-                        }));
+                    // torch_texture.texture =
+                    //     Some(assets.load_texture(if torch.active {
+                    //         "torch"
+                    //     } else {
+                    //         "torch.off"
+                    //     }));
                 }
             }
 

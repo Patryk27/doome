@@ -46,11 +46,11 @@ impl Door {
                 .with_rotation(rotation)
                 .with_scale(vec3(0.5, 1.0, 1.0)),
             GeometryType::Dynamic,
-            Material::default()
-                .double_sided()
-                .with_color(Color::hex(0xffffff))
-                .with_uv_transparency()
-                .without_casting_shadows(),
+            // Material::default()
+            //     .double_sided()
+            //     .with_color(Color::hex(0xffffff))
+            //     .with_uv_transparency()
+            //     .without_casting_shadows(),
             Collider::line(vec2(-1.0, 0.0), vec2(1.0, 0.0)),
         ));
 
@@ -70,12 +70,12 @@ impl Door {
                             .with_rotation(rotation)
                             .with_scale(vec3(0.2, 0.2, 0.2)),
                         GeometryType::Dynamic,
-                        Material::default()
-                            .double_sided()
-                            .with_color(key.color())
-                            .with_texture(texture)
-                            .with_uv_transparency()
-                            .without_casting_shadows(),
+                        // Material::default()
+                        //     .double_sided()
+                        //     .with_color(key.color())
+                        //     .with_texture(texture)
+                        //     .with_uv_transparency()
+                        //     .without_casting_shadows(),
                     ));
                 }
             });

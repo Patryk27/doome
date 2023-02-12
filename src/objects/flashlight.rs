@@ -17,7 +17,7 @@ impl Flashlight {
                     angle: PI / 4.5,
                 },
             },
-            Color::hex(0xffffff) * 0.8,
+            // Color::hex(0xffffff) * 0.8,
             Flashlight,
             Fade::fade_in(0.1),
         ));
@@ -27,11 +27,11 @@ impl Flashlight {
         camera: Query<&Camera>,
         mut flashlight: Query<(&mut Transform, &mut Light, &Flashlight)>,
     ) {
-        let Ok(camera) = camera.get_single() else { return };
-        let Ok((mut fl_transform, mut fl_light, _)) = flashlight.get_single_mut() else { return };
+        // let Ok(camera) = camera.get_single() else { return };
+        // let Ok((mut fl_transform, mut fl_light, _)) = flashlight.get_single_mut() else { return };
 
-        fl_transform.translation = camera.origin + vec3(0.0, -0.1, 0.0);
+        // fl_transform.translation = camera.origin + vec3(0.0, -0.1, 0.0);
 
-        *fl_light.point_at_mut().unwrap() = camera.look_at;
+        // *fl_light.point_at_mut().unwrap() = camera.look_at;
     }
 }

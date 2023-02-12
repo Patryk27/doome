@@ -21,7 +21,7 @@ impl Column {
                     .with_scale(vec3(0.25, 0.33, 0.25))
                     .with_rotation(Quat::from_rotation_y(PI)),
                 GeometryType::Static,
-                Material::default().with_color(Color::hex(0xffffff)),
+                // Material::default().with_color(Color::hex(0xffffff)),
                 Collider::rect(2.0, 2.0),
             ))
             .id()

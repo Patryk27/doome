@@ -8,11 +8,11 @@ use doome_bevy::physics::PhysicsEnabled;
 use doome_bevy::rendering_options::RenderingOptions;
 
 pub use self::cmd::*;
-use crate::inventory::Inventory;
+// use crate::inventory::Inventory;
 use crate::music::SwitchTrack;
 use crate::prelude::*;
-use crate::ui;
-use crate::weapons::{PrefabWeapons, Weapon, WeaponDefinition, WeaponSprites};
+// use crate::ui;
+// use crate::weapons::{PrefabWeapons, Weapon, WeaponDefinition, WeaponSprites};
 
 pub struct CommandsPlugin;
 
@@ -31,7 +31,7 @@ pub struct EventWriters<'w, 's> {
     output_tx: EventWriter<'w, 's, CommandOutput>,
     exit_tx: EventWriter<'w, 's, AppExit>,
     death_tx: EventWriter<'w, 's, Death>,
-    sync_nav_data_tx: EventWriter<'w, 's, SyncNavData>,
+    // sync_nav_data_tx: EventWriter<'w, 's, SyncNavData>,
     goto_level_tx: EventWriter<'w, 's, GotoLevel>,
     switch_track_tx: EventWriter<'w, 's, SwitchTrack>,
 }
@@ -41,24 +41,24 @@ struct Queries<'w, 's> {
     colliders: Query<'w, 's, &'static Collider>,
     all_entities: Query<'w, 's, Entity>,
     player: Query<'w, 's, Entity, With<Player>>,
-    enemies: Query<'w, 's, Entity, With<Enemy>>,
-    weapons: Query<'w, 's, &'static mut Weapon>,
+    // enemies: Query<'w, 's, Entity, With<Enemy>>,
+    // weapons: Query<'w, 's, &'static mut Weapon>,
     transforms: Query<'w, 's, &'static mut Transform>,
     healths: Query<'w, 's, &'static mut Health>,
-    inventory: Query<'w, 's, &'static mut Inventory>,
+    // inventory: Query<'w, 's, &'static mut Inventory>,
 }
 
 fn handle_commands(
     mut game_commands: EventReader<Command>,
     mut commands: Commands,
     assets: Res<DoomeAssets>,
-    prefab_weapons: Res<PrefabWeapons>,
+    // prefab_weapons: Res<PrefabWeapons>,
     // Mutable resources
     mut rendering_options: ResMut<RenderingOptions>,
     mut physics_enabled: ResMut<PhysicsEnabled>,
-    mut input_lock: ResMut<InputLock>,
-    mut weapon_sprites: ResMut<ui::gun::State>,
-    mut enemy_ai_enabled: ResMut<EnemyAiEnabled>,
+    // mut input_lock: ResMut<InputLock>,
+    // mut weapon_sprites: ResMut<ui::gun::State>,
+    // mut enemy_ai_enabled: ResMut<EnemyAiEnabled>,
     // Queries
     mut queries: Queries,
     // Event writers
@@ -73,11 +73,11 @@ fn handle_commands(
             }
 
             Command::LockInput => {
-                input_lock.is_locked = true;
+                // input_lock.is_locked = true;
             }
 
             Command::UnlockInput => {
-                input_lock.is_locked = false;
+                // input_lock.is_locked = false;
             }
 
             Command::ListEntities => {
@@ -124,28 +124,29 @@ fn handle_commands(
                 spawnable,
                 position,
             } => {
-                let entity = match spawnable {
-                    Spawnable::MothMonster => {
-                        MothMonster::spawn(&assets, &mut commands, position)
-                    }
-                    Spawnable::Doome => {
-                        Doome::spawn(&assets, &mut commands, position)
-                    }
-                    Spawnable::Heart => Picker::heart()
-                        .with_position(position.xz())
-                        .spawn(&assets, &mut commands),
-                    Spawnable::RiflePickup => Picker::rifle()
-                        .with_position(position.xz())
-                        .spawn(&assets, &mut commands),
-                    Spawnable::RpgPickup => Picker::rpg()
-                        .with_position(position.xz())
-                        .spawn(&assets, &mut commands),
-                };
+                unimplemented!()
+                // let entity = match spawnable {
+                //     Spawnable::MothMonster => {
+                //         MothMonster::spawn(&assets, &mut commands, position)
+                //     }
+                //     Spawnable::Doome => {
+                //         Doome::spawn(&assets, &mut commands, position)
+                //     }
+                //     Spawnable::Heart => Picker::heart()
+                //         .with_position(position.xz())
+                //         .spawn(&assets, &mut commands),
+                //     Spawnable::RiflePickup => Picker::rifle()
+                //         .with_position(position.xz())
+                //         .spawn(&assets, &mut commands),
+                //     Spawnable::RpgPickup => Picker::rpg()
+                //         .with_position(position.xz())
+                //         .spawn(&assets, &mut commands),
+                // };
 
-                event_writers.output_tx.send(CommandOutput(format!(
-                    "Spawned {spawnable:?}: {}",
-                    EntityHandle(entity)
-                )));
+                // event_writers.output_tx.send(CommandOutput(format!(
+                //     "Spawned {spawnable:?}: {}",
+                //     EntityHandle(entity)
+                // )));
             }
 
             Command::Despawn { entity } => {
@@ -153,9 +154,9 @@ fn handle_commands(
             }
 
             Command::DespawnAllEnemies => {
-                for entity in queries.enemies.iter() {
-                    commands.entity(entity).despawn();
-                }
+                // for entity in queries.enemies.iter() {
+                //     commands.entity(entity).despawn();
+                // }
             }
 
             Command::Kill { entity } => {
@@ -165,7 +166,8 @@ fn handle_commands(
             }
 
             Command::SyncNavData => {
-                event_writers.sync_nav_data_tx.send(SyncNavData::default());
+                unimplemented!()
+                // event_writers.sync_nav_data_tx.send(SyncNavData::default());
             }
 
             Command::NoClip => {
@@ -226,37 +228,38 @@ fn handle_commands(
             }
 
             Command::Give { what } => match what {
-                Item::Flashlight => {
-                    let mut inventory = queries.inventory.single_mut();
-                    inventory.has_flashlight = true;
-                }
-                Item::Rifle => {
-                    give_gun_to_player(
-                        &queries.player,
-                        &mut queries.weapons,
-                        &mut weapon_sprites,
-                        &prefab_weapons.rifle,
-                    );
-                }
-                Item::RocketLauncher => {
-                    give_gun_to_player(
-                        &queries.player,
-                        &mut queries.weapons,
-                        &mut weapon_sprites,
-                        &prefab_weapons.rpg,
-                    );
-                }
-                Item::Handgun => {
-                    give_gun_to_player(
-                        &queries.player,
-                        &mut queries.weapons,
-                        &mut weapon_sprites,
-                        &prefab_weapons.handgun,
-                    );
-                }
-                Item::Key(key) => {
-                    queries.inventory.single_mut().keys.push(key);
-                }
+                _ => unimplemented!(),
+                // Item::Flashlight => {
+                //     let mut inventory = queries.inventory.single_mut();
+                //     inventory.has_flashlight = true;
+                // }
+                // Item::Rifle => {
+                //     give_gun_to_player(
+                //         &queries.player,
+                //         &mut queries.weapons,
+                //         &mut weapon_sprites,
+                //         &prefab_weapons.rifle,
+                //     );
+                // }
+                // Item::RocketLauncher => {
+                //     give_gun_to_player(
+                //         &queries.player,
+                //         &mut queries.weapons,
+                //         &mut weapon_sprites,
+                //         &prefab_weapons.rpg,
+                //     );
+                // }
+                // Item::Handgun => {
+                //     give_gun_to_player(
+                //         &queries.player,
+                //         &mut queries.weapons,
+                //         &mut weapon_sprites,
+                //         &prefab_weapons.handgun,
+                //     );
+                // }
+                // Item::Key(key) => {
+                //     queries.inventory.single_mut().keys.push(key);
+                // }
             },
 
             Command::SwitchTrack { track } => {
@@ -273,7 +276,8 @@ fn handle_commands(
             }
 
             Command::ToggleAi => {
-                enemy_ai_enabled.0 = !enemy_ai_enabled.0;
+                unimplemented!()
+                // enemy_ai_enabled.0 = !enemy_ai_enabled.0;
             }
         }
     }
@@ -281,15 +285,15 @@ fn handle_commands(
 
 fn give_gun_to_player(
     player: &Query<Entity, With<Player>>,
-    weapons: &mut Query<&mut Weapon>,
-    weapon_sprites: &mut ui::gun::State,
-    prefab_weapon: &(Arc<WeaponDefinition>, Arc<WeaponSprites>),
+    // weapons: &mut Query<&mut Weapon>,
+    // weapon_sprites: &mut ui::gun::State,
+    // prefab_weapon: &(Arc<WeaponDefinition>, Arc<WeaponSprites>),
 ) {
     let player = player.single();
-    let mut player_weapon = weapons.get_mut(player).unwrap();
+    // let mut player_weapon = weapons.get_mut(player).unwrap();
 
-    player_weapon.update_def(prefab_weapon.0.clone());
-    weapon_sprites.current_weapon = prefab_weapon.1.clone();
+    // player_weapon.update_def(prefab_weapon.0.clone());
+    // weapon_sprites.current_weapon = prefab_weapon.1.clone();
 }
 
 fn resolve_entity(

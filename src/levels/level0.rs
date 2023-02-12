@@ -19,13 +19,13 @@ pub fn init(
     let mut lvl = LevelBuilder::new(&mut commands, &assets);
 
     lvl.floor(-1, -1, 1, 20)
-        .alter_material(|mat| {
-            mat.with_reflectivity(1.0)
-                .with_reflection_color(Color::hex(0xffffff))
-        })
+        // .alter_material(|mat| {
+        //     mat.with_reflectivity(1.0)
+        //         .with_reflection_color(Color::hex("ffffffff"))
+        // })
         .spawn();
 
-    lvl.point_light(Vec3::new(0.0, 0.0, 0.0), Color::srgb(1.0, 0.0, 0.0), 10.0);
+    lvl.point_light(Vec3::new(0.0, 0.0, 0.0), Color::rgb(1.0, 0.0, 0.0), 10.0);
 
     game_commands.send(Command::LockInput);
 }
