@@ -5,7 +5,7 @@ use glam::{vec2, vec3};
 use tobj::LoadOptions;
 
 use super::{DoomeAssetsLoader, Model, ModelMaterial, ModelTriangle};
-use crate::components::Color;
+use crate::components::DoomeColor;
 
 impl DoomeAssetsLoader {
     pub fn load_model(&mut self, name: &str, path: &Path) -> Result<()> {
@@ -102,7 +102,7 @@ impl DoomeAssetsLoader {
         raw_mat: &tobj::Material,
     ) -> Result<ModelMaterial> {
         let mut mat = ModelMaterial {
-            color: Color {
+            color: DoomeColor {
                 r: raw_mat.diffuse[0],
                 g: raw_mat.diffuse[1],
                 b: raw_mat.diffuse[2],

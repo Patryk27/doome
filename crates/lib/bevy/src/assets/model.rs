@@ -3,7 +3,7 @@ use glam::{vec2, Mat4, Vec2, Vec3};
 use rt::{ATLAS_HEIGHT, ATLAS_WIDTH};
 
 use super::DoomeAssetHandle;
-use crate::components::{Color, Material};
+use crate::components::{DoomeColor, DoomeMaterial};
 
 #[derive(Clone, Debug)]
 pub struct Model {
@@ -21,7 +21,7 @@ impl ModelTriangle {
     pub fn materialize_triangle(
         &self,
         xform: Mat4,
-        mat: Material,
+        mat: DoomeMaterial,
         mat_id: rt::MaterialId,
     ) -> rt::Triangle {
         let (u_div, v_div) = mat.uv_divisor.unwrap_or((1, 1));
@@ -47,13 +47,13 @@ impl ModelTriangle {
 
 #[derive(Clone, Debug, Default)]
 pub struct ModelMaterial {
-    pub color: Color,
+    pub color: DoomeColor,
     pub texture: Option<DoomeAssetHandle<Texture>>,
 }
 
 impl ModelMaterial {
-    pub fn materialize(&self) -> Material {
-        Material {
+    pub fn materialize(&self) -> DoomeMaterial {
+        DoomeMaterial {
             color: Some(self.color),
             texture: self.texture,
             texture_enabled: Some(self.texture.is_some()),

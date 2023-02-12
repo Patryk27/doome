@@ -7,13 +7,13 @@ use glam::vec3;
 use crate::assets::{DoomeAssetHandle, Texture};
 
 #[derive(Copy, Clone, Debug, PartialEq, Component)]
-pub struct Color {
+pub struct DoomeColor {
     pub r: f32,
     pub g: f32,
     pub b: f32,
 }
 
-impl Color {
+impl DoomeColor {
     pub fn srgb(r: f32, g: f32, b: f32) -> Self {
         Self { r, g, b }
     }
@@ -42,7 +42,7 @@ impl Color {
     }
 }
 
-impl Default for Color {
+impl Default for DoomeColor {
     fn default() -> Self {
         Self {
             r: 1.0,
@@ -52,7 +52,7 @@ impl Default for Color {
     }
 }
 
-impl ops::Mul<f32> for Color {
+impl ops::Mul<f32> for DoomeColor {
     type Output = Self;
 
     fn mul(mut self, rhs: f32) -> Self::Output {
@@ -130,7 +130,7 @@ impl Fade {
             Entity,
             &mut Self,
             Option<&mut Light>,
-            Option<&mut Material>,
+            Option<&mut DoomeMaterial>,
         )>,
     ) {
         for (entity, mut this, mut light, mut material) in objects.iter_mut() {
@@ -168,19 +168,19 @@ impl Fade {
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Component)]
-pub struct Camera {
+pub struct DoomeCamera {
     pub origin: Vec3,
     pub look_at: Vec3,
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Component)]
-pub struct Material {
+pub struct DoomeMaterial {
     pub double_sided: Option<bool>,
     pub alpha: Option<f32>,
-    pub color: Option<Color>,
+    pub color: Option<DoomeColor>,
     pub emissive: bool,
     pub reflectivity: Option<f32>,
-    pub reflection_color: Option<Color>,
+    pub reflection_color: Option<DoomeColor>,
     pub texture: Option<DoomeAssetHandle<Texture>>,
     pub texture_enabled: Option<bool>,
     pub casts_shadows: Option<bool>,
@@ -188,7 +188,7 @@ pub struct Material {
     pub uv_transparency: Option<bool>,
 }
 
-impl Material {
+impl DoomeMaterial {
     pub fn double_sided(mut self) -> Self {
         self.double_sided = Some(true);
         self
@@ -199,7 +199,7 @@ impl Material {
         self
     }
 
-    pub fn with_color(mut self, val: Color) -> Self {
+    pub fn with_color(mut self, val: DoomeColor) -> Self {
         self.color = Some(val);
         self
     }
@@ -209,7 +209,7 @@ impl Material {
         self
     }
 
-    pub fn with_reflection_color(mut self, val: Color) -> Self {
+    pub fn with_reflection_color(mut self, val: DoomeColor) -> Self {
         self.reflection_color = Some(val);
         self
     }

@@ -121,7 +121,7 @@ fn sync_created_geometry(
             &GeometryType,
             &DoomeAssetHandle<Model>,
             &Transform,
-            Option<&Material>,
+            Option<&DoomeMaterial>,
         ),
         Added<DoomeAssetHandle<Model>>,
     >,
@@ -163,11 +163,11 @@ fn sync_updated_geometry(
             &GeometryType,
             &DoomeAssetHandle<Model>,
             &Transform,
-            Option<&Material>,
+            Option<&DoomeMaterial>,
         ),
         Or<(
             Changed<Transform>,
-            Changed<Material>,
+            Changed<DoomeMaterial>,
             Changed<DoomeAssetHandle<Model>>,
         )>,
     >,
@@ -205,7 +205,7 @@ fn sync_updated_geometry(
 // TODO doing this each frame feels wonky
 fn sync_lights(
     mut state: ResMut<State>,
-    lights: Query<(&Light, &Transform, &Color, Option<&Visibility>)>,
+    lights: Query<(&Light, &Transform, &DoomeColor, Option<&Visibility>)>,
 ) {
     state.lights = Default::default();
 
@@ -245,7 +245,7 @@ fn sync_camera(
     mut state: ResMut<State>,
     renderer_state: Res<RendererState>,
     renderer: Res<DoomeRenderer>,
-    camera: Query<&Camera, Changed<Camera>>,
+    camera: Query<&DoomeCamera, Changed<DoomeCamera>>,
 ) {
     let Ok(camera) = camera.get_single() else { return };
 

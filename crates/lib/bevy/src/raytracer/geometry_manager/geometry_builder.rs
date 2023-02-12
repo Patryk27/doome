@@ -4,7 +4,7 @@ use glam::Mat4;
 
 use super::GeometryManager;
 use crate::assets::{Model, Texture};
-use crate::components::{GeometryType, Material};
+use crate::components::{DoomeMaterial, GeometryType};
 
 pub struct GeometryBuilder<'a> {
     geo: &'a mut GeometryManager,
@@ -42,7 +42,7 @@ impl<'a> GeometryBuilder<'a> {
         geo_type: GeometryType,
         model: &Model,
         xform: Mat4,
-        mat: Material,
+        mat: DoomeMaterial,
         mat_id: rt::MaterialId,
         tex: Option<Texture>,
     ) {
